@@ -14,17 +14,26 @@ export const initialStoredItems: StoredItem[] = [
     customerName: 'Juan Pérez',
     itemsDescription: '1 maleta grande, negra',
     storageDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    storagePrice: 5.00,
+    laundryPrice: 15.50,
+    totalPrice: 20.50,
   },
   {
     id: 's2',
     customerName: 'Ana García',
     itemsDescription: '2 bolsas de lona, roja y azul',
     storageDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+    storagePrice: 10.00,
+    laundryPrice: 0,
+    totalPrice: 10.00,
   },
     {
     id: 's3',
     customerName: 'Luis Rodríguez',
     itemsDescription: 'Funda de ropa con 3 trajes',
     storageDate: new Date().toISOString(), // Today
+    storagePrice: 5.00,
+    laundryPrice: 30.00,
+    totalPrice: 35.00,
   },
 ];

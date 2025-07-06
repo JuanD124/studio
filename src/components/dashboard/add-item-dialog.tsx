@@ -21,6 +21,8 @@ import { Textarea } from '../ui/textarea';
 const formSchema = z.object({
   customerName: z.string().min(2, { message: 'El nombre del cliente debe tener al menos 2 caracteres.' }),
   itemsDescription: z.string().min(5, { message: 'La descripción debe tener al menos 5 caracteres.' }),
+  storagePrice: z.coerce.number().min(0.01, { message: 'El precio de almacenamiento debe ser mayor que 0.' }),
+  laundryPrice: z.coerce.number().min(0, { message: 'El precio de lavandería no puede ser negativo.' }).default(0),
 });
 
 type AddItemFormValues = z.infer<typeof formSchema>;
@@ -41,7 +43,8 @@ export function AddItemDialog({ isOpen, onClose, onAddItem }: AddItemDialogProps
   });
 
   const onSubmit = (data: AddItemFormValues) => {
-    onAddItem(data);
+    const totalPrice = data.storagePrice + (data.laundryPrice || 0);
+    onAddItem({ ...data, totalPrice });
     form.reset();
     onClose();
   };
@@ -55,10 +58,12 @@ export function AddItemDialog({ isOpen, onClose, onAddItem }: AddItemDialogProps
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-headline">Almacenar Nuevo Artículo</DialogTitle>
-          <DialogDescription>Introduce los detalles del artículo a almacenar.</DialogDescription>
+          <DialogDescription>
+            Introduce los detalles y precios del artículo a almacenar.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -88,6 +93,34 @@ export function AddItemDialog({ isOpen, onClose, onAddItem }: AddItemDialogProps
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="storagePrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Precio Almacenamiento (€)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="5.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="laundryPrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Precio Lavandería (€)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
               <Button type="submit">Añadir Artículo</Button>

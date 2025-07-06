@@ -11,6 +11,7 @@ import { PlusCircle, Search, CalendarDays, Clock, Package, PackageCheck } from '
 import { AddItemDialog } from './add-item-dialog';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Separator } from '@/components/ui/separator';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>(initialStoredItems);
@@ -45,6 +46,13 @@ export default function StorageManager() {
     }
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(amount || 0);
+  }
+
 
   return (
     <div className="space-y-6">
@@ -78,14 +86,33 @@ export default function StorageManager() {
                     {item.itemsDescription}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex-grow space-y-2">
-                <div className="flex items-center text-sm text-muted-foreground">
-                    <CalendarDays className="mr-2 h-4 w-4" />
-                    <span>Almacenado el: {new Date(item.storageDate).toLocaleDateString()}</span>
+              <CardContent className="flex flex-col flex-grow justify-between space-y-4">
+                <div className="space-y-2">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        <span>Almacenado el: {new Date(item.storageDate).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                        <Clock className="mr-2 h-4 w-4" />
+                        <span>Duración: {getStorageDuration(item.storageDate)}</span>
+                    </div>
                 </div>
-                <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="mr-2 h-4 w-4" />
-                    <span>Duración: {getStorageDuration(item.storageDate)}</span>
+                <div className="space-y-2 text-sm">
+                    <Separator />
+                    <div className="flex justify-between pt-2">
+                        <span className="text-muted-foreground">Almacenamiento:</span>
+                        <span className="font-medium">{formatCurrency(item.storagePrice)}</span>
+                    </div>
+                    {item.laundryPrice > 0 && (
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Lavandería:</span>
+                            <span className="font-medium">{formatCurrency(item.laundryPrice)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between font-semibold text-base pt-2 border-t mt-2">
+                        <span>Total a Pagar:</span>
+                        <span>{formatCurrency(item.totalPrice)}</span>
+                    </div>
                 </div>
               </CardContent>
               <CardFooter>

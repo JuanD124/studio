@@ -9,4 +9,7 @@ export interface StoredItem {
   customerName: string;
   itemsDescription: string;
   storageDate: string; // ISO string format
+  storagePrice: number;
+  laundryPrice: number;
+  totalPrice: number;
 }
