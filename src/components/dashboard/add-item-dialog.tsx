@@ -57,6 +57,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
       battalion: '',
       ticketColor: '',
       itemsDescription: '',
+      storagePrice: 0,
       laundryItems: [],
     },
   });
@@ -86,7 +87,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
 
   const onSubmit = (data: AddItemFormValues) => {
     const laundryTotal = data.laundryItems?.reduce((total, item) => total + (item.price * item.quantity), 0) || 0;
-    const totalPrice = (data.storagePrice || 0) + laundryTotal;
+    const totalPrice = Number(data.storagePrice || 0) + laundryTotal;
     onAddItem({ ...data, laundryItems: data.laundryItems || [], totalPrice });
     form.reset();
     onClose();
