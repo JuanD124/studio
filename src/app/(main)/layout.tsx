@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Shirt, WashingMachine } from 'lucide-react';
+import { LayoutDashboard, Shirt, WashingMachine, BarChart4 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -54,6 +54,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/laundry-items">
                   <Shirt />
                   <span>Lista de Precios</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === '/reports'}
+                tooltip="Reportes"
+              >
+                <Link href="/reports">
+                  <BarChart4 />
+                  <span>Reportes</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

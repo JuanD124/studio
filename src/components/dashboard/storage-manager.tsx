@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { initialStoredItems, initialLaundryItems } from '@/lib/data';
-import type { StoredItem, LaundryItem } from '@/lib/types';
+import type { StoredItem, LaundryItem, ClaimedItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 export default function StorageManager() {
   const [items, setItems] = useLocalStorage<StoredItem[]>('storedItems', initialStoredItems);
   const [laundryServices] = useLocalStorage<LaundryItem[]>('laundryItems', initialLaundryItems);
+  const [claimedItems, setClaimedItems] = useLocalStorage<ClaimedItem[]>('claimedItems', []);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
@@ -42,7 +43,15 @@ export default function StorageManager() {
   };
 
   const handleClaimItem = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
+    const itemToClaim = items.find((item) => item.id === id);
+    if (itemToClaim) {
+      const claimedItem: ClaimedItem = {
+        ...itemToClaim,
+        claimedDate: new Date().toISOString(),
+      };
+      setClaimedItems((prevClaimed) => [...prevClaimed, claimedItem]);
+      setItems(items.filter((item) => item.id !== id));
+    }
   };
   
   const handleOpenInvoice = (item: StoredItem) => {

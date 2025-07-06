@@ -21,3 +21,7 @@ export interface StoredItem {
   }[];
   totalPrice: number;
 }
+
+export interface ClaimedItem extends StoredItem {
+  claimedDate: string; // ISO string format
+}
