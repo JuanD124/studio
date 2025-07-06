@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { initialStoredItems } from '@/lib/data';
+import { initialStoredItems, initialLaundryItems } from '@/lib/data';
 import type { StoredItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -103,10 +103,17 @@ export default function StorageManager() {
                         <span className="text-muted-foreground">Almacenamiento:</span>
                         <span className="font-medium">{formatCurrency(item.storagePrice)}</span>
                     </div>
-                    {item.laundryPrice > 0 && (
-                        <div className="flex justify-between">
+                    {item.laundryItems && item.laundryItems.length > 0 && (
+                        <div className="pt-1">
                             <span className="text-muted-foreground">Lavandería:</span>
-                            <span className="font-medium">{formatCurrency(item.laundryPrice)}</span>
+                            <ul className="pl-4 mt-1 space-y-1">
+                                {item.laundryItems.map(subItem => (
+                                    <li key={subItem.laundryItemId} className="flex justify-between text-muted-foreground">
+                                        <span>{subItem.quantity}x {subItem.name}</span>
+                                        <span className="font-medium text-right">{formatCurrency(subItem.price * subItem.quantity)}</span>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
                     )}
                     <div className="flex justify-between font-semibold text-base pt-2 border-t mt-2">
@@ -135,6 +142,7 @@ export default function StorageManager() {
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onAddItem={handleAddItem}
+        laundryServices={initialLaundryItems}
       />
     </div>
   );
