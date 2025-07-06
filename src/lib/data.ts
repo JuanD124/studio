@@ -12,6 +12,9 @@ export const initialStoredItems: StoredItem[] = [
   {
     id: 's1',
     customerName: 'Juan Pérez',
+    rank: 'Soldado',
+    battalion: 'BCG No. 21',
+    ticketColor: 'Rojo',
     itemsDescription: '1 maleta grande, negra',
     storageDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
     storagePrice: 10000,
@@ -24,6 +27,7 @@ export const initialStoredItems: StoredItem[] = [
   {
     id: 's2',
     customerName: 'Ana García',
+    ticketColor: 'Azul',
     itemsDescription: '2 bolsas de lona, roja y azul',
     storageDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
     storagePrice: 20000,
@@ -33,6 +37,9 @@ export const initialStoredItems: StoredItem[] = [
     {
     id: 's3',
     customerName: 'Luis Rodríguez',
+    rank: 'Cabo',
+    battalion: 'BCG No. 34',
+    ticketColor: 'Verde',
     itemsDescription: 'Funda de ropa con 3 trajes',
     storageDate: new Date().toISOString(), // Today
     storagePrice: 10000,

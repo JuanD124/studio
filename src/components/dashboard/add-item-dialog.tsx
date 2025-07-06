@@ -22,6 +22,9 @@ import { Trash2 } from 'lucide-react';
 
 const formSchema = z.object({
   customerName: z.string().min(2, { message: 'El nombre del cliente debe tener al menos 2 caracteres.' }),
+  rank: z.string().optional(),
+  battalion: z.string().optional(),
+  ticketColor: z.string().optional(),
   itemsDescription: z.string().min(5, { message: 'La descripción debe tener al menos 5 caracteres.' }),
   storagePrice: z.coerce.number().min(0, { message: 'El precio de almacenamiento debe ser un número positivo.' }).default(0),
   laundryItems: z.array(z.object({
@@ -50,6 +53,9 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerName: '',
+      rank: '',
+      battalion: '',
+      ticketColor: '',
       itemsDescription: '',
       laundryItems: [],
     },
@@ -116,6 +122,59 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                   <FormMessage />
                 </FormItem>
               )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="rank"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rango (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Soldado, Cabo..." {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="battalion"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Batallón (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="BCG No. 21" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <FormField
+                control={form.control}
+                name="ticketColor"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Color del Ticket (Opcional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar color..." />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="Rojo">Rojo</SelectItem>
+                        <SelectItem value="Azul">Azul</SelectItem>
+                        <SelectItem value="Verde">Verde</SelectItem>
+                        <SelectItem value="Amarillo">Amarillo</SelectItem>
+                        <SelectItem value="Naranja">Naranja</SelectItem>
+                        <SelectItem value="Blanco">Blanco</SelectItem>
+                    </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
             />
             <FormField
               control={form.control}

@@ -7,6 +7,9 @@ export interface LaundryItem {
 export interface StoredItem {
   id: string;
   customerName: string;
+  rank?: string;
+  battalion?: string;
+  ticketColor?: string;
   itemsDescription: string;
   storageDate: string; // ISO string format
   storagePrice: number;
