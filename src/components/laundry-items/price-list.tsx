@@ -21,9 +21,10 @@ import {
 import { PlusCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { ItemDialog } from './item-dialog';
 import { Card, CardContent } from '../ui/card';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export default function PriceList() {
-  const [items, setItems] = React.useState<LaundryItem[]>(initialLaundryItems);
+  const [items, setItems] = useLocalStorage<LaundryItem[]>('laundryItems', initialLaundryItems);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingItem, setEditingItem] = React.useState<LaundryItem | null>(null);
 

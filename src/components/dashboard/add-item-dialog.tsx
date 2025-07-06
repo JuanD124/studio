@@ -122,7 +122,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form id="add-item-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[65vh] overflow-y-auto pr-4">
             <FormField
               control={form.control}
               name="customerName"
@@ -263,13 +263,12 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                 ))}
               </div>
             )}
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-              <Button type="submit">Añadir Artículo</Button>
-            </DialogFooter>
           </form>
         </Form>
+        <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" form="add-item-form">Añadir Artículo</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

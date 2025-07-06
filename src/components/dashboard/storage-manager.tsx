@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { initialStoredItems, initialLaundryItems } from '@/lib/data';
-import type { StoredItem } from '@/lib/types';
+import type { StoredItem, LaundryItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,9 +13,11 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
 import { InvoiceDialog } from './invoice-dialog';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export default function StorageManager() {
-  const [items, setItems] = React.useState<StoredItem[]>(initialStoredItems);
+  const [items, setItems] = useLocalStorage<StoredItem[]>('storedItems', initialStoredItems);
+  const [laundryServices] = useLocalStorage<LaundryItem[]>('laundryItems', initialLaundryItems);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
@@ -170,7 +172,7 @@ export default function StorageManager() {
         isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
         onAddItem={handleAddItem}
-        laundryServices={initialLaundryItems}
+        laundryServices={laundryServices}
       />
       <InvoiceDialog
         isOpen={isInvoiceOpen}
