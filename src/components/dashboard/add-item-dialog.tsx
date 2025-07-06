@@ -19,8 +19,8 @@ import type { StoredItem } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
 
 const formSchema = z.object({
-  customerName: z.string().min(2, { message: 'Customer name must be at least 2 characters.' }),
-  itemsDescription: z.string().min(5, { message: 'Description must be at least 5 characters.' }),
+  customerName: z.string().min(2, { message: 'El nombre del cliente debe tener al menos 2 caracteres.' }),
+  itemsDescription: z.string().min(5, { message: 'La descripción debe tener al menos 5 caracteres.' }),
 });
 
 type AddItemFormValues = z.infer<typeof formSchema>;
@@ -57,8 +57,8 @@ export function AddItemDialog({ isOpen, onClose, onAddItem }: AddItemDialogProps
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Store New Item</DialogTitle>
-          <DialogDescription>Enter the details for the item to be stored.</DialogDescription>
+          <DialogTitle className="font-headline">Almacenar Nuevo Artículo</DialogTitle>
+          <DialogDescription>Introduce los detalles del artículo a almacenar.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -67,9 +67,9 @@ export function AddItemDialog({ isOpen, onClose, onAddItem }: AddItemDialogProps
               name="customerName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Customer Name</FormLabel>
+                  <FormLabel>Nombre del Cliente</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input placeholder="Juan Pérez" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -80,17 +80,17 @@ export function AddItemDialog({ isOpen, onClose, onAddItem }: AddItemDialogProps
               name="itemsDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Item(s) Description</FormLabel>
+                  <FormLabel>Descripción del/los Artículo(s)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g., 1 large blue suitcase" {...field} />
+                    <Textarea placeholder="ej., 1 maleta grande azul" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button type="submit">Add Item</Button>
+              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+              <Button type="submit">Añadir Artículo</Button>
             </DialogFooter>
           </form>
         </Form>

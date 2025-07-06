@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { PlusCircle, Search, CalendarDays, Clock, Package, PackageCheck } from 'lucide-react';
 import { AddItemDialog } from './add-item-dialog';
 import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>(initialStoredItems);
@@ -38,9 +39,9 @@ export default function StorageManager() {
   
   const getStorageDuration = (date: string) => {
     try {
-        return formatDistanceToNow(new Date(date), { addSuffix: true });
+        return formatDistanceToNow(new Date(date), { addSuffix: true, locale: es });
     } catch (e) {
-        return "Invalid date";
+        return "Fecha inválida";
     }
   };
 
@@ -51,7 +52,7 @@ export default function StorageManager() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
-            placeholder="Search by ID, name, or description..."
+            placeholder="Buscar por ID, nombre o descripción..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -59,7 +60,7 @@ export default function StorageManager() {
         </div>
         <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
           <PlusCircle className="h-5 w-5" />
-          <span>Store New Item</span>
+          <span>Almacenar Nuevo Artículo</span>
         </Button>
       </div>
 
@@ -80,17 +81,17 @@ export default function StorageManager() {
               <CardContent className="flex-grow space-y-2">
                 <div className="flex items-center text-sm text-muted-foreground">
                     <CalendarDays className="mr-2 h-4 w-4" />
-                    <span>Stored on: {new Date(item.storageDate).toLocaleDateString()}</span>
+                    <span>Almacenado el: {new Date(item.storageDate).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
                     <Clock className="mr-2 h-4 w-4" />
-                    <span>Duration: {getStorageDuration(item.storageDate)}</span>
+                    <span>Duración: {getStorageDuration(item.storageDate)}</span>
                 </div>
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" onClick={() => handleClaimItem(item.id)}>
                   <PackageCheck className="mr-2 h-4 w-4" />
-                  Mark as Claimed
+                  Marcar como Recogido
                 </Button>
               </CardFooter>
             </Card>
@@ -98,8 +99,8 @@ export default function StorageManager() {
         </div>
       ) : (
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">No stored items found.</p>
-          <p className="text-sm text-muted-foreground">Try adjusting your search or adding a new item.</p>
+          <p className="text-muted-foreground">No se encontraron artículos almacenados.</p>
+          <p className="text-sm text-muted-foreground">Intenta ajustar tu búsqueda o añadir un nuevo artículo.</p>
         </div>
       )}
 

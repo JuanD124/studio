@@ -37,11 +37,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <SidebarMenuButton
                 asChild
                 isActive={pathname === '/dashboard'}
-                tooltip="Dashboard"
+                tooltip="Panel de Almacenamiento"
               >
                 <Link href="/dashboard">
                   <LayoutDashboard />
-                  <span>Storage</span>
+                  <span>Almacenamiento</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -49,11 +49,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <SidebarMenuButton
                 asChild
                 isActive={pathname === '/laundry-items'}
-                tooltip="Price List"
+                tooltip="Lista de Precios"
               >
                 <Link href="/laundry-items">
                   <Shirt />
-                  <span>Price List</span>
+                  <span>Lista de Precios</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

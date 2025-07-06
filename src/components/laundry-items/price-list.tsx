@@ -56,9 +56,9 @@ export default function PriceList() {
   };
   
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('es-ES', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'EUR',
     }).format(amount);
   }
 
@@ -67,7 +67,7 @@ export default function PriceList() {
       <div className="flex justify-end">
         <Button onClick={() => handleOpenDialog()} className="flex items-center gap-2">
           <PlusCircle className="h-5 w-5" />
-          <span>Add New Item</span>
+          <span>Añadir Nuevo Artículo</span>
         </Button>
       </div>
 
@@ -76,8 +76,8 @@ export default function PriceList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Service / Item</TableHead>
-                <TableHead className="text-right">Price</TableHead>
+                <TableHead>Servicio / Artículo</TableHead>
+                <TableHead className="text-right">Precio</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -90,18 +90,18 @@ export default function PriceList() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">Abrir menú</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleOpenDialog(item)}>
                           <Pencil className="mr-2 h-4 w-4" />
-                          <span>Edit</span>
+                          <span>Editar</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDeleteItem(item.id)} className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Delete</span>
+                          <span>Eliminar</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

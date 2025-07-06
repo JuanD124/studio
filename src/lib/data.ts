@@ -1,30 +1,30 @@
 import type { LaundryItem, StoredItem } from './types';
 
 export const initialLaundryItems: LaundryItem[] = [
-  { id: '1', name: 'Shirt (Wash & Fold)', price: 2.50 },
-  { id: '2', name: 'Pants (Wash & Fold)', price: 3.00 },
-  { id: '3', name: 'Jacket (Dry Clean)', price: 10.00 },
-  { id: '4', name: 'Comforter (Large)', price: 25.00 },
-  { id: '5', name: 'Towel', price: 1.50 },
+  { id: '1', name: 'Camisa (Lavado y Doblado)', price: 2.50 },
+  { id: '2', name: 'Pantalones (Lavado y Doblado)', price: 3.00 },
+  { id: '3', name: 'Chaqueta (Lavado en Seco)', price: 10.00 },
+  { id: '4', name: 'Edredón (Grande)', price: 25.00 },
+  { id: '5', name: 'Toalla', price: 1.50 },
 ];
 
 export const initialStoredItems: StoredItem[] = [
   {
     id: 's1',
-    customerName: 'John Doe',
-    itemsDescription: '1 Large suitcase, black',
+    customerName: 'Juan Pérez',
+    itemsDescription: '1 maleta grande, negra',
     storageDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
   },
   {
     id: 's2',
-    customerName: 'Jane Smith',
-    itemsDescription: '2 duffel bags, red and blue',
+    customerName: 'Ana García',
+    itemsDescription: '2 bolsas de lona, roja y azul',
     storageDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
   },
     {
     id: 's3',
-    customerName: 'Peter Jones',
-    itemsDescription: 'Garment bag with 3 suits',
+    customerName: 'Luis Rodríguez',
+    itemsDescription: 'Funda de ropa con 3 trajes',
     storageDate: new Date().toISOString(), // Today
   },
 ];
