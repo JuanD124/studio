@@ -19,7 +19,7 @@ import type { LaundryItem } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'El nombre del artículo debe tener al menos 3 caracteres.' }),
-  price: z.coerce.number().min(0.01, { message: 'El precio debe ser mayor que 0.' }),
+  price: z.coerce.number().min(1, { message: 'El precio debe ser un número positivo.' }),
 });
 
 type ItemFormValues = z.infer<typeof formSchema>;
@@ -94,9 +94,9 @@ export function ItemDialog({ isOpen, onClose, onSave, item }: ItemDialogProps) {
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Precio ($)</FormLabel>
+                  <FormLabel>Precio (COP)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="2.50" {...field} />
+                    <Input type="number" placeholder="5000" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

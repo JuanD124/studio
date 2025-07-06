@@ -42,7 +42,7 @@ interface AddItemDialogProps {
 }
 
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(amount || 0);
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount || 0);
 }
 
 export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: AddItemDialogProps) {
@@ -135,9 +135,9 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                 name="storagePrice"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Precio Almacenamiento (€)</FormLabel>
+                    <FormLabel>Precio Almacenamiento (COP)</FormLabel>
                     <FormControl>
-                    <Input type="number" step="0.01" placeholder="5.00" {...field} />
+                    <Input type="number" placeholder="10000" {...field} />
                     </FormControl>
                     <FormMessage />
                 </FormItem>
