@@ -2,7 +2,6 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
 
 // CRÍTICO: Reemplaza este objeto con la configuración de tu propio proyecto de Firebase.
 // 1. Ve a la consola de Firebase (https://console.firebase.google.com/).
@@ -23,6 +22,5 @@ const firebaseConfig = {
 // Esto asegura que la app de Firebase se inicialice solo una vez.
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
-const auth = getAuth(app);
 
-export { db, auth };
+export { db };
