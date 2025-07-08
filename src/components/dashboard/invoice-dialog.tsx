@@ -73,7 +73,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="font-headline">Factura - ID: {item.id}</DialogTitle>
+          <DialogTitle className="font-headline">Factura - ID: {item.id.substring(0, 6)}</DialogTitle>
           <DialogDescription>
             Revisa los detalles antes de imprimir la factura.
           </DialogDescription>
@@ -87,7 +87,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                         <span>LavanderiaFacil</span>
                     </div>
                     <div>
-                        <p><strong>Factura ID:</strong> {item.id}</p>
+                        <p><strong>Factura ID:</strong> {item.id.substring(0, 6)}</p>
                         <p><strong>Fecha:</strong> {new Date().toLocaleDateString('es-CO')}</p>
                     </div>
                 </div>

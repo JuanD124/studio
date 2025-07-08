@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import type { ClaimedItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, PackageCheck, Calendar, TrendingUp } from 'lucide-react';
@@ -17,7 +18,25 @@ const formatCurrency = (amount: number) => {
 };
 
 export default function ReportsView() {
-  const [claimedItems] = useLocalStorage<ClaimedItem[]>('claimedItems', []);
+  const [claimedItems, setClaimedItems] = React.useState<ClaimedItem[]>([]);
+
+  React.useEffect(() => {
+    const q = query(collection(db, 'claimedItems'), orderBy('claimedDate', 'desc'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const itemsData: ClaimedItem[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            itemsData.push({
+                id: doc.id,
+                ...data,
+                claimedDate: data.claimedDate,
+                storageDate: data.storageDate,
+            } as ClaimedItem);
+        });
+        setClaimedItems(itemsData);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const reportData = React.useMemo(() => {
     const incomeToday = claimedItems

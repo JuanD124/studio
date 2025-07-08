@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { initialStoredItems, initialLaundryItems } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, addDoc, doc, getDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import type { StoredItem, LaundryItem, ClaimedItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,16 +14,42 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
 import { InvoiceDialog } from './invoice-dialog';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export default function StorageManager() {
-  const [items, setItems] = useLocalStorage<StoredItem[]>('storedItems', initialStoredItems);
-  const [laundryServices] = useLocalStorage<LaundryItem[]>('laundryItems', initialLaundryItems);
-  const [claimedItems, setClaimedItems] = useLocalStorage<ClaimedItem[]>('claimedItems', []);
+  const [items, setItems] = React.useState<StoredItem[]>([]);
+  const [laundryServices, setLaundryServices] = React.useState<LaundryItem[]>([]);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
+
+  React.useEffect(() => {
+    const q = query(collection(db, 'storedItems'), orderBy('storageDate', 'desc'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const itemsData: StoredItem[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        itemsData.push({ 
+          id: doc.id,
+          ...data,
+          storageDate: data.storageDate,
+        } as StoredItem);
+      });
+      setItems(itemsData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  React.useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'laundryItems'), (querySnapshot) => {
+      const servicesData: LaundryItem[] = [];
+      querySnapshot.forEach((doc) => {
+        servicesData.push({ id: doc.id, ...doc.data() } as LaundryItem);
+      });
+      setLaundryServices(servicesData);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const filteredItems = items.filter(
     (item) =>
@@ -33,24 +60,43 @@ export default function StorageManager() {
       item.battalion?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddItem = (newItemData: Omit<StoredItem, 'id' | 'storageDate'>) => {
-    const newItem: StoredItem = {
-      id: `s${Date.now()}`,
-      ...newItemData,
-      storageDate: new Date().toISOString(),
-    };
-    setItems([newItem, ...items]);
+  const handleAddItem = async (newItemData: Omit<StoredItem, 'id' | 'storageDate'>) => {
+    try {
+      await addDoc(collection(db, 'storedItems'), {
+        ...newItemData,
+        storageDate: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
   };
 
-  const handleClaimItem = (id: string) => {
-    const itemToClaim = items.find((item) => item.id === id);
-    if (itemToClaim) {
-      const claimedItem: ClaimedItem = {
-        ...itemToClaim,
-        claimedDate: new Date().toISOString(),
-      };
-      setClaimedItems((prevClaimed) => [...prevClaimed, claimedItem]);
-      setItems(items.filter((item) => item.id !== id));
+  const handleClaimItem = async (id: string) => {
+    const itemRef = doc(db, 'storedItems', id);
+    try {
+        const itemSnap = await getDoc(itemRef);
+        if (itemSnap.exists()) {
+            const itemToClaimData = itemSnap.data();
+            const claimedItemPayload: ClaimedItem = {
+                id: itemSnap.id,
+                customerName: itemToClaimData.customerName,
+                rank: itemToClaimData.rank,
+                battalion: itemToClaimData.battalion,
+                ticketColor: itemToClaimData.ticketColor,
+                itemsDescription: itemToClaimData.itemsDescription,
+                storageDate: itemToClaimData.storageDate,
+                storagePrice: itemToClaimData.storagePrice,
+                laundryItems: itemToClaimData.laundryItems,
+                totalPrice: itemToClaimData.totalPrice,
+                claimedDate: new Date().toISOString(),
+            };
+            await addDoc(collection(db, 'claimedItems'), claimedItemPayload);
+            await deleteDoc(itemRef);
+        } else {
+            console.error("No such document to claim!");
+        }
+    } catch (error) {
+        console.error("Error claiming item: ", error);
     }
   };
   
@@ -102,7 +148,7 @@ export default function StorageManager() {
               <CardHeader>
                 <CardTitle className="font-headline flex items-center justify-between">
                   <span>{item.customerName}</span>
-                   <Badge variant="secondary">ID: {item.id}</Badge>
+                   <Badge variant="secondary">ID: {item.id.substring(0,6)}</Badge>
                 </CardTitle>
                 <CardDescription className="flex flex-col gap-1 pt-2">
                     {(item.rank || item.battalion) && (

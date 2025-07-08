@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { initialLaundryItems } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import type { LaundryItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,12 +22,23 @@ import {
 import { PlusCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { ItemDialog } from './item-dialog';
 import { Card, CardContent } from '../ui/card';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export default function PriceList() {
-  const [items, setItems] = useLocalStorage<LaundryItem[]>('laundryItems', initialLaundryItems);
+  const [items, setItems] = React.useState<LaundryItem[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingItem, setEditingItem] = React.useState<LaundryItem | null>(null);
+
+  React.useEffect(() => {
+    const q = query(collection(db, 'laundryItems'), orderBy('name'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const itemsData: LaundryItem[] = [];
+      querySnapshot.forEach((doc) => {
+        itemsData.push({ id: doc.id, ...doc.data() } as LaundryItem);
+      });
+      setItems(itemsData);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleOpenDialog = (item: LaundryItem | null = null) => {
     setEditingItem(item);
@@ -38,22 +50,25 @@ export default function PriceList() {
     setIsDialogOpen(false);
   };
 
-  const handleSaveItem = (itemData: Omit<LaundryItem, 'id'>, id?: string) => {
-    if (id) {
-      // Update existing item
-      setItems(items.map((item) => (item.id === id ? { ...item, ...itemData } : item)));
-    } else {
-      // Add new item
-      const newItem: LaundryItem = {
-        id: `li${Date.now()}`,
-        ...itemData,
-      };
-      setItems([newItem, ...items]);
+  const handleSaveItem = async (itemData: Omit<LaundryItem, 'id'>, id?: string) => {
+    try {
+        if (id) {
+          const itemRef = doc(db, 'laundryItems', id);
+          await updateDoc(itemRef, itemData);
+        } else {
+          await addDoc(collection(db, 'laundryItems'), itemData);
+        }
+    } catch(error) {
+        console.error("Error saving item: ", error);
     }
   };
 
-  const handleDeleteItem = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
+  const handleDeleteItem = async (id: string) => {
+    try {
+        await deleteDoc(doc(db, 'laundryItems', id));
+    } catch(error) {
+        console.error("Error deleting item: ", error);
+    }
   };
   
   const formatCurrency = (amount: number) => {
