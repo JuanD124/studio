@@ -56,6 +56,9 @@ export default function LoginPage() {
             case 'auth/too-many-requests':
                 description = 'Demasiados intentos fallidos. Por favor, intenta de nuevo más tarde.';
                 break;
+            case 'auth/api-key-not-valid':
+                description = 'Error de configuración de Firebase. Revisa que la API Key en `src/lib/firebase.ts` sea correcta.';
+                break;
         }
         toast({
             title: 'Error al iniciar sesión',

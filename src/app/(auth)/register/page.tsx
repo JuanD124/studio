@@ -57,6 +57,9 @@ export default function RegisterPage() {
             case 'auth/operation-not-allowed':
                 description = 'El registro por correo y contraseña no está habilitado. Por favor, actívalo en la consola de Firebase.';
                 break;
+            case 'auth/api-key-not-valid':
+                description = 'Error de configuración de Firebase. Revisa que la API Key en `src/lib/firebase.ts` sea correcta.';
+                break;
         }
         toast({
             title: 'Error al registrarse',
