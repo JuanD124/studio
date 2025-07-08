@@ -39,7 +39,7 @@ export default function LoginPage() {
                 errorMessage = 'Error de red. Por favor, revisa tu conexión a internet e inténtalo de nuevo.';
                 break;
             case 'auth/api-key-not-valid':
-                 errorMessage = 'Error de configuración de Firebase. Revisa que la API Key en `src/lib/firebase.ts` sea correcta.';
+                 errorMessage = 'Error de configuración de Firebase. Revisa que la API Key en \`src/lib/firebase.ts\` sea correcta.';
                  break;
         }
         setError(errorMessage);
@@ -69,7 +69,7 @@ export default function LoginPage() {
                 <p className="font-semibold">Error de Inicio de Sesión</p>
                 <p className="mt-1">{error}</p>
                 <p className="mt-3 text-xs">
-                    <b>Recordatorio:</b> Debes crear este usuario manualmente en la consola de Firebase &gt; Authentication.
+                    <b>Recordatorio:</b> Debes crear este usuario manually en la consola de Firebase > Authentication.
                 </p>
               </div>
           </div>
