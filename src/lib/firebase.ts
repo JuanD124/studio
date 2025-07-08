@@ -2,6 +2,7 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // CRÍTICO: Reemplaza este objeto con la configuración de tu propio proyecto de Firebase.
 // 1. Ve a la consola de Firebase (https://console.firebase.google.com/).
@@ -9,6 +10,8 @@ import { getFirestore } from "firebase/firestore";
 // 3. Ve a la configuración de tu proyecto (el ícono del engranaje).
 // 4. En la sección "Tus apps", añade una nueva aplicación web.
 // 5. Firebase te proporcionará un objeto `firebaseConfig`. Cópialo y pégalo aquí.
+// 6. ¡NUEVO! Ve a la sección de "Authentication" en Firebase, haz clic en "Sign-in method"
+//    y habilita el proveedor de "Correo electrónico/Contraseña".
 const firebaseConfig = {
   apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
   authDomain: "your-project-id.firebaseapp.com",
@@ -22,5 +25,6 @@ const firebaseConfig = {
 // Esto asegura que la app de Firebase se inicialice solo una vez.
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-export { db };
+export { db, auth };
