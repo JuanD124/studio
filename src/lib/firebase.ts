@@ -3,8 +3,12 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-// TODO: Reemplaza esto con la configuración de tu propio proyecto de Firebase
-// Puedes encontrarla en la consola de Firebase, en la configuración de tu proyecto.
+// CRÍTICO: Reemplaza este objeto con la configuración de tu propio proyecto de Firebase.
+// 1. Ve a la consola de Firebase (https://console.firebase.google.com/).
+// 2. Crea un nuevo proyecto o selecciona uno existente.
+// 3. Ve a la configuración de tu proyecto (el ícono del engranaje).
+// 4. En la sección "Tus apps", añade una nueva aplicación web.
+// 5. Firebase te proporcionará un objeto `firebaseConfig`. Cópialo y pégalo aquí.
 const firebaseConfig = {
   apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
   authDomain: "your-project-id.firebaseapp.com",
@@ -15,6 +19,7 @@ const firebaseConfig = {
 };
 
 // Inicializar Firebase
+// Esto asegura que la app de Firebase se inicialice solo una vez.
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
