@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { auth } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { WashingMachine, AlertTriangle } from 'lucide-react';
+import { WashingMachine } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const EMAIL = 'elkin@lavanderia.com';
@@ -12,43 +12,31 @@ const PASSWORD = 'elkin1234';
 
 export default function LoginPage() {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const autoLogin = async () => {
+      // If a user is already logged in (from a previous session),
+      // AuthLayout will handle the redirect. We don't need to do anything here.
       if (user) {
-        // User is already logged in, AuthLayout will redirect.
-        setIsLoading(false);
         return;
       }
       
       try {
         await signInWithEmailAndPassword(auth, EMAIL, PASSWORD);
-        // On successful login, the AuthLayout's effect will trigger the redirect.
+        // On successful login, the onAuthStateChanged listener in AuthContext
+        // will update the user state, and AuthLayout will handle the redirection.
       } catch (e: any) {
-        let errorMessage = 'Ocurrió un error inesperado al intentar iniciar sesión.';
-        
-        switch (e.code) {
-            case 'auth/invalid-credential':
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-                errorMessage = `No se pudo iniciar sesión. Verifica que el usuario "${EMAIL}" exista en tu proyecto de Firebase y que la contraseña sea correcta.`;
-                break;
-            case 'auth/network-request-failed':
-                errorMessage = 'Error de red. Por favor, revisa tu conexión a internet e inténtalo de nuevo.';
-                break;
-            case 'auth/api-key-not-valid':
-                 errorMessage = 'Error de configuración de Firebase. Revisa que la API Key en \`src/lib/firebase.ts\` sea correcta.';
-                 break;
-        }
-        setError(errorMessage);
-      } finally {
-        setIsLoading(false);
+        // We log the error for debugging purposes but don't show it to the user.
+        // The page will continue to show the "Iniciando sesión..." message,
+        // which indicates that something is preventing login without showing an explicit error.
+        console.error("Fallo el inicio de sesión automático. Asegúrate que el usuario exista en Firebase y que la configuración sea correcta.", e);
       }
     };
 
-    autoLogin();
+    // We only run auto-login if there isn't a user from the auth context.
+    if (!user) {
+        autoLogin();
+    }
   }, [user]);
 
   return (
@@ -59,21 +47,8 @@ export default function LoginPage() {
         <CardDescription>Panel de Administración</CardDescription>
       </CardHeader>
       <CardContent className="text-center min-h-[120px] flex items-center justify-center">
-        {isLoading && (
-          <p className="text-muted-foreground animate-pulse">Iniciando sesión automáticamente...</p>
-        )}
-        {error && (
-          <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-md p-4 text-left flex items-start gap-4">
-              <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5"/>
-              <div>
-                <p className="font-semibold">Error de Inicio de Sesión</p>
-                <p className="mt-1">{error}</p>
-                <p className="mt-3 text-xs">
-                    <b>Recordatorio:</b> Debes crear este usuario manually en la consola de Firebase > Authentication.
-                </p>
-              </div>
-          </div>
-        )}
+        {/* We always show the loading message. Redirection is handled by the layout. */}
+        <p className="text-muted-foreground animate-pulse">Iniciando sesión automáticamente...</p>
       </CardContent>
     </Card>
   );
