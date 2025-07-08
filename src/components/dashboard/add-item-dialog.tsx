@@ -19,6 +19,7 @@ import type { StoredItem, LaundryItem } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Trash2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 const formSchema = z.object({
   customerName: z.string().min(2, { message: 'El nombre del cliente debe tener al menos 2 caracteres.' }),
@@ -42,10 +43,6 @@ interface AddItemDialogProps {
   onClose: () => void;
   onAddItem: (data: Omit<StoredItem, 'id' | 'storageDate'>) => void;
   laundryServices: LaundryItem[];
-}
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount || 0);
 }
 
 export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: AddItemDialogProps) {
