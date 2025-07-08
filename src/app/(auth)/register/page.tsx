@@ -38,15 +38,31 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/dashboard');
+      // La redirección ahora es manejada por el AuthLayout
     } catch (error: any) {
-      toast({
-        title: 'Error al registrarse',
-        description: error.message.includes('auth/email-already-in-use') 
-          ? 'Este correo electrónico ya está en uso.'
-          : 'Ocurrió un error. Por favor, intenta de nuevo.',
-        variant: 'destructive',
-      });
+        let description = 'Ocurrió un error inesperado. Por favor, intenta de nuevo.';
+        switch (error.code) {
+            case 'auth/email-already-in-use':
+                description = 'Este correo electrónico ya está en uso. Por favor, intenta con otro.';
+                break;
+            case 'auth/invalid-email':
+                description = 'El formato del correo electrónico no es válido.';
+                break;
+            case 'auth/weak-password':
+                description = 'La contraseña es demasiado débil. Debe tener al menos 6 caracteres.';
+                break;
+            case 'auth/network-request-failed':
+                description = 'Error de red. Por favor, revisa tu conexión a internet.';
+                break;
+            case 'auth/operation-not-allowed':
+                description = 'El registro por correo y contraseña no está habilitado. Por favor, actívalo en la consola de Firebase.';
+                break;
+        }
+        toast({
+            title: 'Error al registrarse',
+            description,
+            variant: 'destructive',
+        });
     } finally {
         setIsLoading(false);
     }

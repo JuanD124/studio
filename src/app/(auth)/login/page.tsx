@@ -38,15 +38,30 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/dashboard');
+      // La redirección ahora es manejada por el AuthLayout
     } catch (error: any) {
-      toast({
-        title: 'Error al iniciar sesión',
-        description: error.message.includes('auth/invalid-credential') 
-          ? 'Las credenciales son incorrectas. Por favor, verifica tu correo y contraseña.'
-          : 'Ocurrió un error. Por favor, intenta de nuevo.',
-        variant: 'destructive',
-      });
+        let description = 'Ocurrió un error inesperado. Por favor, intenta de nuevo.';
+        switch (error.code) {
+            case 'auth/invalid-credential':
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+                description = 'Las credenciales son incorrectas. Por favor, verifica tu correo y contraseña.';
+                break;
+            case 'auth/invalid-email':
+                description = 'El formato del correo electrónico no es válido.';
+                break;
+            case 'auth/network-request-failed':
+                description = 'Error de red. Por favor, revisa tu conexión a internet.';
+                break;
+            case 'auth/too-many-requests':
+                description = 'Demasiados intentos fallidos. Por favor, intenta de nuevo más tarde.';
+                break;
+        }
+        toast({
+            title: 'Error al iniciar sesión',
+            description,
+            variant: 'destructive',
+        });
     } finally {
         setIsLoading(false);
     }
