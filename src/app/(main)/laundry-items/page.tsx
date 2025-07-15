@@ -2,7 +2,7 @@ import PriceList from '@/components/laundry-items/price-list';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Price List - Laundry App',
+  title: 'Price List - Lanzaexpres',
   description: 'Manage your laundry items and prices.',
 };
 

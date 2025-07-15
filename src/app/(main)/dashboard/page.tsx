@@ -2,7 +2,7 @@ import StorageManager from '@/components/dashboard/storage-manager';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Dashboard - Laundry App',
+  title: 'Dashboard - Lanzaexpres',
   description: 'Manage your stored items.',
 };
 

@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Laundry App',
+  title: 'Lanzaexpres',
   description: 'Manage your laundry business with ease.',
 };
 
