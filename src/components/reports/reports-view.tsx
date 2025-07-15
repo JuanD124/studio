@@ -2,12 +2,15 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import type { ClaimedItem } from '@/lib/types';
+import { collection, onSnapshot, query, orderBy, doc, deleteDoc, addDoc, runTransaction, getDoc, setDoc } from 'firebase/firestore';
+import type { ClaimedItem, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, PackageCheck, Calendar, TrendingUp } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { isToday, isThisMonth, isThisYear, parseISO } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
+import { ClaimedItemCard } from './claimed-item-card';
+
 
 export default function ReportsView() {
   const [claimedItems, setClaimedItems] = React.useState<ClaimedItem[]>([]);
@@ -21,14 +24,44 @@ export default function ReportsView() {
             itemsData.push({
                 id: doc.id,
                 ...data,
-                claimedDate: data.claimedDate,
-                storageDate: data.storageDate,
             } as ClaimedItem);
         });
         setClaimedItems(itemsData);
     });
     return () => unsubscribe();
   }, []);
+  
+  const handleRestoreItem = async (id: string) => {
+    const claimedItemRef = doc(db, 'claimedItems', id);
+    try {
+      await runTransaction(db, async (transaction) => {
+        const claimedItemDoc = await transaction.get(claimedItemRef);
+        if (!claimedItemDoc.exists()) {
+          throw "Document does not exist!";
+        }
+        
+        const dataToRestore = claimedItemDoc.data();
+        // Create a payload without the 'claimedDate' and 'id' fields
+        const { claimedDate, id: oldId, ...restoredData } = dataToRestore;
+
+        const newStoredItemRef = doc(collection(db, 'storedItems'), id);
+        transaction.set(newStoredItemRef, restoredData);
+        transaction.delete(claimedItemRef);
+      });
+    } catch (error) {
+      console.error("Error restoring item: ", error);
+    }
+  };
+  
+  const handleDeleteItem = async (id: string) => {
+      const itemRef = doc(db, 'claimedItems', id);
+      try {
+          await deleteDoc(itemRef);
+      } catch (error) {
+          console.error("Error deleting item permanently: ", error);
+      }
+  };
+
 
   const reportData = React.useMemo(() => {
     const incomeToday = claimedItems
@@ -87,7 +120,7 @@ export default function ReportsView() {
       description: `${reportData.deliveredThisYear} artículos este año`,
     },
     {
-      title: 'Total Entregado',
+      title: 'Total Histórico Entregado',
       value: reportData.totalDelivered.toString(),
       icon: PackageCheck,
       description: `Ingreso total de ${formatCurrency(reportData.totalIncome)}`,
@@ -95,25 +128,44 @@ export default function ReportsView() {
   ];
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat) => (
-        <Card key={stat.title}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-            <stat.icon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
-            <p className="text-xs text-muted-foreground">{stat.description}</p>
-          </CardContent>
-        </Card>
-      ))}
-       {claimedItems.length === 0 && (
-        <div className="col-span-full text-center py-16 border-2 border-dashed rounded-lg">
-            <p className="text-muted-foreground">No hay datos de reportes todavía.</p>
-            <p className="text-sm text-muted-foreground">Cuando marques un artículo como "Recogido", aparecerán las estadísticas aquí.</p>
-        </div>
-       )}
+    <div className="space-y-8">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground">{stat.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      <Separator />
+
+      <div>
+        <h2 className="text-2xl font-bold font-headline mb-4">Artículos Entregados (Papelera)</h2>
+        {claimedItems.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {claimedItems.map((item) => (
+              <ClaimedItemCard 
+                key={item.id}
+                item={item}
+                onRestore={handleRestoreItem}
+                onDelete={handleDeleteItem}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="col-span-full text-center py-16 border-2 border-dashed rounded-lg">
+              <p className="text-muted-foreground">La papelera está vacía.</p>
+              <p className="text-sm text-muted-foreground">Cuando marques un artículo como "Recogido", aparecerá aquí.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

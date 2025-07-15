@@ -24,7 +24,8 @@ export interface StoredItem {
   totalPrice: number;
 }
 
-export interface ClaimedItem extends StoredItem {
+export interface ClaimedItem extends Omit<StoredItem, 'id'> {
+  id: string; // Firestore document ID of claimed item
   claimedDate: string; // ISO string format
 }
 
