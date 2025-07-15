@@ -42,7 +42,7 @@ type AddItemFormValues = z.infer<typeof formSchema>;
 interface AddItemDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddItem: (data: Omit<StoredItem, 'id' | 'storageDate'>) => void;
+  onAddItem: (data: Omit<StoredItem, 'id' | 'storageDate' | 'ticketNumber'>) => void;
   laundryServices: LaundryItem[];
 }
 
@@ -100,7 +100,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
     const laundryTotal = data.laundryItems?.reduce((total, item) => total + (item.price * item.quantity), 0) || 0;
     const totalPrice = Number(data.storagePrice || 0) + laundryTotal;
 
-    const newItemPayload: Omit<StoredItem, 'id' | 'storageDate'> = {
+    const newItemPayload: Omit<StoredItem, 'id' | 'storageDate' | 'ticketNumber'> = {
       customerName: data.customerName,
       rank: data.rank,
       battalion: data.battalion,

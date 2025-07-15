@@ -20,7 +20,7 @@ export function StoredItemCard({ item, onClaim, onOpenInvoice }: StoredItemCardP
       <CardHeader>
         <CardTitle className="font-headline flex items-center justify-between">
           <span>{item.customerName}</span>
-          <Badge variant="secondary">ID: {item.id.substring(0, 6)}</Badge>
+          <Badge variant="secondary">Ticket No. {item.ticketNumber}</Badge>
         </CardTitle>
         <CardDescription className="flex flex-col gap-1 pt-2">
           <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2">

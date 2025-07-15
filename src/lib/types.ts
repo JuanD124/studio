@@ -5,7 +5,8 @@ export interface LaundryItem {
 }
 
 export interface StoredItem {
-  id: string;
+  id: string; // Firestore document ID
+  ticketNumber: number;
   customerName: string;
   rank?: string;
   battalion?: string;
@@ -25,4 +26,9 @@ export interface StoredItem {
 
 export interface ClaimedItem extends StoredItem {
   claimedDate: string; // ISO string format
+}
+
+export interface Counter {
+    id: string;
+    value: number;
 }

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, getDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, getDoc, deleteDoc, query, orderBy, runTransaction } from 'firebase/firestore';
 import type { StoredItem, LaundryItem, ClaimedItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,29 @@ import { PlusCircle, Search } from 'lucide-react';
 import { AddItemDialog } from './add-item-dialog';
 import { InvoiceDialog } from './invoice-dialog';
 import { StoredItemCard } from './stored-item-card';
+
+// Function to get the next ticket number
+async function getNextTicketNumber(): Promise<number> {
+  const counterRef = doc(db, 'counters', 'storedItems');
+  try {
+    const newTicketNumber = await runTransaction(db, async (transaction) => {
+      const counterDoc = await transaction.get(counterRef);
+      let newValue = 1;
+      if (!counterDoc.exists()) {
+        console.log("Counter document does not exist! Initializing to 1.");
+      } else {
+        newValue = counterDoc.data().value + 1;
+      }
+      transaction.set(counterRef, { value: newValue });
+      return newValue;
+    });
+    return newTicketNumber;
+  } catch (e) {
+    console.error("Transaction failed: ", e);
+    throw new Error("Could not generate a new ticket number.");
+  }
+}
+
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -20,7 +43,7 @@ export default function StorageManager() {
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
 
   React.useEffect(() => {
-    const q = query(collection(db, 'storedItems'), orderBy('storageDate', 'desc'));
+    const q = query(collection(db, 'storedItems'), orderBy('ticketNumber', 'desc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const itemsData: StoredItem[] = [];
       querySnapshot.forEach((doc) => {
@@ -50,17 +73,19 @@ export default function StorageManager() {
   const filteredItems = items.filter(
     (item) =>
       item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toString().includes(searchTerm) ||
+      item.ticketNumber.toString().includes(searchTerm) ||
       item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.rank?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.battalion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.contingent?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddItem = async (newItemData: Omit<StoredItem, 'id' | 'storageDate'>) => {
+  const handleAddItem = async (newItemData: Omit<StoredItem, 'id' | 'storageDate' | 'ticketNumber'>) => {
     try {
+      const ticketNumber = await getNextTicketNumber();
       await addDoc(collection(db, 'storedItems'), {
         ...newItemData,
+        ticketNumber,
         storageDate: new Date().toISOString(),
       });
     } catch (error) {
@@ -76,6 +101,7 @@ export default function StorageManager() {
             const itemToClaimData = itemSnap.data();
             const claimedItemPayload: ClaimedItem = {
                 id: itemSnap.id,
+                ticketNumber: itemToClaimData.ticketNumber,
                 customerName: itemToClaimData.customerName,
                 rank: itemToClaimData.rank,
                 battalion: itemToClaimData.battalion,
@@ -109,7 +135,7 @@ export default function StorageManager() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
-            placeholder="Buscar por ID, nombre, descripción, rango..."
+            placeholder="Buscar por Ticket, nombre, descripción, rango..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
