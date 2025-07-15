@@ -9,6 +9,7 @@ export interface StoredItem {
   customerName: string;
   rank?: string;
   battalion?: string;
+  contingent?: string;
   ticketColor?: string;
   itemsDescription: string;
   storageDate: string; // ISO string format

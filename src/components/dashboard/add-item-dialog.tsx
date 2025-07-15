@@ -25,6 +25,7 @@ const formSchema = z.object({
   customerName: z.string().min(2, { message: 'El nombre del cliente debe tener al menos 2 caracteres.' }),
   rank: z.string().optional(),
   battalion: z.string().optional(),
+  contingent: z.string().optional(),
   ticketColor: z.string().optional(),
   itemsDescription: z.string().min(5, { message: 'La descripción debe tener al menos 5 caracteres.' }),
   storagePrice: z.coerce.number().min(0, { message: 'El precio de almacenamiento debe ser un número positivo.' }).default(0),
@@ -64,6 +65,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
       customerName: '',
       rank: '',
       battalion: '',
+      contingent: '',
       ticketColor: '',
       itemsDescription: '',
       storagePrice: 0,
@@ -102,6 +104,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
       customerName: data.customerName,
       rank: data.rank,
       battalion: data.battalion,
+      contingent: data.contingent,
       ticketColor: data.ticketColor,
       itemsDescription: data.itemsDescription,
       storagePrice: Number(data.storagePrice || 0),
@@ -145,36 +148,38 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                 </FormItem>
               )}
             />
+            
+            <FormField
+              control={form.control}
+              name="rank"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rango (Opcional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar rango..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Sin Rango / Civil">Sin Rango / Civil</SelectItem>
+                      <SelectGroup>
+                        <SelectLabel>Oficiales</SelectLabel>
+                        {officerRanks.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
+                      </SelectGroup>
+                      <SelectGroup>
+                        <SelectLabel>Suboficiales</SelectLabel>
+                        {ncoRanks.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="rank"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rango (Opcional)</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar rango..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Sin Rango / Civil">Sin Rango / Civil</SelectItem>
-                        <SelectGroup>
-                          <SelectLabel>Oficiales</SelectLabel>
-                          {officerRanks.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel>Suboficiales</SelectLabel>
-                          {ncoRanks.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
+               <FormField
                 control={form.control}
                 name="battalion"
                 render={({ field }) => (
@@ -182,6 +187,19 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                     <FormLabel>Batallón (Opcional)</FormLabel>
                     <FormControl>
                       <Input placeholder="BCG No. 21" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="contingent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contingente (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="1/24" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

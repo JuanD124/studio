@@ -23,14 +23,22 @@ export function StoredItemCard({ item, onClaim, onOpenInvoice }: StoredItemCardP
           <Badge variant="secondary">ID: {item.id.substring(0, 6)}</Badge>
         </CardTitle>
         <CardDescription className="flex flex-col gap-1 pt-2">
-          {(item.rank || item.battalion) && (
-            <div className="text-xs text-muted-foreground">
-              {item.rank && <span>{item.rank}</span>}
-              {item.rank && item.battalion && <span> &bull; </span>}
-              {item.battalion && <span>{item.battalion}</span>}
-            </div>
-          )}
-          <div className="flex items-center gap-2">
+          <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2">
+            {item.rank && <span>{item.rank}</span>}
+            {item.battalion && (
+              <>
+                {item.rank && <span> &bull; </span>}
+                <span>{item.battalion}</span>
+              </>
+            )}
+            {item.contingent && (
+               <>
+                {(item.rank || item.battalion) && <span> &bull; </span>}
+                <span>Cont. {item.contingent}</span>
+               </>
+            )}
+          </div>
+          <div className="flex items-center gap-2 pt-1">
             <Package className="w-4 h-4" />
             <span>{item.itemsDescription}</span>
             {item.ticketColor && <Badge variant="outline">{item.ticketColor}</Badge>}

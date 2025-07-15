@@ -94,6 +94,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                         <p>{item.customerName}</p>
                         {item.rank && <p>{item.rank}</p>}
                         {item.battalion && <p>{item.battalion}</p>}
+                        {item.contingent && <p>Cont. {item.contingent}</p>}
                     </div>
                      <div className="details-item">
                         <strong>Detalles de Almacenamiento:</strong>

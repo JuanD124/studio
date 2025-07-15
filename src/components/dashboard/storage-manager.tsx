@@ -53,7 +53,8 @@ export default function StorageManager() {
       item.id.toString().includes(searchTerm) ||
       item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.rank?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.battalion?.toLowerCase().includes(searchTerm.toLowerCase())
+      item.battalion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.contingent?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddItem = async (newItemData: Omit<StoredItem, 'id' | 'storageDate'>) => {
@@ -78,6 +79,7 @@ export default function StorageManager() {
                 customerName: itemToClaimData.customerName,
                 rank: itemToClaimData.rank,
                 battalion: itemToClaimData.battalion,
+                contingent: itemToClaimData.contingent,
                 ticketColor: itemToClaimData.ticketColor,
                 itemsDescription: itemToClaimData.itemsDescription,
                 storageDate: itemToClaimData.storageDate,
