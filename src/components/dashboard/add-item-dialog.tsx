@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { StoredItem, LaundryItem } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select';
 import { Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
@@ -44,6 +44,18 @@ interface AddItemDialogProps {
   onAddItem: (data: Omit<StoredItem, 'id' | 'storageDate'>) => void;
   laundryServices: LaundryItem[];
 }
+
+const officerRanks = [
+  "Subteniente", "Teniente", "Capitán", "Mayor", "Teniente Coronel",
+  "Coronel", "Brigadier General", "Mayor General", "General"
+];
+
+const ncoRanks = [
+  "Soldado", "Cabo Tercero", "Cabo Segundo", "Cabo Primero", "Sargento Segundo",
+  "Sargento Viceprimero", "Sargento Primero", "Sargento Mayor",
+  "Sargento Mayor de Comando", "Sargento Mayor de Comando Conjunto"
+];
+
 
 export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: AddItemDialogProps) {
   const form = useForm<AddItemFormValues>({
@@ -140,9 +152,24 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Rango (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Soldado, Cabo..." {...field} value={field.value ?? ''} />
-                    </FormControl>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar rango..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Sin Rango / Civil">Sin Rango / Civil</SelectItem>
+                        <SelectGroup>
+                          <SelectLabel>Oficiales</SelectLabel>
+                          {officerRanks.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel>Suboficiales</SelectLabel>
+                          {ncoRanks.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
