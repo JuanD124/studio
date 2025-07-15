@@ -44,11 +44,12 @@ type AddItemFormValues = z.infer<typeof formSchema>;
 interface AddItemDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddItem: (data: Omit<StoredItem, 'id' | 'storageDate'>) => void;
+  onSave: (data: Omit<StoredItem, 'id' | 'storageDate'>, id?: string) => void;
+  itemToEdit: StoredItem | null;
   laundryServices: LaundryItem[];
 }
 
-export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: AddItemDialogProps) {
+export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServices }: AddItemDialogProps) {
   const form = useForm<AddItemFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -68,6 +69,34 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
     control: form.control,
     name: "laundryItems"
   });
+
+  React.useEffect(() => {
+    if (itemToEdit && isOpen) {
+      form.reset({
+        customerName: itemToEdit.customerName,
+        customerId: itemToEdit.customerId || '',
+        rank: itemToEdit.rank,
+        battalion: itemToEdit.battalion || '',
+        contingent: itemToEdit.contingent || '',
+        color: itemToEdit.color,
+        itemsDescription: itemToEdit.itemsDescription,
+        storagePrice: itemToEdit.storagePrice,
+        laundryItems: itemToEdit.laundryItems || [],
+      });
+    } else {
+      form.reset({
+        customerName: '',
+        customerId: '',
+        rank: '',
+        battalion: '',
+        contingent: '',
+        color: '',
+        itemsDescription: '',
+        storagePrice: 0,
+        laundryItems: [],
+      });
+    }
+  }, [itemToEdit, isOpen, form]);
 
   const [selectedService, setSelectedService] = React.useState('');
   const [quantity, setQuantity] = React.useState(1);
@@ -91,27 +120,19 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
     const laundryTotal = data.laundryItems?.reduce((total, item) => total + (item.price * item.quantity), 0) || 0;
     const totalPrice = Number(data.storagePrice || 0) + laundryTotal;
 
-    const newItemPayload: Omit<StoredItem, 'id' | 'storageDate'> = {
-      customerName: data.customerName,
-      customerId: data.customerId,
-      rank: data.rank,
-      battalion: data.battalion,
-      contingent: data.contingent,
-      color: data.color,
-      itemsDescription: data.itemsDescription,
+    const itemPayload = {
+      ...data,
       storagePrice: Number(data.storagePrice || 0),
       laundryItems: data.laundryItems || [],
       totalPrice,
     };
-
-    onAddItem(newItemPayload);
-    form.reset();
+    
+    onSave(itemPayload, itemToEdit?.id);
     onClose();
   };
   
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      form.reset();
       onClose();
     }
   };
@@ -120,9 +141,9 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Almacenar Nuevo Artículo</DialogTitle>
+          <DialogTitle className="font-headline">{itemToEdit ? 'Editar Artículo' : 'Almacenar Nuevo Artículo'}</DialogTitle>
           <DialogDescription>
-            Introduce los detalles y el precio del artículo a almacenar.
+            {itemToEdit ? 'Modifica los detalles del artículo y guarda los cambios.' : 'Introduce los detalles del artículo a almacenar.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -162,7 +183,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Rango</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona un rango..." />
@@ -187,7 +208,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Color</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona un color..." />
@@ -308,7 +329,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
         </Form>
         <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" form="add-item-form">Guardar Artículo</Button>
+            <Button type="submit" form="add-item-form">Guardar Cambios</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

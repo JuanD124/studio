@@ -4,24 +4,47 @@ import type { StoredItem } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+  } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, FileText, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint } from 'lucide-react';
+import { CalendarDays, Clock, FileText, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 
 interface StoredItemCardProps {
   item: StoredItem;
   onClaim: (item: StoredItem) => void;
   onOpenInvoice: (item: StoredItem) => void;
+  onEdit: (item: StoredItem) => void;
 }
 
-export function StoredItemCard({ item, onClaim, onOpenInvoice }: StoredItemCardProps) {
+export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit }: StoredItemCardProps) {
   return (
     <Card className="flex flex-col transition-all hover:shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline flex items-center justify-between">
-          <span>{item.customerName}</span>
-          <Badge variant="secondary">ID: {item.id.substring(0,6)}</Badge>
-        </CardTitle>
+        <div className="flex items-start justify-between">
+            <CardTitle className="font-headline flex-1">
+                {item.customerName}
+            </CardTitle>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Abrir menú</span>
+                    <MoreVertical className="h-4 w-4" />
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(item)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    <span>Editar</span>
+                </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+        <Badge variant="secondary" className="w-fit">ID: {item.id.substring(0,6)}</Badge>
         <CardDescription className="flex items-center gap-2 pt-2">
           <Package className="w-4 h-4" />
           <span>{item.itemsDescription}</span>

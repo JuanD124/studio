@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc } from 'firebase/firestore';
 import type { StoredItem, LaundryItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ export default function StorageManager() {
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
+  const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -58,25 +59,37 @@ export default function StorageManager() {
       item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddItem = async (newItemData: Omit<StoredItem, 'id' | 'storageDate'>) => {
+  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate'>, id?: string) => {
     try {
-      await addDoc(collection(db, 'storedItems'), {
-        ...newItemData,
-        storageDate: new Date().toISOString(),
-      });
-      toast({
-        title: "Éxito",
-        description: "El artículo ha sido almacenado correctamente.",
-      });
+      if (id) {
+        // Update existing item
+        const itemRef = doc(db, 'storedItems', id);
+        await updateDoc(itemRef, itemData);
+        toast({
+          title: "Éxito",
+          description: "El artículo ha sido actualizado correctamente.",
+        });
+      } else {
+        // Add new item
+        await addDoc(collection(db, 'storedItems'), {
+          ...itemData,
+          storageDate: new Date().toISOString(),
+        });
+        toast({
+          title: "Éxito",
+          description: "El artículo ha sido almacenado correctamente.",
+        });
+      }
     } catch (error) {
-      console.error("Error al añadir documento: ", error);
+      console.error("Error al guardar el artículo: ", error);
       toast({
         title: "Error",
-        description: "No se pudo almacenar el artículo.",
+        description: "No se pudo guardar el artículo.",
         variant: "destructive",
       });
     }
   };
+
 
   const handleClaimItem = async (item: StoredItem) => {
     try {
@@ -108,6 +121,21 @@ export default function StorageManager() {
     setInvoicingItem(item);
     setIsInvoiceOpen(true);
   };
+  
+  const handleOpenAddDialog = () => {
+    setEditingItem(null);
+    setIsAddDialogOpen(true);
+  }
+
+  const handleOpenEditDialog = (item: StoredItem) => {
+    setEditingItem(item);
+    setIsAddDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsAddDialogOpen(false);
+    setEditingItem(null);
+  }
 
   return (
     <div className="space-y-6">
@@ -121,7 +149,7 @@ export default function StorageManager() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
+        <Button onClick={handleOpenAddDialog} className="flex items-center gap-2">
           <PlusCircle className="h-5 w-5" />
           <span>Almacenar Nuevo Artículo</span>
         </Button>
@@ -135,6 +163,7 @@ export default function StorageManager() {
               item={item}
               onClaim={handleClaimItem}
               onOpenInvoice={handleOpenInvoice}
+              onEdit={handleOpenEditDialog}
             />
           ))}
         </div>
@@ -147,8 +176,9 @@ export default function StorageManager() {
 
       <AddItemDialog
         isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
-        onAddItem={handleAddItem}
+        onClose={handleCloseDialog}
+        onSave={handleSaveItem}
+        itemToEdit={editingItem}
         laundryServices={laundryServices}
       />
       <InvoiceDialog
