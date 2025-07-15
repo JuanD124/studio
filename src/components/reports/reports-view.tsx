@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, deleteDoc, addDoc, runTransaction, getDoc } from 'firebase/firestore';
-import type { ClaimedItem, StoredItem } from '@/lib/types';
+import { collection, onSnapshot, query, orderBy, doc, deleteDoc, addDoc, getDoc } from 'firebase/firestore';
+import type { ClaimedItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, PackageCheck, Calendar, TrendingUp } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
