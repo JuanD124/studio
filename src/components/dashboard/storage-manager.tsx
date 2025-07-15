@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, deleteDoc, writeBatch, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy } from 'firebase/firestore';
 import type { StoredItem, LaundryItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -81,7 +81,8 @@ export default function StorageManager() {
     try {
       const batch = writeBatch(db);
       
-      const claimedItemRef = doc(collection(db, 'claimedItems'));
+      // Use the same ID for the claimed item
+      const claimedItemRef = doc(db, 'claimedItems', item.id);
       batch.set(claimedItemRef, { ...item, claimedDate: new Date().toISOString() });
       
       const originalItemRef = doc(db, 'storedItems', item.id);

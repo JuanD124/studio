@@ -2,14 +2,14 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, setDoc } from 'firebase/firestore';
 import type { StoredItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Package, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { ClaimedItemCard } from './claimed-item-card';
 import { useToast } from '@/hooks/use-toast';
-import { startOfDay, startOfMonth, startOfYear, subDays, subMonths, subYears } from 'date-fns';
+import { startOfDay, startOfMonth, startOfYear } from 'date-fns';
 
 type ClaimedItem = StoredItem & { claimedDate: string };
 
@@ -31,9 +31,12 @@ export default function ReportsView() {
             const { claimedDate, ...originalItemData } = itemToRestore;
 
             const batch = writeBatch(db);
-            const newStoredItemRef = doc(collection(db, 'storedItems'));
-            batch.set(newStoredItemRef, originalItemData);
             
+            // Restore to storedItems with the same ID
+            const storedItemRef = doc(db, 'storedItems', itemToRestore.id);
+            batch.set(storedItemRef, originalItemData);
+            
+            // Delete from claimedItems
             const claimedItemRef = doc(db, 'claimedItems', itemToRestore.id);
             batch.delete(claimedItemRef);
             
