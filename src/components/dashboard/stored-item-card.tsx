@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, FileText, Package, PackageCheck, Palette, Shield, User, Users } from 'lucide-react';
+import { CalendarDays, Clock, FileText, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 
 interface StoredItemCardProps {
@@ -31,6 +31,7 @@ export function StoredItemCard({ item, onClaim, onOpenInvoice }: StoredItemCardP
                 <User className="w-3 h-3"/>
                 <span>{item.rank}</span>
             </div>
+            {item.customerId && <div className="flex items-center gap-2"><Fingerprint className="w-3 h-3"/><span>C.C. {item.customerId}</span></div>}
             {item.battalion && <div className="flex items-center gap-2"><Shield className="w-3 h-3"/><span>{item.battalion}</span></div>}
             {item.contingent && <div className="flex items-center gap-2"><Users className="w-3 h-3"/><span>{item.contingent}</span></div>}
             {item.color && <div className="flex items-center gap-2"><Palette className="w-3 h-3"/><span>{item.color}</span></div>}

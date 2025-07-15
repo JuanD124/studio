@@ -54,6 +54,7 @@ export default function StorageManager() {
     (item) =>
       item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.customerId && item.customerId.toLowerCase().includes(searchTerm.toLowerCase())) ||
       item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -81,7 +82,6 @@ export default function StorageManager() {
     try {
       const batch = writeBatch(db);
       
-      // Use the same ID for the claimed item
       const claimedItemRef = doc(db, 'claimedItems', item.id);
       batch.set(claimedItemRef, { ...item, claimedDate: new Date().toISOString() });
       
@@ -115,7 +115,7 @@ export default function StorageManager() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
-            placeholder="Buscar por ID, nombre de cliente, o descripción..."
+            placeholder="Buscar por ID, nombre, cédula, o descripción..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

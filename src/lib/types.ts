@@ -7,6 +7,7 @@ export interface LaundryItem {
 export interface StoredItem {
   id: string; // Firestore document ID
   customerName: string;
+  customerId?: string;
   rank: string;
   battalion?: string;
   contingent?: string;
