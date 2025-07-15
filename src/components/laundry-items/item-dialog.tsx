@@ -18,8 +18,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import type { LaundryItem } from '@/lib/types';
 
 const formSchema = z.object({
-  name: z.string().min(3, { message: 'Item name must be at least 3 characters.' }),
-  price: z.coerce.number().min(1, { message: 'Price must be a positive number.' }),
+  name: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres.' }),
+  price: z.coerce.number().min(1, { message: 'El precio debe ser un número positivo.' }),
 });
 
 type ItemFormValues = z.infer<typeof formSchema>;
@@ -69,9 +69,9 @@ export function ItemDialog({ isOpen, onClose, onSave, item }: ItemDialogProps) {
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">{item ? 'Edit Item' : 'Add New Item'}</DialogTitle>
+          <DialogTitle className="font-headline">{item ? 'Editar Artículo' : 'Añadir Nuevo Artículo'}</DialogTitle>
           <DialogDescription>
-            {item ? 'Update the details for this item.' : 'Enter the details for the new service or item.'}
+            {item ? 'Actualiza los detalles para este artículo.' : 'Introduce los detalles para el nuevo servicio o artículo.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -81,9 +81,9 @@ export function ItemDialog({ isOpen, onClose, onSave, item }: ItemDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Service / Item Name</FormLabel>
+                  <FormLabel>Nombre del Servicio / Artículo</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Shirt (Wash & Fold)" {...field} />
+                    <Input placeholder="Ej: Camisa (Lavado y Doblado)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -94,7 +94,7 @@ export function ItemDialog({ isOpen, onClose, onSave, item }: ItemDialogProps) {
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price (COP)</FormLabel>
+                  <FormLabel>Precio (COP)</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="5000" {...field} />
                   </FormControl>
@@ -103,8 +103,8 @@ export function ItemDialog({ isOpen, onClose, onSave, item }: ItemDialogProps) {
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+              <Button type="submit">Guardar Cambios</Button>
             </DialogFooter>
           </form>
         </Form>

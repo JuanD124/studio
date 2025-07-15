@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Shirt } from 'lucide-react';
+import { LayoutDashboard, Shirt, Trash2 } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -36,11 +36,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <SidebarMenuButton
                 asChild
                 isActive={pathname === '/dashboard'}
-                tooltip="Storage Dashboard"
+                tooltip="Panel de Almacenamiento"
               >
                 <Link href="/dashboard">
                   <LayoutDashboard />
-                  <span>Dashboard</span>
+                  <span>Panel</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -48,11 +48,23 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <SidebarMenuButton
                 asChild
                 isActive={pathname === '/laundry-items'}
-                tooltip="Price List"
+                tooltip="Lista de Precios"
               >
                 <Link href="/laundry-items">
                   <Shirt />
-                  <span>Price List</span>
+                  <span>Precios</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === '/reports'}
+                tooltip="Reportes y Papelera"
+              >
+                <Link href="/reports">
+                  <Trash2 />
+                  <span>Papelera</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

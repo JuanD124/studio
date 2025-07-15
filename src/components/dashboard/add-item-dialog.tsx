@@ -17,19 +17,24 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { StoredItem, LaundryItem } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { RANGOS, COLORES } from '@/lib/data';
 
 const formSchema = z.object({
-  customerName: z.string().min(2, { message: 'Customer name must be at least 2 characters.' }),
-  itemsDescription: z.string().min(5, { message: 'Description must be at least 5 characters.' }),
-  storagePrice: z.coerce.number().min(0, { message: 'Storage price must be a positive number.' }).default(0),
+  customerName: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
+  rank: z.string().min(1, { message: 'Debes seleccionar un rango.' }),
+  battalion: z.string().optional(),
+  contingent: z.string().optional(),
+  color: z.string().min(1, { message: 'Debes seleccionar un color.' }),
+  itemsDescription: z.string().min(5, { message: 'La descripción debe tener al menos 5 caracteres.' }),
+  storagePrice: z.coerce.number().min(0, { message: 'El precio debe ser un número positivo.' }).default(0),
   laundryItems: z.array(z.object({
     laundryItemId: z.string(),
     name: z.string(),
     price: z.number(),
-    quantity: z.coerce.number().min(1, { message: "Quantity must be at least 1." })
+    quantity: z.coerce.number().min(1, { message: "La cantidad debe ser al menos 1." })
   })).optional(),
 });
 
@@ -47,6 +52,10 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerName: '',
+      rank: '',
+      battalion: '',
+      contingent: '',
+      color: '',
       itemsDescription: '',
       storagePrice: 0,
       laundryItems: [],
@@ -82,6 +91,10 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
 
     const newItemPayload: Omit<StoredItem, 'id' | 'storageDate'> = {
       customerName: data.customerName,
+      rank: data.rank,
+      battalion: data.battalion,
+      contingent: data.contingent,
+      color: data.color,
       itemsDescription: data.itemsDescription,
       storagePrice: Number(data.storagePrice || 0),
       laundryItems: data.laundryItems || [],
@@ -104,9 +117,9 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Store New Item</DialogTitle>
+          <DialogTitle className="font-headline">Almacenar Nuevo Artículo</DialogTitle>
           <DialogDescription>
-            Enter the details and pricing for the item to be stored.
+            Introduce los detalles y el precio del artículo a almacenar.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -116,7 +129,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
               name="customerName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Customer Name</FormLabel>
+                  <FormLabel>Nombre del Cliente</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" {...field} />
                   </FormControl>
@@ -124,14 +137,89 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="rank"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rango</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un rango..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.entries(RANGOS).map(([group, ranks]) => (
+                            <SelectGroup key={group}>
+                                <FormLabel className='pl-2 text-xs'>{group}</FormLabel>
+                                {ranks.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
+                            </SelectGroup>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Color</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un color..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {COLORES.map(color => <SelectItem key={color} value={color}>{color}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="battalion"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Batallón (Opcional)</FormLabel>
+                        <FormControl>
+                            <Input placeholder="BICOY 20" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="contingent"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Contingente (Opcional)</FormLabel>
+                        <FormControl>
+                            <Input placeholder="2do del 2024" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
             <FormField
               control={form.control}
               name="itemsDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Item(s) Description</FormLabel>
+                  <FormLabel>Descripción del Artículo(s)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="e.g., 1 large blue suitcase" {...field} />
+                    <Textarea placeholder="Ej: 1 maleta azul grande" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -142,7 +230,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                 name="storagePrice"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Storage Price (COP)</FormLabel>
+                    <FormLabel>Precio Almacenamiento (COP)</FormLabel>
                     <FormControl>
                     <Input type="number" placeholder="10000" {...field} />
                     </FormControl>
@@ -152,13 +240,13 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
             />
 
             <div className="space-y-2">
-              <FormLabel>Add Laundry Service</FormLabel>
+              <FormLabel>Añadir Servicio de Lavandería</FormLabel>
               <div className="flex items-end gap-2">
                 <div className="flex-grow">
-                  <FormLabel className="text-xs text-muted-foreground">Service</FormLabel>
+                  <FormLabel className="text-xs text-muted-foreground">Servicio</FormLabel>
                   <Select value={selectedService} onValueChange={setSelectedService}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select..." />
+                      <SelectValue placeholder="Selecciona..." />
                     </SelectTrigger>
                     <SelectContent>
                       {laundryServices.map((service) => (
@@ -170,7 +258,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                   </Select>
                 </div>
                 <div className="w-24">
-                  <FormLabel className="text-xs text-muted-foreground">Quantity</FormLabel>
+                  <FormLabel className="text-xs text-muted-foreground">Cantidad</FormLabel>
                   <Input
                       type="number"
                       value={quantity}
@@ -178,13 +266,13 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                       min="1"
                   />
                 </div>
-                <Button type="button" variant="outline" onClick={addLaundryItem}>Add</Button>
+                <Button type="button" variant="outline" onClick={addLaundryItem}>Añadir</Button>
               </div>
             </div>
 
             {fields.length > 0 && (
               <div className="space-y-2 rounded-md border p-2">
-                <FormLabel>Added services</FormLabel>
+                <FormLabel>Servicios añadidos</FormLabel>
                 {fields.map((field, index) => (
                   <div key={field.id} className="flex items-center justify-between text-sm p-2 rounded-md bg-muted/50">
                     <div>
@@ -201,8 +289,8 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
           </form>
         </Form>
         <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" form="add-item-form">Add Item</Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" form="add-item-form">Guardar Artículo</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -2,16 +2,16 @@ import StorageManager from '@/components/dashboard/storage-manager';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Dashboard - Lanzaexpres',
-  description: 'Manage your stored items.',
+  title: 'Panel de Control - Lanzaexpres',
+  description: 'Gestiona tus artículos almacenados.',
 };
 
 export default function DashboardPage() {
   return (
     <div className="container mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold font-headline">Storage Dashboard</h1>
-        <p className="text-muted-foreground">Keep track and manage all stored items.</p>
+        <h1 className="text-3xl font-bold font-headline">Panel de Almacenamiento</h1>
+        <p className="text-muted-foreground">Visualiza y gestiona todos los artículos almacenados.</p>
       </div>
       <StorageManager />
     </div>

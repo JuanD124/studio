@@ -23,11 +23,13 @@ import { PlusCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { ItemDialog } from './item-dialog';
 import { Card, CardContent } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PriceList() {
   const [items, setItems] = React.useState<LaundryItem[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingItem, setEditingItem] = React.useState<LaundryItem | null>(null);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     const q = query(collection(db, 'laundryItems'), orderBy('name'));
@@ -56,19 +58,24 @@ export default function PriceList() {
         if (id) {
           const itemRef = doc(db, 'laundryItems', id);
           await updateDoc(itemRef, itemData);
+          toast({ title: "Éxito", description: "Artículo actualizado correctamente." });
         } else {
           await addDoc(collection(db, 'laundryItems'), itemData);
+          toast({ title: "Éxito", description: "Nuevo artículo añadido." });
         }
     } catch(error) {
-        console.error("Error saving item: ", error);
+        console.error("Error al guardar el artículo: ", error);
+        toast({ title: "Error", description: "No se pudo guardar el artículo.", variant: "destructive" });
     }
   };
 
   const handleDeleteItem = async (id: string) => {
     try {
         await deleteDoc(doc(db, 'laundryItems', id));
+        toast({ title: "Éxito", description: "Artículo eliminado.", variant: "destructive" });
     } catch(error) {
-        console.error("Error deleting item: ", error);
+        console.error("Error al eliminar el artículo: ", error);
+        toast({ title: "Error", description: "No se pudo eliminar el artículo.", variant: "destructive" });
     }
   };
   
@@ -77,7 +84,7 @@ export default function PriceList() {
       <div className="flex justify-end">
         <Button onClick={() => handleOpenDialog()} className="flex items-center gap-2">
           <PlusCircle className="h-5 w-5" />
-          <span>Add New Item</span>
+          <span>Añadir Nuevo Artículo</span>
         </Button>
       </div>
 
@@ -86,8 +93,8 @@ export default function PriceList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Service / Item</TableHead>
-                <TableHead className="text-right">Price</TableHead>
+                <TableHead>Servicio / Artículo</TableHead>
+                <TableHead className="text-right">Precio</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -100,18 +107,18 @@ export default function PriceList() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">Abrir menú</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleOpenDialog(item)}>
                           <Pencil className="mr-2 h-4 w-4" />
-                          <span>Edit</span>
+                          <span>Editar</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDeleteItem(item.id)} className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Delete</span>
+                          <span>Eliminar</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
