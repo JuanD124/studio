@@ -32,11 +32,9 @@ export default function ReportsView() {
 
             const batch = writeBatch(db);
             
-            // Restore to storedItems with the same ID
             const storedItemRef = doc(db, 'storedItems', itemToRestore.id);
             batch.set(storedItemRef, originalItemData);
             
-            // Delete from claimedItems
             const claimedItemRef = doc(db, 'claimedItems', itemToRestore.id);
             batch.delete(claimedItemRef);
             
