@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, deleteDoc, addDoc, runTransaction, getDoc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, deleteDoc, addDoc, runTransaction, getDoc } from 'firebase/firestore';
 import type { ClaimedItem, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, PackageCheck, Calendar, TrendingUp } from 'lucide-react';
@@ -34,23 +34,23 @@ export default function ReportsView() {
   const handleRestoreItem = async (id: string) => {
     const claimedItemRef = doc(db, 'claimedItems', id);
     try {
-      await runTransaction(db, async (transaction) => {
-        const claimedItemDoc = await transaction.get(claimedItemRef);
-        if (!claimedItemDoc.exists()) {
-          throw "Document does not exist!";
-        }
-        
-        const dataToRestore = claimedItemDoc.data();
-        // Create a payload without the 'claimedDate' and 'id' fields
-        const { claimedDate, id: oldId, ...restoredData } = dataToRestore;
+        const claimedItemSnap = await getDoc(claimedItemRef);
+        if (claimedItemSnap.exists()) {
+            const itemToRestoreData = claimedItemSnap.data();
+            // Create a payload for the new stored item, omitting fields we don't want to carry over.
+            const { id: claimedId, claimedDate, ...restoredItemPayload } = itemToRestoreData;
+            
+            // Add the restored item back to the 'storedItems' collection.
+            // It will get a new document ID from Firestore automatically.
+            await addDoc(collection(db, 'storedItems'), restoredItemPayload);
 
-        // Add as a new document to storedItems
-        transaction.set(doc(collection(db, 'storedItems')), restoredData);
-        // Delete from claimedItems
-        transaction.delete(claimedItemRef);
-      });
+            // Delete the item from the 'claimedItems' collection.
+            await deleteDoc(claimedItemRef);
+        } else {
+            console.error("No such document to restore!");
+        }
     } catch (error) {
-      console.error("Error restoring item: ", error);
+        console.error("Error restoring item: ", error);
     }
   };
   
