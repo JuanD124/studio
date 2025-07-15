@@ -44,8 +44,9 @@ export default function ReportsView() {
         // Create a payload without the 'claimedDate' and 'id' fields
         const { claimedDate, id: oldId, ...restoredData } = dataToRestore;
 
-        const newStoredItemRef = doc(collection(db, 'storedItems'), id);
-        transaction.set(newStoredItemRef, restoredData);
+        // Add as a new document to storedItems
+        transaction.set(doc(collection(db, 'storedItems')), restoredData);
+        // Delete from claimedItems
         transaction.delete(claimedItemRef);
       });
     } catch (error) {
