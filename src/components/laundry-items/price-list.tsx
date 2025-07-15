@@ -77,7 +77,7 @@ export default function PriceList() {
       <div className="flex justify-end">
         <Button onClick={() => handleOpenDialog()} className="flex items-center gap-2">
           <PlusCircle className="h-5 w-5" />
-          <span>Añadir Nuevo Artículo</span>
+          <span>Add New Item</span>
         </Button>
       </div>
 
@@ -86,8 +86,8 @@ export default function PriceList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Servicio / Artículo</TableHead>
-                <TableHead className="text-right">Precio</TableHead>
+                <TableHead>Service / Item</TableHead>
+                <TableHead className="text-right">Price</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -100,18 +100,18 @@ export default function PriceList() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Abrir menú</span>
+                          <span className="sr-only">Open menu</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleOpenDialog(item)}>
                           <Pencil className="mr-2 h-4 w-4" />
-                          <span>Editar</span>
+                          <span>Edit</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDeleteItem(item.id)} className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Eliminar</span>
+                          <span>Delete</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

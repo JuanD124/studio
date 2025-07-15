@@ -1,19 +1,12 @@
-import ReportsView from '@/components/reports/reports-view';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Reportes y Papelera - Lanzaexpres',
-  description: 'Ver reportes de ingresos y gestionar artículos entregados.',
-};
+// This file can be removed or repurposed.
+// For now, it will just show a placeholder message.
 
 export default function ReportsPage() {
-  return (
-    <div className="container mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold font-headline">Reportes y Papelera</h1>
-        <p className="text-muted-foreground">Analiza los ingresos y gestiona los artículos ya entregados.</p>
+    return (
+      <div className="container mx-auto">
+        <h1 className="text-3xl font-bold">Reports</h1>
+        <p className="text-muted-foreground">This page is under construction.</p>
       </div>
-      <ReportsView />
-    </div>
-  );
-}
+    );
+  }
+  

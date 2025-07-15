@@ -17,23 +17,19 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { StoredItem, LaundryItem } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 const formSchema = z.object({
-  customerName: z.string().min(2, { message: 'El nombre del cliente debe tener al menos 2 caracteres.' }),
-  rank: z.string().optional(),
-  battalion: z.string().optional(),
-  contingent: z.string().optional(),
-  ticketColor: z.string().optional(),
-  itemsDescription: z.string().min(5, { message: 'La descripción debe tener al menos 5 caracteres.' }),
-  storagePrice: z.coerce.number().min(0, { message: 'El precio de almacenamiento debe ser un número positivo.' }).default(0),
+  customerName: z.string().min(2, { message: 'Customer name must be at least 2 characters.' }),
+  itemsDescription: z.string().min(5, { message: 'Description must be at least 5 characters.' }),
+  storagePrice: z.coerce.number().min(0, { message: 'Storage price must be a positive number.' }).default(0),
   laundryItems: z.array(z.object({
     laundryItemId: z.string(),
     name: z.string(),
     price: z.number(),
-    quantity: z.coerce.number().min(1, { message: "La cantidad debe ser al menos 1." })
+    quantity: z.coerce.number().min(1, { message: "Quantity must be at least 1." })
   })).optional(),
 });
 
@@ -42,31 +38,15 @@ type AddItemFormValues = z.infer<typeof formSchema>;
 interface AddItemDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddItem: (data: Omit<StoredItem, 'id' | 'storageDate' | 'ticketNumber'>) => void;
+  onAddItem: (data: Omit<StoredItem, 'id' | 'storageDate'>) => void;
   laundryServices: LaundryItem[];
 }
-
-const officerRanks = [
-  "Subteniente", "Teniente", "Capitán", "Mayor", "Teniente Coronel",
-  "Coronel", "Brigadier General", "Mayor General", "General"
-];
-
-const ncoRanks = [
-  "Soldado", "Soldado Regular", "Cabo Tercero", "Cabo Segundo", "Cabo Primero", "Sargento Segundo",
-  "Sargento Viceprimero", "Sargento Primero", "Sargento Mayor",
-  "Sargento Mayor de Comando", "Sargento Mayor de Comando Conjunto"
-];
-
 
 export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: AddItemDialogProps) {
   const form = useForm<AddItemFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerName: '',
-      rank: '',
-      battalion: '',
-      contingent: '',
-      ticketColor: '',
       itemsDescription: '',
       storagePrice: 0,
       laundryItems: [],
@@ -100,12 +80,8 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
     const laundryTotal = data.laundryItems?.reduce((total, item) => total + (item.price * item.quantity), 0) || 0;
     const totalPrice = Number(data.storagePrice || 0) + laundryTotal;
 
-    const newItemPayload: Omit<StoredItem, 'id' | 'storageDate' | 'ticketNumber'> = {
+    const newItemPayload: Omit<StoredItem, 'id' | 'storageDate'> = {
       customerName: data.customerName,
-      rank: data.rank,
-      battalion: data.battalion,
-      contingent: data.contingent,
-      ticketColor: data.ticketColor,
       itemsDescription: data.itemsDescription,
       storagePrice: Number(data.storagePrice || 0),
       laundryItems: data.laundryItems || [],
@@ -128,9 +104,9 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Almacenar Nuevo Artículo</DialogTitle>
+          <DialogTitle className="font-headline">Store New Item</DialogTitle>
           <DialogDescription>
-            Introduce los detalles y precios del artículo a almacenar.
+            Enter the details and pricing for the item to be stored.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -140,105 +116,22 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
               name="customerName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre del Cliente</FormLabel>
+                  <FormLabel>Customer Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Juan Pérez" {...field} />
+                    <Input placeholder="John Doe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="rank"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Rango (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar rango..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Sin Rango / Civil">Sin Rango / Civil</SelectItem>
-                      <SelectGroup>
-                        <SelectLabel>Oficiales</SelectLabel>
-                        {officerRanks.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
-                      </SelectGroup>
-                      <SelectGroup>
-                        <SelectLabel>Suboficiales</SelectLabel>
-                        {ncoRanks.map(rank => <SelectItem key={rank} value={rank}>{rank}</SelectItem>)}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-               <FormField
-                control={form.control}
-                name="battalion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Batallón (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="BCG No. 21" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="contingent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contingente (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="1/24" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-             <FormField
-                control={form.control}
-                name="ticketColor"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Color del Ticket (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                        <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar color..." />
-                        </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        <SelectItem value="Rojo">Rojo</SelectItem>
-                        <SelectItem value="Azul">Azul</SelectItem>
-                        <SelectItem value="Verde">Verde</SelectItem>
-                        <SelectItem value="Amarillo">Amarillo</SelectItem>
-                        <SelectItem value="Naranja">Naranja</SelectItem>
-                        <SelectItem value="Blanco">Blanco</SelectItem>
-                    </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-                )}
             />
             <FormField
               control={form.control}
               name="itemsDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descripción del/los Artículo(s)</FormLabel>
+                  <FormLabel>Item(s) Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="ej., 1 maleta grande azul" {...field} />
+                    <Textarea placeholder="e.g., 1 large blue suitcase" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -249,7 +142,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                 name="storagePrice"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Precio Almacenamiento (COP)</FormLabel>
+                    <FormLabel>Storage Price (COP)</FormLabel>
                     <FormControl>
                     <Input type="number" placeholder="10000" {...field} />
                     </FormControl>
@@ -259,13 +152,13 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
             />
 
             <div className="space-y-2">
-              <FormLabel>Añadir Servicio de Lavandería</FormLabel>
+              <FormLabel>Add Laundry Service</FormLabel>
               <div className="flex items-end gap-2">
                 <div className="flex-grow">
-                  <FormLabel className="text-xs text-muted-foreground">Servicio</FormLabel>
+                  <FormLabel className="text-xs text-muted-foreground">Service</FormLabel>
                   <Select value={selectedService} onValueChange={setSelectedService}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar..." />
+                      <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent>
                       {laundryServices.map((service) => (
@@ -277,7 +170,7 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                   </Select>
                 </div>
                 <div className="w-24">
-                  <FormLabel className="text-xs text-muted-foreground">Cantidad</FormLabel>
+                  <FormLabel className="text-xs text-muted-foreground">Quantity</FormLabel>
                   <Input
                       type="number"
                       value={quantity}
@@ -285,13 +178,13 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
                       min="1"
                   />
                 </div>
-                <Button type="button" variant="outline" onClick={addLaundryItem}>Añadir</Button>
+                <Button type="button" variant="outline" onClick={addLaundryItem}>Add</Button>
               </div>
             </div>
 
             {fields.length > 0 && (
               <div className="space-y-2 rounded-md border p-2">
-                <FormLabel>Servicios añadidos</FormLabel>
+                <FormLabel>Added services</FormLabel>
                 {fields.map((field, index) => (
                   <div key={field.id} className="flex items-center justify-between text-sm p-2 rounded-md bg-muted/50">
                     <div>
@@ -308,8 +201,8 @@ export function AddItemDialog({ isOpen, onClose, onAddItem, laundryServices }: A
           </form>
         </Form>
         <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" form="add-item-form">Añadir Artículo</Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit" form="add-item-form">Add Item</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
