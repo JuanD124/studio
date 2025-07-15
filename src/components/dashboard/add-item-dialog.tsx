@@ -51,7 +51,7 @@ const officerRanks = [
 ];
 
 const ncoRanks = [
-  "Soldado", "Cabo Tercero", "Cabo Segundo", "Cabo Primero", "Sargento Segundo",
+  "Soldado", "Soldado Regular", "Cabo Tercero", "Cabo Segundo", "Cabo Primero", "Sargento Segundo",
   "Sargento Viceprimero", "Sargento Primero", "Sargento Mayor",
   "Sargento Mayor de Comando", "Sargento Mayor de Comando Conjunto"
 ];
