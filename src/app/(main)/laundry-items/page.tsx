@@ -2,7 +2,7 @@ import PriceList from '@/components/laundry-items/price-list';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Lista de Precios - LavanderiaFacil',
+  title: 'Lista de Precios - Lanzaexpres',
   description: 'Gestiona tus artículos de lavandería y precios.',
 };
 

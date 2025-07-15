@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'LavanderiaFacil',
+  title: 'Lanzaexpres',
   description: 'Gestiona tu negocio de lavandería con facilidad.',
 };
 

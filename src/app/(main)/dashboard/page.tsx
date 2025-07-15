@@ -2,7 +2,7 @@ import StorageManager from '@/components/dashboard/storage-manager';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Panel de Almacenamiento - LavanderiaFacil',
+  title: 'Panel de Almacenamiento - Lanzaexpres',
   description: 'Gestiona tus artículos almacenados.',
 };
 

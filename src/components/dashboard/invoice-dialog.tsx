@@ -144,7 +144,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         <div className="max-h-[60vh] overflow-y-auto p-1 bg-gray-100 rounded-md">
             <div ref={invoiceRef} className="receipt">
                 <div className="header">
-                    <h2>LavanderiaFacil</h2>
+                    <h2>Lanzaexpres</h2>
                 </div>
 
                 <div className="hr"></div>

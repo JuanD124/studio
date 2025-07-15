@@ -2,7 +2,7 @@ import ReportsView from '@/components/reports/reports-view';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Reportes y Papelera - LavanderiaFacil',
+  title: 'Reportes y Papelera - Lanzaexpres',
   description: 'Ver reportes de ingresos y gestionar artículos entregados.',
 };
 
