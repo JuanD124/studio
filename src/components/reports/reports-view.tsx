@@ -2,31 +2,42 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, setDoc } from 'firebase/firestore';
-import type { StoredItem } from '@/lib/types';
+import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc } from 'firebase/firestore';
+import type { ClaimedItem, IncomeEntry } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Package, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { ClaimedItemCard } from './claimed-item-card';
 import { useToast } from '@/hooks/use-toast';
-import { startOfDay, startOfMonth, startOfYear } from 'date-fns';
-
-type ClaimedItem = StoredItem & { claimedDate: string };
+import { startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear, isWithinInterval } from 'date-fns';
 
 export default function ReportsView() {
     const [claimedItems, setClaimedItems] = React.useState<ClaimedItem[]>([]);
+    const [incomeEntries, setIncomeEntries] = React.useState<IncomeEntry[]>([]);
     const { toast } = useToast();
 
     React.useEffect(() => {
-        const q = query(collection(db, "claimedItems"), orderBy("claimedDate", "desc"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const claimedQuery = query(collection(db, "claimedItems"), orderBy("claimedDate", "desc"));
+        const unsubscribeClaimed = onSnapshot(claimedQuery, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as ClaimedItem[];
             setClaimedItems(items);
         });
-        return () => unsubscribe();
+        
+        const incomeQuery = query(collection(db, "incomeEntries"), orderBy("date", "desc"));
+        const unsubscribeIncome = onSnapshot(incomeQuery, (snapshot) => {
+            const entries = snapshot.docs.map(doc => doc.data()) as IncomeEntry[];
+            setIncomeEntries(entries);
+        });
+
+        return () => {
+            unsubscribeClaimed();
+            unsubscribeIncome();
+        };
     }, []);
     
     const handleRestoreItem = async (itemToRestore: ClaimedItem) => {
+        // This functionality might need re-evaluation with the new income logic.
+        // For now, it restores the item but does not reverse income entries.
         try {
             const { claimedDate, ...originalItemData } = itemToRestore;
 
@@ -42,7 +53,7 @@ export default function ReportsView() {
 
             toast({
                 title: "Artículo Restaurado",
-                description: "El artículo ha sido devuelto al panel de almacenamiento.",
+                description: "El artículo ha sido devuelto al panel de almacenamiento. Los registros de ingresos no se han modificado.",
             });
         } catch (error) {
             console.error("Error al restaurar el artículo: ", error);
@@ -55,14 +66,14 @@ export default function ReportsView() {
     };
 
     const handleDeleteItem = async (id: string) => {
-        if (!window.confirm("¿Estás seguro de que quieres eliminar este artículo permanentemente? Esta acción no se puede deshacer.")) {
+        if (!window.confirm("¿Estás seguro de que quieres eliminar este artículo permanentemente? Esta acción no se puede deshacer y no afectará los reportes de ingresos ya registrados.")) {
             return;
         }
         try {
             await deleteDoc(doc(db, "claimedItems", id));
             toast({
                 title: "Artículo Eliminado",
-                description: "El artículo ha sido eliminado permanentemente.",
+                description: "El artículo ha sido eliminado permanentemente de la papelera.",
                 variant: 'destructive',
             });
         } catch (error) {
@@ -75,16 +86,19 @@ export default function ReportsView() {
         }
     };
 
-    const calculateTotal = (items: ClaimedItem[], startDate: Date) => {
-        return items
-            .filter(item => new Date(item.claimedDate) >= startDate)
-            .reduce((sum, item) => sum + item.totalPrice, 0);
+    const calculateTotalIncome = (entries: IncomeEntry[], startDate: Date, endDate: Date) => {
+        return entries
+            .filter(entry => {
+                const entryDate = new Date(entry.date);
+                return isWithinInterval(entryDate, { start: startDate, end: endDate });
+            })
+            .reduce((sum, entry) => sum + entry.amount, 0);
     };
 
     const now = new Date();
-    const totalHoy = calculateTotal(claimedItems, startOfDay(now));
-    const totalMes = calculateTotal(claimedItems, startOfMonth(now));
-    const totalAnio = calculateTotal(claimedItems, startOfYear(now));
+    const totalHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now));
+    const totalMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now));
+    const totalAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now));
 
     return (
         <div className="space-y-8">

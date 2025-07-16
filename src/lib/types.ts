@@ -30,3 +30,17 @@ export interface StoredItem {
   payments: Payment[];
   remainingBalance: number;
 }
+
+// Represents an item that has been claimed/delivered
+export type ClaimedItem = StoredItem & {
+  claimedDate: string; // ISO string format
+};
+
+// Represents a single income transaction (payment or final claim payment)
+export interface IncomeEntry {
+    amount: number;
+    date: string; // ISO string format
+    itemId: string;
+    customerName: string;
+    type: 'Abono' | 'Entrega';
+}

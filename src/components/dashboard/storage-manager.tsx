@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion } from 'firebase/firestore';
-import type { StoredItem, LaundryItem } from '@/lib/types';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction } from 'firebase/firestore';
+import type { StoredItem, LaundryItem, Payment } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search } from 'lucide-react';
@@ -68,10 +68,12 @@ export default function StorageManager() {
         const itemRef = doc(db, 'storedItems', id);
         // When editing, we recalculate total but don't reset payments
         const existingItem = items.find(i => i.id === id);
+        const totalPaid = existingItem?.payments.reduce((sum, p) => sum + p.amount, 0) || 0;
+        
         const updatedData = {
           ...itemData,
           totalPrice: itemData.totalPrice,
-          remainingBalance: itemData.totalPrice - ((existingItem?.totalPrice || 0) - (existingItem?.remainingBalance || 0))
+          remainingBalance: itemData.totalPrice - totalPaid,
         };
         await updateDoc(itemRef, updatedData);
         toast({
@@ -107,8 +109,29 @@ export default function StorageManager() {
       const batch = writeBatch(db);
       
       const claimedItemRef = doc(db, 'claimedItems', item.id);
-      batch.set(claimedItemRef, { ...item, claimedDate: new Date().toISOString() });
+      const finalPayment = item.remainingBalance;
+
+      // Update item with claimed date and set balance to 0
+      const updatedItem = {
+          ...item,
+          remainingBalance: 0,
+          claimedDate: new Date().toISOString() 
+      };
+
+      batch.set(claimedItemRef, updatedItem);
       
+      // If there was a remaining balance, record it as a final income entry
+      if (finalPayment > 0) {
+        const incomeEntryRef = doc(collection(db, 'incomeEntries'));
+        batch.set(incomeEntryRef, {
+            amount: finalPayment,
+            date: new Date().toISOString(),
+            itemId: item.id,
+            customerName: item.customerName,
+            type: 'Entrega'
+        });
+      }
+
       const originalItemRef = doc(db, 'storedItems', item.id);
       batch.delete(originalItemRef);
       
@@ -154,25 +177,52 @@ export default function StorageManager() {
   };
 
   const handleSavePayment = async (itemId: string, amount: number) => {
-    const item = items.find(i => i.id === itemId);
-    if (!item) return;
-
-    const newPayment = {
-      amount,
-      date: new Date().toISOString(),
-    };
-
     const itemRef = doc(db, 'storedItems', itemId);
-    
-    await updateDoc(itemRef, {
-      payments: arrayUnion(newPayment),
-      remainingBalance: item.remainingBalance - amount,
-    });
+    const incomeEntryRef = doc(collection(db, 'incomeEntries'));
 
-    toast({
-      title: "Abono Registrado",
-      description: "El pago se ha registrado correctamente.",
-    });
+    try {
+      await runTransaction(db, async (transaction) => {
+        const itemDoc = await transaction.get(itemRef);
+        if (!itemDoc.exists()) {
+          throw new Error("El artículo no existe.");
+        }
+
+        const itemData = itemDoc.data() as StoredItem;
+        
+        const newPayment: Payment = {
+          amount,
+          date: new Date().toISOString(),
+        };
+
+        const newRemainingBalance = itemData.remainingBalance - amount;
+        const newPayments = [...(itemData.payments || []), newPayment];
+        
+        transaction.update(itemRef, {
+          payments: newPayments,
+          remainingBalance: newRemainingBalance,
+        });
+
+        transaction.set(incomeEntryRef, {
+          amount,
+          date: newPayment.date,
+          itemId: itemId,
+          customerName: itemData.customerName,
+          type: 'Abono'
+        });
+      });
+
+      toast({
+        title: "Abono Registrado",
+        description: "El pago se ha registrado correctamente.",
+      });
+    } catch (error) {
+       console.error("Error al registrar el abono: ", error);
+       toast({
+        title: "Error en la transacción",
+        description: "No se pudo registrar el abono.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

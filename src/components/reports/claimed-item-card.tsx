@@ -1,20 +1,22 @@
 'use client';
 
-import type { StoredItem } from '@/lib/types';
+import type { StoredItem, ClaimedItem } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Clock, Package, RotateCcw, Trash2 } from 'lucide-react';
+import { CalendarDays, Clock, Package, RotateCcw, Trash2, User, Fingerprint } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 
 interface ClaimedItemCardProps {
-  item: StoredItem & { claimedDate: string };
-  onRestore: (item: StoredItem) => void;
+  item: ClaimedItem;
+  onRestore: (item: ClaimedItem) => void;
   onDelete: (id: string) => void;
 }
 
 export function ClaimedItemCard({ item, onRestore, onDelete }: ClaimedItemCardProps) {
+  const totalPaid = item.totalPrice;
+  
   return (
     <Card className="flex flex-col transition-all hover:shadow-md bg-muted/30">
       <CardHeader className="pb-4">
@@ -26,6 +28,13 @@ export function ClaimedItemCard({ item, onRestore, onDelete }: ClaimedItemCardPr
           <Package className="w-4 h-4" />
           <span>{item.itemsDescription}</span>
         </CardDescription>
+        <div className="text-xs text-muted-foreground space-y-1 pt-2">
+            <div className="flex items-center gap-2">
+                <User className="w-3 h-3"/>
+                <span>{item.rank}</span>
+            </div>
+            {item.customerId && <div className="flex items-center gap-2"><Fingerprint className="w-3 h-3"/><span>C.C. {item.customerId}</span></div>}
+        </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-2 text-sm">
          <div className="space-y-1">
@@ -43,7 +52,7 @@ export function ClaimedItemCard({ item, onRestore, onDelete }: ClaimedItemCardPr
           </div>
         </div>
         <div className="text-right font-semibold pt-2 border-t">
-            Total Pagado: {formatCurrency(item.totalPrice)}
+            Total Pagado: {formatCurrency(totalPaid)}
         </div>
       </CardContent>
       <CardFooter>
