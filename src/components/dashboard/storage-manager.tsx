@@ -1,17 +1,18 @@
 'use client';
 
 import * as React from 'react';
-import { db } from '@/lib/firebase';
+import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction, getDoc, setDoc } from 'firebase/firestore';
 import type { StoredItem, LaundryItem, Payment, ClaimedItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search } from 'lucide-react';
+import { AlertTriangle, PlusCircle, Search } from 'lucide-react';
 import { AddItemDialog } from './add-item-dialog';
 import { InvoiceDialog } from './invoice-dialog';
 import { StoredItemCard } from './stored-item-card';
 import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -26,6 +27,8 @@ export default function StorageManager() {
   const { toast } = useToast();
 
   React.useEffect(() => {
+    if (!db) return; // No hacer nada si la configuración de Firebase no es válida
+
     const q = query(collection(db, 'storedItems'), orderBy('storageDate', 'desc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const itemsData: StoredItem[] = [];
@@ -43,6 +46,8 @@ export default function StorageManager() {
   }, []);
 
   React.useEffect(() => {
+    if (!db) return; // No hacer nada si la configuración de Firebase no es válida
+
     const q = query(collection(db, 'laundryItems'), orderBy('name'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const servicesData: LaundryItem[] = [];
@@ -54,6 +59,19 @@ export default function StorageManager() {
     return () => unsubscribe();
   }, []);
 
+  if (isFirebaseConfigInvalid) {
+    return (
+      <Alert variant="destructive" className="mt-4">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Error de Configuración</AlertTitle>
+        <AlertDescription>
+          La aplicación no puede conectarse a la base de datos. Por favor, asegúrate de que has introducido
+          tus credenciales de Firebase en el archivo <strong>src/lib/firebase.ts</strong>.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   const filteredItems = items.filter(
     (item) =>
       item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,13 +80,15 @@ export default function StorageManager() {
       item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'remainingBalance' | 'payments'>, id?: string) => {
+  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance'>, id?: string) => {
+    if (!db) return;
     try {
       if (id) {
         const itemRef = doc(db, 'storedItems', id);
-        // When editing, we recalculate total but don't reset payments
         const existingItem = items.find(i => i.id === id);
-        const totalPaid = existingItem?.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+        if (!existingItem) throw new Error("Item not found");
+
+        const totalPaid = existingItem.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
         
         const updatedData = {
           ...itemData,
@@ -105,6 +125,7 @@ export default function StorageManager() {
 
 
   const handleClaimItem = async (item: StoredItem) => {
+    if (!db) return;
     try {
       const batch = writeBatch(db);
       
@@ -112,16 +133,18 @@ export default function StorageManager() {
       const claimedItemRef = doc(db, 'claimedItems', item.id);
       const finalPayment = item.remainingBalance;
 
-      // Prepare claimed item data
       const claimedItemData: ClaimedItem = {
           ...item,
           remainingBalance: 0,
           claimedDate: new Date().toISOString() 
       };
 
+      if (item.payments) {
+          claimedItemData.payments = item.payments;
+      }
+      
       batch.set(claimedItemRef, claimedItemData);
       
-      // If there was a remaining balance, record it as a final income entry
       if (finalPayment > 0) {
         const incomeEntryRef = doc(collection(db, 'incomeEntries'));
         batch.set(incomeEntryRef, {
@@ -177,6 +200,7 @@ export default function StorageManager() {
   };
 
   const handleSavePayment = async (itemId: string, amount: number) => {
+    if (!db) return;
     const itemRef = doc(db, 'storedItems', itemId);
     const incomeEntryRef = doc(collection(db, 'incomeEntries'));
 

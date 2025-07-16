@@ -1,15 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc } from 'firebase/firestore';
-import type { ClaimedItem, IncomeEntry } from '@/lib/types';
+import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
+import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, setDoc } from 'firebase/firestore';
+import type { ClaimedItem, IncomeEntry, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Package, TrendingUp } from 'lucide-react';
+import { AlertTriangle, DollarSign, Package, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { ClaimedItemCard } from './claimed-item-card';
 import { useToast } from '@/hooks/use-toast';
 import { startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear, isWithinInterval } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 export default function ReportsView() {
     const [claimedItems, setClaimedItems] = React.useState<ClaimedItem[]>([]);
@@ -17,6 +18,8 @@ export default function ReportsView() {
     const { toast } = useToast();
 
     React.useEffect(() => {
+        if (!db) return;
+
         const claimedQuery = query(collection(db, "claimedItems"), orderBy("claimedDate", "desc"));
         const unsubscribeClaimed = onSnapshot(claimedQuery, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as ClaimedItem[];
@@ -36,21 +39,21 @@ export default function ReportsView() {
     }, []);
     
     const handleRestoreItem = async (itemToRestore: ClaimedItem) => {
-        // This functionality might need re-evaluation with the new income logic.
-        // For now, it restores the item but does not reverse income entries.
+        if (!db) return;
+    
+        const { claimedDate, ...originalItemData } = itemToRestore;
+    
         try {
-            const { claimedDate, ...originalItemData } = itemToRestore;
-
             const batch = writeBatch(db);
-            
+    
             const storedItemRef = doc(db, 'storedItems', itemToRestore.id);
-            batch.set(storedItemRef, originalItemData);
-            
+            batch.set(storedItemRef, originalItemData as StoredItem);
+    
             const claimedItemRef = doc(db, 'claimedItems', itemToRestore.id);
             batch.delete(claimedItemRef);
-            
+    
             await batch.commit();
-
+    
             toast({
                 title: "Artículo Restaurado",
                 description: "El artículo ha sido devuelto al panel de almacenamiento. Los registros de ingresos no se han modificado.",
@@ -66,6 +69,7 @@ export default function ReportsView() {
     };
 
     const handleDeleteItem = async (id: string) => {
+        if (!db) return;
         if (!window.confirm("¿Estás seguro de que quieres eliminar este artículo permanentemente? Esta acción no se puede deshacer y no afectará los reportes de ingresos ya registrados.")) {
             return;
         }
@@ -85,6 +89,19 @@ export default function ReportsView() {
             });
         }
     };
+
+    if (isFirebaseConfigInvalid) {
+        return (
+          <Alert variant="destructive" className="mt-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error de Configuración</AlertTitle>
+            <AlertDescription>
+              La aplicación no puede conectarse a la base de datos. Por favor, asegúrate de que has introducido
+              tus credenciales de Firebase en el archivo <strong>src/lib/firebase.ts</strong>.
+            </AlertDescription>
+          </Alert>
+        );
+    }
 
     const calculateTotalIncome = (entries: IncomeEntry[], startDate: Date, endDate: Date) => {
         return entries
