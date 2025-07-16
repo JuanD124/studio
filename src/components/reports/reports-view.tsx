@@ -5,7 +5,7 @@ import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, where, getDocs } from 'firebase/firestore';
 import type { ClaimedItem, IncomeEntry, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, DollarSign, Package, TrendingUp } from 'lucide-react';
+import { AlertTriangle, DollarSign, PackageCheck, TrendingUp, Package } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { ClaimedItemCard } from './claimed-item-card';
 import { useToast } from '@/hooks/use-toast';
@@ -46,15 +46,12 @@ export default function ReportsView() {
         try {
             const batch = writeBatch(db);
     
-            // 1. Restore the item to the 'storedItems' collection
             const storedItemRef = doc(db, 'storedItems', itemToRestore.id);
             batch.set(storedItemRef, originalItemData as StoredItem);
     
-            // 2. Delete the item from the 'claimedItems' collection
             const claimedItemRef = doc(db, 'claimedItems', itemToRestore.id);
             batch.delete(claimedItemRef);
 
-            // 3. Find and delete ONLY the final delivery income entry
             const incomeQuery = query(
                 collection(db, 'incomeEntries'), 
                 where('itemId', '==', itemToRestore.id),
@@ -119,50 +116,64 @@ export default function ReportsView() {
         );
     }
 
-    const calculateTotalIncome = (entries: IncomeEntry[], startDate: Date, endDate: Date) => {
+    const calculateTotalIncome = (entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega' | 'Ambos') => {
         return entries
             .filter(entry => {
                 const entryDate = new Date(entry.date);
-                return isWithinInterval(entryDate, { start: startDate, end: endDate });
+                const isWithinDate = isWithinInterval(entryDate, { start: startDate, end: endDate });
+                if (!isWithinDate) return false;
+                if (type === 'Ambos') return true;
+                return entry.type === type;
             })
             .reduce((sum, entry) => sum + entry.amount, 0);
     };
 
     const now = new Date();
-    const totalHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now));
-    const totalMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now));
-    const totalAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now));
+    const abonosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
+    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
+    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
+    
+    const entregasMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Entrega');
 
     return (
         <div className="space-y-8">
             <section>
-                <h2 className="text-2xl font-semibold mb-4">Resumen de Ingresos</h2>
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
+                <h2 className="text-2xl font-semibold mb-4">Resumen de Ingresos por Abonos</h2>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card className="lg:col-span-1">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ingresos de Hoy</CardTitle>
+                            <CardTitle className="text-sm font-medium">Abonos de Hoy</CardTitle>
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(totalHoy)}</div>
+                            <div className="text-2xl font-bold">{formatCurrency(abonosHoy)}</div>
                         </CardContent>
                     </Card>
-                     <Card>
+                     <Card className="lg:col-span-1">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ingresos de este Mes</CardTitle>
+                            <CardTitle className="text-sm font-medium">Abonos de este Mes</CardTitle>
                             <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(totalMes)}</div>
+                            <div className="text-2xl font-bold">{formatCurrency(abonosMes)}</div>
                         </CardContent>
                     </Card>
-                     <Card>
+                     <Card className="lg:col-span-1">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ingresos de este Año</CardTitle>
+                            <CardTitle className="text-sm font-medium">Abonos de este Año</CardTitle>
                             <Package className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(totalAnio)}</div>
+                            <div className="text-2xl font-bold">{formatCurrency(abonosAnio)}</div>
+                        </CardContent>
+                    </Card>
+                    <Card className="lg:col-span-1 bg-primary/10 border-primary/40">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Total por Entregas (Mes)</CardTitle>
+                            <PackageCheck className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{formatCurrency(entregasMes)}</div>
                         </CardContent>
                     </Card>
                 </div>
