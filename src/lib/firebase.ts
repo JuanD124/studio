@@ -9,18 +9,17 @@ import { getFirestore } from "firebase/firestore";
 // 3. En la sección "Tus apps", si no tienes una app web, crea una.
 // 4. Firebase te dará un objeto `firebaseConfig`. Copia los valores y pégalos aquí.
 const firebaseConfig = {
-  // PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE
-  apiKey: "AIzaSy_REEMPLAZAME_CON_TU_API_KEY",
-  authDomain: "TU_ID_DE_PROYECTO.firebaseapp.com",
-  projectId: "TU_ID_DE_PROYECTO",
-  storageBucket: "TU_ID_DE_PROYECTO.appspot.com",
-  messagingSenderId: "REEMPLAZAME_CON_TU_SENDER_ID",
-  appId: "REEMPLAZAME_CON_TU_APP_ID"
+  apiKey: "AIzaSyDEdS6Wl-tHMn29ekftc5jbL7Sa4TaXGIU",
+  authDomain: "lavanderiafacil.firebaseapp.com",
+  projectId: "lavanderiafacil",
+  storageBucket: "lavanderiafacil.firebasestorage.app",
+  messagingSenderId: "958579500745",
+  appId: "1:958579500745:web:87ac53655cb9cbb8c54f18"
 };
 
 // --- Verificación de la configuración de Firebase ---
 // Esta variable nos dirá si la configuración parece ser la de ejemplo.
-export const isFirebaseConfigInvalid = firebaseConfig.projectId === "TU_ID_DE_PROYECTO";
+export const isFirebaseConfigInvalid = firebaseConfig.projectId === "TU_ID_DE_PROYECTO" || !firebaseConfig.apiKey || firebaseConfig.apiKey.includes("REEMPLAZAME");
 
 let db;
 
