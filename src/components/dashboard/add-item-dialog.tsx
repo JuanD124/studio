@@ -44,7 +44,7 @@ type AddItemFormValues = z.infer<typeof formSchema>;
 interface AddItemDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: Omit<StoredItem, 'id' | 'storageDate'>, id?: string) => void;
+  onSave: (data: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance'>, id?: string) => void;
   itemToEdit: StoredItem | null;
   laundryServices: LaundryItem[];
 }

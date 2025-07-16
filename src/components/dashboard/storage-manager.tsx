@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion } from 'firebase/firestore';
 import type { StoredItem, LaundryItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { PlusCircle, Search } from 'lucide-react';
 import { AddItemDialog } from './add-item-dialog';
 import { InvoiceDialog } from './invoice-dialog';
 import { StoredItemCard } from './stored-item-card';
+import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function StorageManager() {
@@ -18,8 +19,10 @@ export default function StorageManager() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
+  const [payingItem, setPayingItem] = React.useState<StoredItem | null>(null);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -59,22 +62,30 @@ export default function StorageManager() {
       item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate'>, id?: string) => {
+  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'remainingBalance' | 'payments'>, id?: string) => {
     try {
       if (id) {
-        // Update existing item
         const itemRef = doc(db, 'storedItems', id);
-        await updateDoc(itemRef, itemData);
+        // When editing, we recalculate total but don't reset payments
+        const existingItem = items.find(i => i.id === id);
+        const updatedData = {
+          ...itemData,
+          totalPrice: itemData.totalPrice,
+          remainingBalance: itemData.totalPrice - ((existingItem?.totalPrice || 0) - (existingItem?.remainingBalance || 0))
+        };
+        await updateDoc(itemRef, updatedData);
         toast({
           title: "Éxito",
           description: "El artículo ha sido actualizado correctamente.",
         });
       } else {
-        // Add new item
-        await addDoc(collection(db, 'storedItems'), {
+        const newItemData = {
           ...itemData,
           storageDate: new Date().toISOString(),
-        });
+          payments: [],
+          remainingBalance: itemData.totalPrice,
+        };
+        await addDoc(collection(db, 'storedItems'), newItemData);
         toast({
           title: "Éxito",
           description: "El artículo ha sido almacenado correctamente.",
@@ -136,6 +147,33 @@ export default function StorageManager() {
     setIsAddDialogOpen(false);
     setEditingItem(null);
   }
+  
+  const handleOpenPaymentDialog = (item: StoredItem) => {
+    setPayingItem(item);
+    setIsPaymentDialogOpen(true);
+  };
+
+  const handleSavePayment = async (itemId: string, amount: number) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    const newPayment = {
+      amount,
+      date: new Date().toISOString(),
+    };
+
+    const itemRef = doc(db, 'storedItems', itemId);
+    
+    await updateDoc(itemRef, {
+      payments: arrayUnion(newPayment),
+      remainingBalance: item.remainingBalance - amount,
+    });
+
+    toast({
+      title: "Abono Registrado",
+      description: "El pago se ha registrado correctamente.",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -164,6 +202,7 @@ export default function StorageManager() {
               onClaim={handleClaimItem}
               onOpenInvoice={handleOpenInvoice}
               onEdit={handleOpenEditDialog}
+              onAddPayment={handleOpenPaymentDialog}
             />
           ))}
         </div>
@@ -185,6 +224,12 @@ export default function StorageManager() {
         isOpen={isInvoiceOpen}
         onClose={() => setIsInvoiceOpen(false)}
         item={invoicingItem}
+      />
+      <AddPaymentDialog
+        isOpen={isPaymentDialogOpen}
+        onClose={() => setIsPaymentDialogOpen(false)}
+        item={payingItem}
+        onSave={handleSavePayment}
       />
     </div>
   );

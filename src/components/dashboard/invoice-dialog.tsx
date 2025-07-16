@@ -42,12 +42,14 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             .header { text-align: center; margin-bottom: 20px; }
             .header h1 { margin: 0; font-size: 24px; }
             .header p { margin: 2px 0; }
-            .item-line { display: flex; justify-content: space-between; }
+            .item-line { display: flex; justify-content: space-between; margin-bottom: 2px; }
             .item-line span:first-child { text-align: left; }
             .item-line span:last-child { text-align: right; }
             .details p { margin: 2px 0; }
             .separator { border-top: 1px dashed black; margin: 10px 0; }
-            .total { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; }
+            .total-section { font-size: 16px; }
+            .total { display: flex; justify-content: space-between; }
+            .total.grand-total { font-weight: bold; font-size: 18px; margin-top: 5px; }
             .footer { text-align: center; margin-top: 20px; font-size: 12px; }
           </style>
         `);
@@ -62,6 +64,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
   };
 
   if (!item) return null;
+
+  const totalPaid = item.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -116,9 +120,21 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             
             <div className="separator"></div>
 
-            <div className="total">
-                <span>TOTAL A PAGAR:</span>
-                <span>{formatCurrency(item.totalPrice)}</span>
+            <div className="total-section">
+              <div className="total">
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(item.totalPrice)}</span>
+              </div>
+              {totalPaid > 0 && (
+                <div className="total">
+                    <span>Total Abonado:</span>
+                    <span>-{formatCurrency(totalPaid)}</span>
+                </div>
+              )}
+              <div className="total grand-total">
+                  <span>SALDO A PAGAR:</span>
+                  <span>{formatCurrency(item.remainingBalance)}</span>
+              </div>
             </div>
 
             <div className="separator"></div>
