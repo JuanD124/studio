@@ -54,8 +54,13 @@ export default function ReportsView() {
             const claimedItemRef = doc(db, 'claimedItems', itemToRestore.id);
             batch.delete(claimedItemRef);
 
-            // 3. Find and delete the corresponding income entry
-            const incomeQuery = query(collection(db, 'incomeEntries'), where('itemId', '==', itemToRestore.id));
+            // 3. Find and delete ONLY the final delivery income entry
+            const incomeQuery = query(
+                collection(db, 'incomeEntries'), 
+                where('itemId', '==', itemToRestore.id),
+                where('type', '==', 'Entrega')
+            );
+
             const incomeSnapshot = await getDocs(incomeQuery);
             if (!incomeSnapshot.empty) {
                 incomeSnapshot.forEach(incomeDoc => {
@@ -67,7 +72,7 @@ export default function ReportsView() {
     
             toast({
                 title: "Artículo Restaurado",
-                description: "El artículo ha sido devuelto al panel de almacenamiento y el ingreso asociado ha sido eliminado.",
+                description: "El artículo ha vuelto al almacén y el ingreso final ha sido anulado.",
             });
         } catch (error) {
             console.error("Error al restaurar el artículo: ", error);
@@ -105,7 +110,7 @@ export default function ReportsView() {
         return (
           <Alert variant="destructive" className="mt-4">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Error de Configuración</AlertTitle>
+            <AlertTitle>Error de Configuración de Firebase</AlertTitle>
             <AlertDescription>
               La aplicación no puede conectarse a la base de datos. Por favor, asegúrate de que has introducido
               tus credenciales de Firebase en el archivo <strong>src/lib/firebase.ts</strong>.
