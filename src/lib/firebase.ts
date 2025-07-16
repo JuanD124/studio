@@ -9,6 +9,7 @@ import { getFirestore } from "firebase/firestore";
 // 3. En la sección "Tus apps", si no tienes una app web, crea una.
 // 4. Firebase te dará un objeto `firebaseConfig`. Copia los valores y pégalos aquí.
 const firebaseConfig = {
+  // PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE
   apiKey: "AIzaSy_REEMPLAZAME_CON_TU_API_KEY",
   authDomain: "TU_ID_DE_PROYECTO.firebaseapp.com",
   projectId: "TU_ID_DE_PROYECTO",
@@ -25,11 +26,17 @@ let db;
 
 // Solo inicializamos Firebase si la configuración es válida.
 if (!isFirebaseConfigInvalid) {
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  db = getFirestore(app);
+  try {
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    db = getFirestore(app);
+  } catch (error) {
+    console.error("Error al inicializar Firebase:", error);
+    db = null;
+  }
 } else {
   // Si la configuración no es válida, `db` será `null`.
   // Los componentes mostrarán una advertencia.
+  console.warn("La configuración de Firebase en src/lib/firebase.ts no es válida. Por favor, introduce tus credenciales.");
   db = null;
 }
 
