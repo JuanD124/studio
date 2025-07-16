@@ -4,6 +4,11 @@ export interface LaundryItem {
   price: number;
 }
 
+export interface Payment {
+  amount: number;
+  date: string; // ISO string format
+}
+
 export interface StoredItem {
   id: string; // Firestore document ID
   customerName: string;
@@ -22,6 +27,8 @@ export interface StoredItem {
     quantity: number;
   }[];
   totalPrice: number;
+  payments: Payment[];
+  remainingBalance: number;
 }
 
 // Represents an item that has been claimed/delivered
@@ -35,5 +42,5 @@ export interface IncomeEntry {
     date: string; // ISO string format
     itemId: string;
     customerName: string;
-    type: 'Entrega';
+    type: 'Abono' | 'Entrega';
 }

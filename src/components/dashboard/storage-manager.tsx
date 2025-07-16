@@ -2,14 +2,15 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, getDoc } from 'firebase/firestore';
-import type { StoredItem, LaundryItem, ClaimedItem } from '@/lib/types';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion } from 'firebase/firestore';
+import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, PlusCircle, Search } from 'lucide-react';
 import { AddItemDialog } from './add-item-dialog';
 import { InvoiceDialog } from './invoice-dialog';
 import { StoredItemCard } from './stored-item-card';
+import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
@@ -19,8 +20,10 @@ export default function StorageManager() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
+  const [paymentItem, setPaymentItem] = React.useState<StoredItem | null>(null);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -60,7 +63,7 @@ export default function StorageManager() {
     return (
       <Alert variant="destructive" className="mt-4">
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Error de Configuración</AlertTitle>
+        <AlertTitle>Error de Configuración de Firebase</AlertTitle>
         <AlertDescription>
           La aplicación no puede conectarse a la base de datos. Por favor, asegúrate de que has introducido
           tus credenciales de Firebase en el archivo <strong>src/lib/firebase.ts</strong>.
@@ -77,20 +80,33 @@ export default function StorageManager() {
       item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate'>, id?: string) => {
+  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance'>, id?: string) => {
     if (!db) return;
     try {
       if (id) {
+        // When editing, we need to preserve payments and recalculate remaining balance
+        const existingItem = items.find(i => i.id === id);
+        if (!existingItem) throw new Error("Item no encontrado");
+
+        const totalPaid = existingItem.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+        const updatedData = {
+          ...itemData,
+          payments: existingItem.payments || [],
+          remainingBalance: itemData.totalPrice - totalPaid,
+        };
         const itemRef = doc(db, 'storedItems', id);
-        await updateDoc(itemRef, itemData);
+        await updateDoc(itemRef, updatedData);
         toast({
           title: "Éxito",
           description: "El artículo ha sido actualizado correctamente.",
         });
       } else {
-        const newItemData = {
+        // When creating a new item
+        const newItemData: Omit<StoredItem, 'id'> = {
           ...itemData,
           storageDate: new Date().toISOString(),
+          payments: [],
+          remainingBalance: itemData.totalPrice,
         };
         await addDoc(collection(db, 'storedItems'), newItemData);
         toast({
@@ -108,6 +124,51 @@ export default function StorageManager() {
     }
   };
 
+  const handleSavePayment = async (itemId: string, amount: number) => {
+    if (!db) return;
+
+    const itemRef = doc(db, 'storedItems', itemId);
+    const incomeEntryRef = doc(collection(db, 'incomeEntries'));
+    const item = items.find(i => i.id === itemId);
+
+    if (!item) {
+        toast({ title: "Error", description: "Artículo no encontrado.", variant: "destructive" });
+        return;
+    }
+
+    try {
+        const batch = writeBatch(db);
+
+        const newPayment: Payment = {
+            amount,
+            date: new Date().toISOString()
+        };
+
+        const newRemainingBalance = item.remainingBalance - amount;
+
+        // Update stored item with new payment and remaining balance
+        batch.update(itemRef, {
+            payments: arrayUnion(newPayment),
+            remainingBalance: newRemainingBalance,
+        });
+
+        // Create a new income entry
+        const incomeEntry: IncomeEntry = {
+            amount,
+            date: new Date().toISOString(),
+            itemId: item.id,
+            customerName: item.customerName,
+            type: 'Abono',
+        };
+        batch.set(incomeEntryRef, incomeEntry);
+
+        await batch.commit();
+        toast({ title: "Éxito", description: "Abono registrado correctamente." });
+    } catch (error) {
+        console.error("Error al registrar el abono: ", error);
+        toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
+    }
+};
 
   const handleClaimItem = async (item: StoredItem) => {
     if (!db) return;
@@ -116,7 +177,6 @@ export default function StorageManager() {
       
       const originalItemRef = doc(db, 'storedItems', item.id);
       const claimedItemRef = doc(db, 'claimedItems', item.id);
-      const incomeEntryRef = doc(collection(db, 'incomeEntries'));
 
       const claimedItemData: ClaimedItem = {
           ...item,
@@ -125,13 +185,18 @@ export default function StorageManager() {
       
       batch.set(claimedItemRef, claimedItemData);
       
-      batch.set(incomeEntryRef, {
-          amount: item.totalPrice,
-          date: new Date().toISOString(),
-          itemId: item.id,
-          customerName: item.customerName,
-          type: 'Entrega'
-      });
+      // If there's a remaining balance, create an income entry for it
+      if (item.remainingBalance > 0) {
+        const finalPaymentEntryRef = doc(collection(db, 'incomeEntries'));
+        const finalIncomeEntry: IncomeEntry = {
+            amount: item.remainingBalance,
+            date: new Date().toISOString(),
+            itemId: item.id,
+            customerName: item.customerName,
+            type: 'Entrega'
+        };
+        batch.set(finalPaymentEntryRef, finalIncomeEntry);
+      }
 
       batch.delete(originalItemRef);
       
@@ -166,9 +231,18 @@ export default function StorageManager() {
     setIsAddDialogOpen(true);
   };
 
-  const handleCloseDialog = () => {
+  const handleOpenPaymentDialog = (item: StoredItem) => {
+    setPaymentItem(item);
+    setIsPaymentDialogOpen(true);
+  }
+
+  const handleCloseDialogs = () => {
     setIsAddDialogOpen(false);
     setEditingItem(null);
+    setIsPaymentDialogOpen(false);
+    setPaymentItem(null);
+    setIsInvoiceOpen(false);
+    setInvoicingItem(null);
   }
 
   return (
@@ -198,6 +272,7 @@ export default function StorageManager() {
               onClaim={handleClaimItem}
               onOpenInvoice={handleOpenInvoice}
               onEdit={handleOpenEditDialog}
+              onAddPayment={handleOpenPaymentDialog}
             />
           ))}
         </div>
@@ -210,10 +285,16 @@ export default function StorageManager() {
 
       <AddItemDialog
         isOpen={isAddDialogOpen}
-        onClose={handleCloseDialog}
+        onClose={handleCloseDialogs}
         onSave={handleSaveItem}
         itemToEdit={editingItem}
         laundryServices={laundryServices}
+      />
+      <AddPaymentDialog
+        isOpen={isPaymentDialogOpen}
+        onClose={handleCloseDialogs}
+        onSave={handleSavePayment}
+        item={paymentItem}
       />
       <InvoiceDialog
         isOpen={isInvoiceOpen}

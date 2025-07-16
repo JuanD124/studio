@@ -26,11 +26,12 @@ interface AddPaymentDialogProps {
 }
 
 export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDialogProps) {
-  // We need to build the schema inside the component to access the item's remainingBalance
+  const remainingBalance = item?.remainingBalance ?? 0;
+
   const formSchema = z.object({
     amount: z.coerce.number()
       .min(1, { message: 'El abono debe ser mayor a cero.' })
-      .max(item?.remainingBalance ?? 0, { message: `El abono no puede superar el saldo pendiente de ${formatCurrency(item?.remainingBalance ?? 0)}.` }),
+      .max(remainingBalance, { message: `El abono no puede superar el saldo pendiente de ${formatCurrency(remainingBalance)}.` }),
   });
 
   type PaymentFormValues = z.infer<typeof formSchema>;
@@ -38,16 +39,14 @@ export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDi
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      amount: 0,
+      amount: undefined,
     },
-    // We'll re-validate when the item changes
-    context: { item },
+    mode: 'onChange'
   });
 
   React.useEffect(() => {
-    // Reset the form whenever the dialog opens or the item changes
     if (isOpen) {
-      form.reset({ amount: 0 });
+      form.reset({ amount: undefined });
     }
   }, [isOpen, item, form]);
   
@@ -95,7 +94,8 @@ export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDi
                     <Input 
                       type="number" 
                       placeholder="5000" 
-                      {...field} 
+                      {...field}
+                      value={field.value ?? ''}
                       autoFocus
                     />
                   </FormControl>

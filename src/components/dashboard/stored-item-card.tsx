@@ -1,6 +1,6 @@
 'use client';
 
-import type { StoredItem } from '@/lib/types';
+import type { Payment, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,18 +11,37 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt } from 'lucide-react';
+import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface StoredItemCardProps {
   item: StoredItem;
   onClaim: (item: StoredItem) => void;
   onOpenInvoice: (item: StoredItem) => void;
   onEdit: (item: StoredItem) => void;
+  onAddPayment: (item: StoredItem) => void;
 }
 
-export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit }: StoredItemCardProps) {
+const PaymentHistory = ({ payments }: { payments: Payment[] }) => (
+    <div className="space-y-1 text-xs">
+        <div className="flex items-center gap-2 font-medium">
+            <History className="w-3.5 h-3.5" />
+            <span>Historial de Abonos</span>
+        </div>
+        {payments.map((p, index) => (
+            <div key={index} className="flex justify-between items-center pl-4">
+                <span>{format(new Date(p.date), 'dd/MM/yyyy')}</span>
+                <Badge variant="outline">{formatCurrency(p.amount)}</Badge>
+            </div>
+        ))}
+    </div>
+);
+
+export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit, onAddPayment }: StoredItemCardProps) {
   
+  const payments = item.payments || [];
+
   return (
     <Card className="flex flex-col transition-all hover:shadow-lg">
       <CardHeader>
@@ -72,20 +91,31 @@ export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit }: StoredI
             <span>Duración: {getStorageDuration(item.storageDate)}</span>
           </div>
         </div>
+
+        {payments.length > 0 && <PaymentHistory payments={payments} />}
+
         <div className="space-y-2 text-sm">
           <Separator />
            <div className="flex justify-between font-semibold text-base pt-2">
             <span>Total a Pagar:</span>
             <span>{formatCurrency(item.totalPrice)}</span>
           </div>
+          <div className="flex justify-between text-destructive">
+            <span>Saldo Pendiente:</span>
+            <span className="font-bold">{formatCurrency(item.remainingBalance)}</span>
+          </div>
         </div>
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2">
-          <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => onClaim(item)}>
+          <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => onAddPayment(item)} disabled={item.remainingBalance <= 0}>
+            <Banknote className="mr-2 h-4 w-4" />
+            Abonar
+          </Button>
+          <Button variant="secondary" className="flex-1 min-w-[120px]" onClick={() => onClaim(item)}>
             <PackageCheck className="mr-2 h-4 w-4" />
             Entregado
           </Button>
-          <Button className="flex-1 min-w-[120px]" onClick={() => onOpenInvoice(item)}>
+          <Button className="flex-grow w-full" onClick={() => onOpenInvoice(item)}>
             <Receipt className="mr-2 h-4 w-4" />
             Factura
           </Button>
