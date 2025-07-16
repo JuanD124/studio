@@ -5,17 +5,18 @@ import { getFirestore } from "firebase/firestore";
 
 // CRÍTICO: Reemplaza este objeto con la configuración de tu propio proyecto de Firebase.
 // 1. Ve a la consola de Firebase (https://console.firebase.google.com/).
-// 2. Crea un nuevo proyecto o selecciona uno existente.
-// 3. Ve a la configuración de tu proyecto (el ícono del engranaje).
-// 4. En la sección "Tus apps", añade una nueva aplicación web.
-// 5. Firebase te proporcionará un objeto `firebaseConfig`. Cópialo y pégalo aquí.
+// 2. Haz clic en el engranaje (⚙️) -> Configuración del proyecto.
+// 3. En la sección "Tus apps", si no tienes una app web, crea una.
+// 4. Firebase te dará un objeto `firebaseConfig`. Copia los valores y pégalos aquí.
+//    El "projectId" que necesitas está en este objeto.
 const firebaseConfig = {
-  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:XXXXXXXXXXXXXXXXXXXXXX"
+  // Pega aquí tu configuración de Firebase
+  apiKey: "AIzaSy_REEMPLAZAME_CON_TU_API_KEY",
+  authDomain: "TU_ID_DE_PROYECTO.firebaseapp.com",
+  projectId: "TU_ID_DE_PROYECTO",
+  storageBucket: "TU_ID_DE_PROYECTO.appspot.com",
+  messagingSenderId: "REEMPLAZAME_CON_TU_SENDER_ID",
+  appId: "REEMPLAZAME_CON_TU_APP_ID"
 };
 
 // Inicializar Firebase
