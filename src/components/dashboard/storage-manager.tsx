@@ -2,18 +2,16 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, getDoc, runTransaction } from 'firebase/firestore';
-import type { StoredItem, LaundryItem, Payment, ClaimedItem } from '@/lib/types';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, getDoc } from 'firebase/firestore';
+import type { StoredItem, LaundryItem, ClaimedItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, PlusCircle, Search } from 'lucide-react';
 import { AddItemDialog } from './add-item-dialog';
 import { InvoiceDialog } from './invoice-dialog';
 import { StoredItemCard } from './stored-item-card';
-import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { EditPaymentDialog } from './edit-payment-dialog';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -21,12 +19,8 @@ export default function StorageManager() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
-  const [isEditPaymentDialogOpen, setIsEditPaymentDialogOpen] = React.useState(false);
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
-  const [payingItem, setPayingItem] = React.useState<StoredItem | null>(null);
-  const [editingPayment, setEditingPayment] = React.useState<{ item: StoredItem; payment: Payment } | null>(null);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -83,22 +77,12 @@ export default function StorageManager() {
       item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance'>, id?: string) => {
+  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate'>, id?: string) => {
     if (!db) return;
     try {
       if (id) {
         const itemRef = doc(db, 'storedItems', id);
-        const existingItem = items.find(i => i.id === id);
-        if (!existingItem) throw new Error("Item not found");
-
-        const totalPaid = existingItem.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-        
-        const updatedData = {
-          ...itemData,
-          totalPrice: itemData.totalPrice,
-          remainingBalance: itemData.totalPrice - totalPaid,
-        };
-        await updateDoc(itemRef, updatedData);
+        await updateDoc(itemRef, itemData);
         toast({
           title: "Éxito",
           description: "El artículo ha sido actualizado correctamente.",
@@ -107,8 +91,6 @@ export default function StorageManager() {
         const newItemData = {
           ...itemData,
           storageDate: new Date().toISOString(),
-          payments: [],
-          remainingBalance: itemData.totalPrice,
         };
         await addDoc(collection(db, 'storedItems'), newItemData);
         toast({
@@ -134,30 +116,22 @@ export default function StorageManager() {
       
       const originalItemRef = doc(db, 'storedItems', item.id);
       const claimedItemRef = doc(db, 'claimedItems', item.id);
-      const finalPayment = item.remainingBalance;
+      const incomeEntryRef = doc(collection(db, 'incomeEntries'));
 
       const claimedItemData: ClaimedItem = {
           ...item,
-          remainingBalance: 0,
           claimedDate: new Date().toISOString() 
       };
-
-      if (item.payments) {
-          claimedItemData.payments = item.payments;
-      }
       
       batch.set(claimedItemRef, claimedItemData);
       
-      if (finalPayment > 0) {
-        const incomeEntryRef = doc(collection(db, 'incomeEntries'));
-        batch.set(incomeEntryRef, {
-            amount: finalPayment,
-            date: new Date().toISOString(),
-            itemId: item.id,
-            customerName: item.customerName,
-            type: 'Entrega'
-        });
-      }
+      batch.set(incomeEntryRef, {
+          amount: item.totalPrice,
+          date: new Date().toISOString(),
+          itemId: item.id,
+          customerName: item.customerName,
+          type: 'Entrega'
+      });
 
       batch.delete(originalItemRef);
       
@@ -196,159 +170,6 @@ export default function StorageManager() {
     setIsAddDialogOpen(false);
     setEditingItem(null);
   }
-  
-  const handleOpenPaymentDialog = (item: StoredItem) => {
-    setPayingItem(item);
-    setIsPaymentDialogOpen(true);
-  };
-
-  const handleSavePayment = async (itemId: string, amount: number) => {
-    if (!db) return;
-    const itemRef = doc(db, 'storedItems', itemId);
-    const incomeEntryRef = doc(collection(db, 'incomeEntries'));
-
-    try {
-        const itemDoc = await getDoc(itemRef);
-        if (!itemDoc.exists()) {
-            throw new Error("El artículo no existe.");
-        }
-        
-        const itemData = itemDoc.data() as StoredItem;
-
-        const newPayment: Payment = {
-            amount,
-            date: new Date().toISOString(),
-        };
-
-        const newRemainingBalance = itemData.remainingBalance - amount;
-        const newPayments = [...(itemData.payments || []), newPayment];
-        
-        const batch = writeBatch(db);
-
-        batch.update(itemRef, {
-            payments: newPayments,
-            remainingBalance: newRemainingBalance,
-        });
-
-        batch.set(incomeEntryRef, {
-            amount,
-            date: newPayment.date,
-            itemId: itemId,
-            customerName: itemData.customerName,
-            type: 'Abono'
-        });
-
-        await batch.commit();
-
-        toast({
-            title: "Abono Registrado",
-            description: "El pago se ha registrado correctamente.",
-        });
-
-    } catch (error) {
-       console.error("Error al registrar el abono: ", error);
-       toast({
-        title: "Error en la transacción",
-        description: "No se pudo registrar el abono.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleOpenEditPaymentDialog = (item: StoredItem, payment: Payment) => {
-    setEditingPayment({ item, payment });
-    setIsEditPaymentDialogOpen(true);
-  };
-
-  const handleUpdatePayment = async (itemId: string, oldPayment: Payment, newAmount: number) => {
-    if (!db) return;
-    const itemRef = doc(db, "storedItems", itemId);
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            const itemDoc = await transaction.get(itemRef);
-            if (!itemDoc.exists()) {
-                throw "Document does not exist!";
-            }
-
-            const itemData = itemDoc.data() as StoredItem;
-            const payments = itemData.payments || [];
-            
-            const paymentIndex = payments.findIndex(p => p.date === oldPayment.date && p.amount === oldPayment.amount);
-            if (paymentIndex === -1) {
-                throw "Payment not found";
-            }
-            
-            const updatedPayments = [...payments];
-            updatedPayments[paymentIndex] = { ...updatedPayments[paymentIndex], amount: newAmount };
-            
-            const totalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
-            const newRemainingBalance = itemData.totalPrice - totalPaid;
-
-            if (newRemainingBalance < 0) {
-                throw "El monto total abonado no puede superar el precio total del artículo.";
-            }
-
-            transaction.update(itemRef, {
-                payments: updatedPayments,
-                remainingBalance: newRemainingBalance
-            });
-        });
-        toast({
-          title: "Abono Actualizado",
-          description: "El abono ha sido actualizado correctamente."
-        });
-    } catch (e: any) {
-        console.error("Error al actualizar el abono: ", e);
-        toast({
-            title: "Error",
-            description: typeof e === 'string' ? e : "No se pudo actualizar el abono.",
-            variant: "destructive",
-        });
-    }
-  };
-  
-  const handleDeletePayment = async (itemId: string, paymentToDelete: Payment) => {
-    if (!db) return;
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este abono? Esta acción no se puede deshacer.")) {
-        return;
-    }
-    const itemRef = doc(db, "storedItems", itemId);
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            const itemDoc = await transaction.get(itemRef);
-            if (!itemDoc.exists()) {
-                throw "Document does not exist!";
-            }
-
-            const itemData = itemDoc.data() as StoredItem;
-            const payments = itemData.payments || [];
-
-            const updatedPayments = payments.filter(p => p.date !== paymentToDelete.date || p.amount !== paymentToDelete.amount);
-
-            const totalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
-            const newRemainingBalance = itemData.totalPrice - totalPaid;
-
-            transaction.update(itemRef, {
-                payments: updatedPayments,
-                remainingBalance: newRemainingBalance
-            });
-        });
-        toast({
-            title: "Abono Eliminado",
-            description: "El abono ha sido eliminado correctamente.",
-            variant: "destructive"
-        });
-    } catch (e) {
-        console.error("Error al eliminar el abono: ", e);
-        toast({
-            title: "Error",
-            description: "No se pudo eliminar el abono.",
-            variant: "destructive",
-        });
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -377,9 +198,6 @@ export default function StorageManager() {
               onClaim={handleClaimItem}
               onOpenInvoice={handleOpenInvoice}
               onEdit={handleOpenEditDialog}
-              onAddPayment={handleOpenPaymentDialog}
-              onEditPayment={handleOpenEditPaymentDialog}
-              onDeletePayment={handleDeletePayment}
             />
           ))}
         </div>
@@ -401,18 +219,6 @@ export default function StorageManager() {
         isOpen={isInvoiceOpen}
         onClose={() => setIsInvoiceOpen(false)}
         item={invoicingItem}
-      />
-      <AddPaymentDialog
-        isOpen={isPaymentDialogOpen}
-        onClose={() => setIsPaymentDialogOpen(false)}
-        item={payingItem}
-        onSave={handleSavePayment}
-      />
-      <EditPaymentDialog
-        isOpen={isEditPaymentDialogOpen}
-        onClose={() => setIsEditPaymentDialogOpen(false)}
-        paymentInfo={editingPayment}
-        onSave={handleUpdatePayment}
       />
     </div>
   );

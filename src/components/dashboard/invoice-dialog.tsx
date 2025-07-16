@@ -65,8 +65,6 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
 
   if (!item) return null;
 
-  const totalPaid = item.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -121,19 +119,9 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             <div className="separator"></div>
 
             <div className="total-section">
-              <div className="total">
-                  <span>Subtotal:</span>
-                  <span>{formatCurrency(item.totalPrice)}</span>
-              </div>
-              {totalPaid > 0 && (
-                <div className="total">
-                    <span>Total Abonado:</span>
-                    <span>-{formatCurrency(totalPaid)}</span>
-                </div>
-              )}
               <div className="total grand-total">
-                  <span>SALDO A PAGAR:</span>
-                  <span>{formatCurrency(item.remainingBalance)}</span>
+                  <span>TOTAL A PAGAR:</span>
+                  <span>{formatCurrency(item.totalPrice)}</span>
               </div>
             </div>
 
