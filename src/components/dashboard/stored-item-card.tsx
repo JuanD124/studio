@@ -104,7 +104,7 @@ export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit, onAddPaym
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-wrap">
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <Button variant="secondary" className="w-full" onClick={() => onAddPayment(item)} disabled={item.remainingBalance <= 0}>
             <HandCoins className="mr-2 h-4 w-4" />
