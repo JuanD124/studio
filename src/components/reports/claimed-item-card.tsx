@@ -1,5 +1,5 @@
 'use client';
-
+import React from 'react';
 import type { StoredItem, ClaimedItem } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ interface ClaimedItemCardProps {
   onDelete: (id: string) => void;
 }
 
-export function ClaimedItemCard({ item, onRestore, onDelete }: ClaimedItemCardProps) {
+function ClaimedItemCardComponent({ item, onRestore, onDelete }: ClaimedItemCardProps) {
   const totalPaid = item.totalPrice;
   
   return (
@@ -70,3 +70,5 @@ export function ClaimedItemCard({ item, onRestore, onDelete }: ClaimedItemCardPr
     </Card>
   );
 }
+
+export const ClaimedItemCard = React.memo(ClaimedItemCardComponent);

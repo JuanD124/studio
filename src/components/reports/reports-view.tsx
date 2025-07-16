@@ -38,7 +38,7 @@ export default function ReportsView() {
         };
     }, []);
     
-    const handleRestoreItem = async (itemToRestore: ClaimedItem) => {
+    const handleRestoreItem = React.useCallback(async (itemToRestore: ClaimedItem) => {
         if (!db) return;
     
         const { claimedDate, ...originalItemData } = itemToRestore;
@@ -79,9 +79,9 @@ export default function ReportsView() {
                 variant: "destructive",
             });
         }
-    };
+    }, [toast]);
 
-    const handleDeleteItem = async (id: string) => {
+    const handleDeleteItem = React.useCallback(async (id: string) => {
         if (!db) return;
         if (!window.confirm("¿Estás seguro de que quieres eliminar este artículo permanentemente? Esta acción no se puede deshacer y no afectará los reportes de ingresos ya registrados.")) {
             return;
@@ -101,8 +101,26 @@ export default function ReportsView() {
                 variant: "destructive",
             });
         }
-    };
+    }, [toast]);
 
+    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega' | 'Ambos') => {
+        return entries
+            .filter(entry => {
+                const entryDate = new Date(entry.date);
+                const isWithinDate = isWithinInterval(entryDate, { start: startDate, end: endDate });
+                if (!isWithinDate) return false;
+                if (type === 'Ambos') return true;
+                return entry.type === type;
+            })
+            .reduce((sum, entry) => sum + entry.amount, 0);
+    }, []);
+
+    const now = new Date();
+    const abonosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
+    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
+    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
+    const entregasMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Entrega');
+    
     if (isFirebaseConfigInvalid) {
         return (
           <Alert variant="destructive" className="mt-4">
@@ -115,25 +133,6 @@ export default function ReportsView() {
           </Alert>
         );
     }
-
-    const calculateTotalIncome = (entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega' | 'Ambos') => {
-        return entries
-            .filter(entry => {
-                const entryDate = new Date(entry.date);
-                const isWithinDate = isWithinInterval(entryDate, { start: startDate, end: endDate });
-                if (!isWithinDate) return false;
-                if (type === 'Ambos') return true;
-                return entry.type === type;
-            })
-            .reduce((sum, entry) => sum + entry.amount, 0);
-    };
-
-    const now = new Date();
-    const abonosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
-    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
-    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
-    
-    const entregasMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Entrega');
 
     return (
         <div className="space-y-8">

@@ -1,5 +1,5 @@
 'use client';
-
+import React from 'react';
 import type { Payment, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ const PaymentHistory = ({ payments }: { payments: Payment[] }) => (
     </div>
 );
 
-export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit, onAddPayment }: StoredItemCardProps) {
+function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment }: StoredItemCardProps) {
   
   const payments = item.payments || [];
 
@@ -123,3 +123,5 @@ export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit, onAddPaym
     </Card>
   );
 }
+
+export const StoredItemCard = React.memo(StoredItemCardComponent);

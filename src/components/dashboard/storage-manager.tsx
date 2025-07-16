@@ -59,28 +59,7 @@ export default function StorageManager() {
     return () => unsubscribe();
   }, []);
 
-  if (isFirebaseConfigInvalid) {
-    return (
-      <Alert variant="destructive" className="mt-4">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Error de Configuración de Firebase</AlertTitle>
-        <AlertDescription>
-          La aplicación no puede conectarse a la base de datos. Por favor, asegúrate de que has introducido
-          tus credenciales de Firebase en el archivo <strong>src/lib/firebase.ts</strong>.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  const filteredItems = items.filter(
-    (item) =>
-      item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.customerId && item.customerId.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSaveItem = async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance'>, id?: string) => {
+  const handleSaveItem = React.useCallback(async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance'>, id?: string) => {
     if (!db) return;
     try {
       if (id) {
@@ -122,9 +101,9 @@ export default function StorageManager() {
         variant: "destructive",
       });
     }
-  };
+  }, [items, toast]);
 
-  const handleSavePayment = async (itemId: string, amount: number) => {
+  const handleSavePayment = React.useCallback(async (itemId: string, amount: number) => {
     if (!db) return;
 
     const itemRef = doc(db, 'storedItems', itemId);
@@ -168,9 +147,9 @@ export default function StorageManager() {
         console.error("Error al registrar el abono: ", error);
         toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
     }
-};
+}, [items, toast]);
 
-  const handleClaimItem = async (item: StoredItem) => {
+  const handleClaimItem = React.useCallback(async (item: StoredItem) => {
     if (!db) return;
     try {
       const batch = writeBatch(db);
@@ -214,35 +193,57 @@ export default function StorageManager() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
   
-  const handleOpenInvoice = (item: StoredItem) => {
+  const handleOpenInvoice = React.useCallback((item: StoredItem) => {
     setInvoicingItem(item);
     setIsInvoiceOpen(true);
-  };
+  }, []);
   
-  const handleOpenAddDialog = () => {
+  const handleOpenAddDialog = React.useCallback(() => {
     setEditingItem(null);
     setIsAddDialogOpen(true);
-  }
+  }, []);
 
-  const handleOpenEditDialog = (item: StoredItem) => {
+  const handleOpenEditDialog = React.useCallback((item: StoredItem) => {
     setEditingItem(item);
     setIsAddDialogOpen(true);
-  };
+  }, []);
 
-  const handleOpenPaymentDialog = (item: StoredItem) => {
+  const handleOpenPaymentDialog = React.useCallback((item: StoredItem) => {
     setPaymentItem(item);
     setIsPaymentDialogOpen(true);
-  }
+  }, []);
 
-  const handleCloseDialogs = () => {
+  const handleCloseDialogs = React.useCallback(() => {
     setIsAddDialogOpen(false);
     setEditingItem(null);
     setIsPaymentDialogOpen(false);
     setPaymentItem(null);
     setIsInvoiceOpen(false);
     setInvoicingItem(null);
+  }, []);
+
+  const filteredItems = React.useMemo(() => 
+    items.filter(
+      (item) =>
+        item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.customerId && item.customerId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
+  ), [items, searchTerm]);
+
+  if (isFirebaseConfigInvalid) {
+    return (
+      <Alert variant="destructive" className="mt-4">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Error de Configuración de Firebase</AlertTitle>
+        <AlertDescription>
+          La aplicación no puede conectarse a la base de datos. Por favor, asegúrate de que has introducido
+          tus credenciales de Firebase en el archivo <strong>src/lib/firebase.ts</strong>.
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   return (
