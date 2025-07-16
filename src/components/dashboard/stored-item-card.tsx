@@ -104,21 +104,19 @@ export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit, onAddPaym
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex-wrap">
-        <div className="w-full flex flex-col sm:flex-row gap-2">
-          <Button variant="secondary" className="w-full" onClick={() => onAddPayment(item)} disabled={item.remainingBalance <= 0}>
+      <CardFooter className="flex flex-wrap gap-2">
+          <Button variant="secondary" className="flex-1 min-w-[120px]" onClick={() => onAddPayment(item)} disabled={item.remainingBalance <= 0}>
             <HandCoins className="mr-2 h-4 w-4" />
             Abonar
           </Button>
-          <Button variant="outline" className="w-full" onClick={() => onClaim(item)} disabled={item.remainingBalance > 0}>
+          <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => onClaim(item)} disabled={item.remainingBalance > 0}>
             <PackageCheck className="mr-2 h-4 w-4" />
             Entregado
           </Button>
-          <Button className="w-full" onClick={() => onOpenInvoice(item)}>
+          <Button className="flex-1 min-w-[120px]" onClick={() => onOpenInvoice(item)}>
             <Receipt className="mr-2 h-4 w-4" />
             Factura
           </Button>
-        </div>
       </CardFooter>
     </Card>
   );
