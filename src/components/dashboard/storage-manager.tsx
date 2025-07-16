@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction } from 'firebase/firestore';
-import type { StoredItem, LaundryItem, Payment } from '@/lib/types';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction, getDoc, setDoc } from 'firebase/firestore';
+import type { StoredItem, LaundryItem, Payment, ClaimedItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search } from 'lucide-react';
@@ -68,7 +68,7 @@ export default function StorageManager() {
         const itemRef = doc(db, 'storedItems', id);
         // When editing, we recalculate total but don't reset payments
         const existingItem = items.find(i => i.id === id);
-        const totalPaid = existingItem?.payments.reduce((sum, p) => sum + p.amount, 0) || 0;
+        const totalPaid = existingItem?.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
         
         const updatedData = {
           ...itemData,
@@ -108,17 +108,18 @@ export default function StorageManager() {
     try {
       const batch = writeBatch(db);
       
+      const originalItemRef = doc(db, 'storedItems', item.id);
       const claimedItemRef = doc(db, 'claimedItems', item.id);
       const finalPayment = item.remainingBalance;
 
-      // Update item with claimed date and set balance to 0
-      const updatedItem = {
+      // Prepare claimed item data
+      const claimedItemData: ClaimedItem = {
           ...item,
           remainingBalance: 0,
           claimedDate: new Date().toISOString() 
       };
 
-      batch.set(claimedItemRef, updatedItem);
+      batch.set(claimedItemRef, claimedItemData);
       
       // If there was a remaining balance, record it as a final income entry
       if (finalPayment > 0) {
@@ -132,7 +133,6 @@ export default function StorageManager() {
         });
       }
 
-      const originalItemRef = doc(db, 'storedItems', item.id);
       batch.delete(originalItemRef);
       
       await batch.commit();
