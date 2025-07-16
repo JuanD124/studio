@@ -26,6 +26,7 @@ interface AddPaymentDialogProps {
 }
 
 export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDialogProps) {
+  // We need to build the schema inside the component to access the item's remainingBalance
   const formSchema = z.object({
     amount: z.coerce.number()
       .min(1, { message: 'El abono debe ser mayor a cero.' })
@@ -39,16 +40,19 @@ export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDi
     defaultValues: {
       amount: 0,
     },
+    // We'll re-validate when the item changes
+    context: { item },
   });
 
   React.useEffect(() => {
+    // Reset the form whenever the dialog opens or the item changes
     if (isOpen) {
       form.reset({ amount: 0 });
     }
-  }, [isOpen, form]);
-
+  }, [isOpen, item, form]);
+  
   if (!item) return null;
-
+  
   const onSubmit = (data: PaymentFormValues) => {
     onSave(item.id, data.amount);
     onClose();
