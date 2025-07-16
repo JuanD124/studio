@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, where, getDocs } from 'firebase/firestore';
 import type { ClaimedItem, IncomeEntry, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, DollarSign, Package, TrendingUp } from 'lucide-react';
@@ -46,17 +46,28 @@ export default function ReportsView() {
         try {
             const batch = writeBatch(db);
     
+            // 1. Restore the item to the 'storedItems' collection
             const storedItemRef = doc(db, 'storedItems', itemToRestore.id);
             batch.set(storedItemRef, originalItemData as StoredItem);
     
+            // 2. Delete the item from the 'claimedItems' collection
             const claimedItemRef = doc(db, 'claimedItems', itemToRestore.id);
             batch.delete(claimedItemRef);
+
+            // 3. Find and delete the corresponding income entry
+            const incomeQuery = query(collection(db, 'incomeEntries'), where('itemId', '==', itemToRestore.id));
+            const incomeSnapshot = await getDocs(incomeQuery);
+            if (!incomeSnapshot.empty) {
+                incomeSnapshot.forEach(incomeDoc => {
+                    batch.delete(incomeDoc.ref);
+                });
+            }
     
             await batch.commit();
     
             toast({
                 title: "Artículo Restaurado",
-                description: "El artículo ha sido devuelto al panel de almacenamiento. Los registros de ingresos no se han modificado.",
+                description: "El artículo ha sido devuelto al panel de almacenamiento y el ingreso asociado ha sido eliminado.",
             });
         } catch (error) {
             console.error("Error al restaurar el artículo: ", error);
