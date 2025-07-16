@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction, getDoc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, getDoc } from 'firebase/firestore';
 import type { StoredItem, LaundryItem, Payment, ClaimedItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ export default function StorageManager() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    if (!db) return; // No hacer nada si la configuración de Firebase no es válida
+    if (!db) return;
 
     const q = query(collection(db, 'storedItems'), orderBy('storageDate', 'desc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -46,7 +46,7 @@ export default function StorageManager() {
   }, []);
 
   React.useEffect(() => {
-    if (!db) return; // No hacer nada si la configuración de Firebase no es válida
+    if (!db) return;
 
     const q = query(collection(db, 'laundryItems'), orderBy('name'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -205,40 +205,43 @@ export default function StorageManager() {
     const incomeEntryRef = doc(collection(db, 'incomeEntries'));
 
     try {
-      await runTransaction(db, async (transaction) => {
-        const itemDoc = await transaction.get(itemRef);
+        const itemDoc = await getDoc(itemRef);
         if (!itemDoc.exists()) {
-          throw new Error("El artículo no existe.");
+            throw new Error("El artículo no existe.");
         }
-
-        const itemData = itemDoc.data() as StoredItem;
         
+        const itemData = itemDoc.data() as StoredItem;
+
         const newPayment: Payment = {
-          amount,
-          date: new Date().toISOString(),
+            amount,
+            date: new Date().toISOString(),
         };
 
         const newRemainingBalance = itemData.remainingBalance - amount;
         const newPayments = [...(itemData.payments || []), newPayment];
         
-        transaction.update(itemRef, {
-          payments: newPayments,
-          remainingBalance: newRemainingBalance,
+        const batch = writeBatch(db);
+
+        batch.update(itemRef, {
+            payments: newPayments,
+            remainingBalance: newRemainingBalance,
         });
 
-        transaction.set(incomeEntryRef, {
-          amount,
-          date: newPayment.date,
-          itemId: itemId,
-          customerName: itemData.customerName,
-          type: 'Abono'
+        batch.set(incomeEntryRef, {
+            amount,
+            date: newPayment.date,
+            itemId: itemId,
+            customerName: itemData.customerName,
+            type: 'Abono'
         });
-      });
 
-      toast({
-        title: "Abono Registrado",
-        description: "El pago se ha registrado correctamente.",
-      });
+        await batch.commit();
+
+        toast({
+            title: "Abono Registrado",
+            description: "El pago se ha registrado correctamente.",
+        });
+
     } catch (error) {
        console.error("Error al registrar el abono: ", error);
        toast({
