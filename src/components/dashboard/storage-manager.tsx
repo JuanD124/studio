@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, getDoc, runTransaction } from 'firebase/firestore';
 import type { StoredItem, LaundryItem, Payment, ClaimedItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { StoredItemCard } from './stored-item-card';
 import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { EditPaymentDialog } from './edit-payment-dialog';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -21,9 +22,11 @@ export default function StorageManager() {
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
+  const [isEditPaymentDialogOpen, setIsEditPaymentDialogOpen] = React.useState(false);
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
   const [payingItem, setPayingItem] = React.useState<StoredItem | null>(null);
+  const [editingPayment, setEditingPayment] = React.useState<{ item: StoredItem; payment: Payment } | null>(null);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -251,6 +254,101 @@ export default function StorageManager() {
       });
     }
   };
+  
+  const handleOpenEditPaymentDialog = (item: StoredItem, payment: Payment) => {
+    setEditingPayment({ item, payment });
+    setIsEditPaymentDialogOpen(true);
+  };
+
+  const handleUpdatePayment = async (itemId: string, oldPayment: Payment, newAmount: number) => {
+    if (!db) return;
+    const itemRef = doc(db, "storedItems", itemId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const itemDoc = await transaction.get(itemRef);
+            if (!itemDoc.exists()) {
+                throw "Document does not exist!";
+            }
+
+            const itemData = itemDoc.data() as StoredItem;
+            const payments = itemData.payments || [];
+            
+            const paymentIndex = payments.findIndex(p => p.date === oldPayment.date && p.amount === oldPayment.amount);
+            if (paymentIndex === -1) {
+                throw "Payment not found";
+            }
+            
+            const updatedPayments = [...payments];
+            updatedPayments[paymentIndex] = { ...updatedPayments[paymentIndex], amount: newAmount };
+            
+            const totalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
+            const newRemainingBalance = itemData.totalPrice - totalPaid;
+
+            if (newRemainingBalance < 0) {
+                throw "El monto total abonado no puede superar el precio total del artículo.";
+            }
+
+            transaction.update(itemRef, {
+                payments: updatedPayments,
+                remainingBalance: newRemainingBalance
+            });
+        });
+        toast({
+          title: "Abono Actualizado",
+          description: "El abono ha sido actualizado correctamente."
+        });
+    } catch (e: any) {
+        console.error("Error al actualizar el abono: ", e);
+        toast({
+            title: "Error",
+            description: typeof e === 'string' ? e : "No se pudo actualizar el abono.",
+            variant: "destructive",
+        });
+    }
+  };
+  
+  const handleDeletePayment = async (itemId: string, paymentToDelete: Payment) => {
+    if (!db) return;
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este abono? Esta acción no se puede deshacer.")) {
+        return;
+    }
+    const itemRef = doc(db, "storedItems", itemId);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const itemDoc = await transaction.get(itemRef);
+            if (!itemDoc.exists()) {
+                throw "Document does not exist!";
+            }
+
+            const itemData = itemDoc.data() as StoredItem;
+            const payments = itemData.payments || [];
+
+            const updatedPayments = payments.filter(p => p.date !== paymentToDelete.date || p.amount !== paymentToDelete.amount);
+
+            const totalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
+            const newRemainingBalance = itemData.totalPrice - totalPaid;
+
+            transaction.update(itemRef, {
+                payments: updatedPayments,
+                remainingBalance: newRemainingBalance
+            });
+        });
+        toast({
+            title: "Abono Eliminado",
+            description: "El abono ha sido eliminado correctamente.",
+            variant: "destructive"
+        });
+    } catch (e) {
+        console.error("Error al eliminar el abono: ", e);
+        toast({
+            title: "Error",
+            description: "No se pudo eliminar el abono.",
+            variant: "destructive",
+        });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -280,6 +378,8 @@ export default function StorageManager() {
               onOpenInvoice={handleOpenInvoice}
               onEdit={handleOpenEditDialog}
               onAddPayment={handleOpenPaymentDialog}
+              onEditPayment={handleOpenEditPaymentDialog}
+              onDeletePayment={handleDeletePayment}
             />
           ))}
         </div>
@@ -307,6 +407,12 @@ export default function StorageManager() {
         onClose={() => setIsPaymentDialogOpen(false)}
         item={payingItem}
         onSave={handleSavePayment}
+      />
+      <EditPaymentDialog
+        isOpen={isEditPaymentDialogOpen}
+        onClose={() => setIsEditPaymentDialogOpen(false)}
+        paymentInfo={editingPayment}
+        onSave={handleUpdatePayment}
       />
     </div>
   );

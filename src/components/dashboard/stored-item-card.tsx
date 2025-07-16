@@ -1,6 +1,6 @@
 'use client';
 
-import type { StoredItem } from '@/lib/types';
+import type { StoredItem, Payment } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, FileText, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, HandCoins, Receipt } from 'lucide-react';
+import { CalendarDays, Clock, FileText, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, HandCoins, Receipt, Trash2 } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -21,9 +21,11 @@ interface StoredItemCardProps {
   onOpenInvoice: (item: StoredItem) => void;
   onEdit: (item: StoredItem) => void;
   onAddPayment: (item: StoredItem) => void;
+  onEditPayment: (item: StoredItem, payment: Payment) => void;
+  onDeletePayment: (itemId: string, payment: Payment) => void;
 }
 
-export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit, onAddPayment }: StoredItemCardProps) {
+export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit, onAddPayment, onEditPayment, onDeletePayment }: StoredItemCardProps) {
   const totalPaid = item.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
   
   return (
@@ -43,7 +45,7 @@ export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit, onAddPaym
                 <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEdit(item)}>
                     <Pencil className="mr-2 h-4 w-4" />
-                    <span>Editar</span>
+                    <span>Editar Artículo</span>
                 </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -86,9 +88,28 @@ export function StoredItemCard({ item, onClaim, onOpenInvoice, onEdit, onAddPaym
               <span className="text-muted-foreground">Abonos:</span>
               <ul className="pl-4 mt-1 space-y-1">
                 {item.payments.map((payment, index) => (
-                  <li key={index} className="flex justify-between text-muted-foreground text-xs">
-                    <span>{format(new Date(payment.date), 'dd/MM/yy')}:</span>
-                    <span className="font-medium text-right">{formatCurrency(payment.amount)}</span>
+                  <li key={index} className="flex justify-between items-center text-muted-foreground text-xs group">
+                    <div className="flex-grow">
+                        <span>{format(new Date(payment.date), 'dd/MM/yy')}:</span>
+                        <span className="font-medium text-right ml-2">{formatCurrency(payment.amount)}</span>
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100">
+                                <MoreVertical className="h-3 w-3" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => onEditPayment(item, payment)}>
+                                <Pencil className="mr-2 h-4 w-4"/>
+                                Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onDeletePayment(item.id, payment)} className="text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Eliminar
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                   </li>
                 ))}
               </ul>
