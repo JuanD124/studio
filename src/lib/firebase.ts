@@ -19,7 +19,7 @@ const firebaseConfig = {
 
 // --- Verificación de la configuración de Firebase ---
 // Comprueba si las credenciales están presentes.
-export const isFirebaseConfigInvalid = !firebaseConfig.projectId || !firebaseConfig.apiKey;
+export const isFirebaseConfigInvalid = !firebaseConfig.projectId;
 
 let app: FirebaseApp;
 let db: any = null;
