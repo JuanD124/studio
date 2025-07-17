@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Shirt, Trash2, LogOut, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Shirt, Trash2, LogOut, ShieldAlert, Coins } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -98,6 +98,20 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
                     </SidebarMenuButton>
                     </SidebarMenuItem>
                 </>
+            )}
+             {user?.role === 'empleado' && (
+                <SidebarMenuItem>
+                <SidebarMenuButton
+                    asChild
+                    isActive={pathname === '/reports'}
+                    tooltip="Cierre de Caja"
+                >
+                    <Link href="/reports">
+                    <Coins />
+                    <span>Cierre Caja</span>
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
             )}
           </SidebarMenu>
         </SidebarContent>

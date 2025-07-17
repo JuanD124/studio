@@ -5,14 +5,16 @@ import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, where, getDocs } from 'firebase/firestore';
 import type { ClaimedItem, IncomeEntry, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, DollarSign, PackageCheck, TrendingUp, Package } from 'lucide-react';
+import { AlertTriangle, DollarSign, PackageCheck, TrendingUp, Package, Coins } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { ClaimedItemCard } from './claimed-item-card';
 import { useToast } from '@/hooks/use-toast';
 import { startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear, isWithinInterval } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ReportsView() {
+    const { user } = useAuth();
     const [claimedItems, setClaimedItems] = React.useState<ClaimedItem[]>([]);
     const [incomeEntries, setIncomeEntries] = React.useState<IncomeEntry[]>([]);
     const { toast } = useToast();
@@ -117,9 +119,12 @@ export default function ReportsView() {
 
     const now = new Date();
     const abonosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
+    const entregasHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Entrega');
+    const recaudadoHoy = abonosHoy + entregasHoy;
+
     const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
-    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
     const entregasMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Entrega');
+    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
     
     if (isFirebaseConfigInvalid) {
         return (
@@ -132,6 +137,23 @@ export default function ReportsView() {
             </AlertDescription>
           </Alert>
         );
+    }
+    
+    if (user?.role === 'empleado') {
+        return (
+             <Card className="lg:col-span-4 bg-primary/10 border-primary/40">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-base font-medium">Total a Recaudar Hoy</CardTitle>
+                    <Coins className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-3xl font-bold">{formatCurrency(recaudadoHoy)}</div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Suma de todos los abonos y pagos de entregas del día.
+                    </p>
+                </CardContent>
+            </Card>
+        )
     }
 
     return (
@@ -179,7 +201,7 @@ export default function ReportsView() {
             </section>
             
             <section>
-                <h2 className="text-2xl font-semibold mb-4">Artículos Entregados Recientemente</h2>
+                <h2 className="text-2xl font-semibold mb-4">Artículos Entregados Recientemente (Papelera)</h2>
                 {claimedItems.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {claimedItems.map((item) => (
