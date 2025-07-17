@@ -40,7 +40,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               font-size: 14px;
             }
             .header { text-align: center; margin-bottom: 20px; }
-            .header h1 { margin: 0; font-size: 24px; }
+            .header h1 { margin: 0; font-size: 24px; display: flex; align-items: center; justify-content: center; gap: 8px;}
             .header p { margin: 2px 0; }
             .item-line { display: flex; justify-content: space-between; margin-bottom: 2px; }
             .item-line span:first-child { text-align: left; }
@@ -80,8 +80,11 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         
         <div ref={invoiceRef} className="py-4 font-mono text-sm">
             <div className="header">
-                <h1>Lanzaexpres</h1>
-                <p>Tu solución de lavandería y almacenamiento</p>
+                 <h1>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="w-8 h-8"><path d="M12 2a10 10 0 1 0 10 10c0-4.42-3.58-8-8-8"></path><path d="M12 15a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"></path><path d="M12 18a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"></path><path d="M12 21a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"></path></svg>
+                    <span>Lanzaexpres</span>
+                </h1>
+                <p>El mejor servicio para nuestros héroes</p>
                 <div className="separator"></div>
                 <p><strong>FACTURA SIMPLIFICADA</strong></p>
                 <p>{new Date().toLocaleString('es-CO')}</p>
