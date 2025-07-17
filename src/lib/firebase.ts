@@ -5,18 +5,18 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // --- Configuración de Firebase ---
-// Estas son las credenciales para tu proyecto de Firebase.
+// Lee las credenciales desde las variables de entorno para mayor seguridad en producción.
 const firebaseConfig = {
-  apiKey: "AIzaSyCvKWgTa0b71w9lK8umg_IGMiIF7rR75S0",
-  authDomain: "lavanderiafacil-f86a2.firebaseapp.com",
-  projectId: "lavanderiafacil-f86a2",
-  storageBucket: "lavanderiafacil-f86a2.appspot.com",
-  messagingSenderId: "1079404806714",
-  appId: "1:1079404806714:web:f778bdb6f76fb977c42b03",
-  measurementId: "G-HE37H8GCM3"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // --- Verificación de la configuración de Firebase ---
+// Comprueba si las variables de entorno están cargadas.
 export const isFirebaseConfigInvalid = !firebaseConfig.projectId || !firebaseConfig.apiKey;
 
 let app: FirebaseApp;
