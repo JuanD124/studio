@@ -6,8 +6,8 @@ export const initialLaundryItems: LaundryItem[] = [];
 export const initialStoredItems: StoredItem[] = [];
 
 export const COLORES = [
-    "Negro", "Blanco", "Gris", "Rojo", "Azul", "Verde", "Amarillo", "Naranja",
-    "Morado", "Rosado", "Café", "Beige", "Vinotinto", "Verde Oliva", "Azul Oscuro"
+     "Blanco", "Azul", "Verde", "Amarillo", "Naranja",
+    "Morado", "Rosado"
 ];
 
 export const RANGOS = {

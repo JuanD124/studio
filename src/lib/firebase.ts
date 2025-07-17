@@ -1,6 +1,7 @@
 'use client';
 
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // CRÍTICO: Reemplaza este objeto con la configuración de tu propio proyecto de Firebase.
@@ -21,23 +22,27 @@ const firebaseConfig = {
 // Esta variable nos dirá si la configuración parece ser la de ejemplo.
 export const isFirebaseConfigInvalid = firebaseConfig.projectId === "TU_ID_DE_PROYECTO" || !firebaseConfig.apiKey || firebaseConfig.apiKey.includes("REEMPLAZAME");
 
+let app: FirebaseApp;
 let db;
+let auth;
 
 // Solo inicializamos Firebase si la configuración es válida.
 if (!isFirebaseConfigInvalid) {
   try {
-    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     db = getFirestore(app);
+    auth = getAuth(app);
   } catch (error) {
     console.error("Error al inicializar Firebase:", error);
     db = null;
+    auth = null;
   }
 } else {
   // Si la configuración no es válida, `db` será `null`.
   // Los componentes mostrarán una advertencia.
   console.warn("La configuración de Firebase en src/lib/firebase.ts no es válida. Por favor, introduce tus credenciales.");
   db = null;
+  auth = null;
 }
 
-
-export { db };
+export { db, auth };
