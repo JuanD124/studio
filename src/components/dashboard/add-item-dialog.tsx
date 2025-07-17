@@ -299,7 +299,8 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
                 <div className="w-24">
                   <FormLabel className="text-xs text-muted-foreground">Cantidad</FormLabel>
                   <Input
-                      type="number"
+                      type="tel"
+                      pattern="[0-9]*"
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
                       min="1"
