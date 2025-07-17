@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History } from 'lucide-react';
+import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -38,9 +38,26 @@ const PaymentHistory = ({ payments }: { payments: Payment[] }) => (
     </div>
 );
 
+const LaundryItemsList = ({ items }: { items: StoredItem['laundryItems'] }) => (
+  <div className="space-y-1 text-xs">
+      <div className="flex items-center gap-2 font-medium">
+          <Shirt className="w-3.5 h-3.5" />
+          <span>Servicios de Lavandería</span>
+      </div>
+      {items.map((item, index) => (
+          <div key={index} className="flex justify-between items-center pl-4">
+              <span>{item.quantity} &times; {item.name}</span>
+              <Badge variant="outline">{formatCurrency(item.price * item.quantity)}</Badge>
+          </div>
+      ))}
+  </div>
+);
+
+
 function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment }: StoredItemCardProps) {
   
   const payments = item.payments || [];
+  const laundryItems = item.laundryItems || [];
 
   return (
     <Card className="flex flex-col transition-all hover:shadow-lg">
@@ -91,10 +108,11 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
             <span>Duración: {getStorageDuration(item.storageDate)}</span>
           </div>
         </div>
-
+        
+        {laundryItems.length > 0 && <LaundryItemsList items={laundryItems} />}
         {payments.length > 0 && <PaymentHistory payments={payments} />}
 
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2 text-sm pt-2">
           <Separator />
            <div className="flex justify-between font-semibold text-base pt-2">
             <span>Total a Pagar:</span>
