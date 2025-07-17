@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 // You can change these credentials as needed.
 const USERS = {
   gerente: { password: 'TIOTRABAJE', role: 'gerente' },
-  empleado: { password: 'empleado123', role: 'empleado' },
+  empleado: { password: '1234', role: 'empleado' },
 };
 // ---
 
