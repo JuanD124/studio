@@ -10,21 +10,21 @@ import { getFirestore } from "firebase/firestore";
 // 3. En la sección "Tus apps", si no tienes una app web, crea una.
 // 4. Firebase te dará un objeto `firebaseConfig`. Copia los valores y pégalos aquí.
 const firebaseConfig = {
-  apiKey: "AIzaSyDEdS6Wl-tHMn29ekftc5jbL7Sa4TaXGIU",
-  authDomain: "lavanderiafacil.firebaseapp.com",
-  projectId: "lavanderiafacil",
-  storageBucket: "lavanderiafacil.firebasestorage.app",
-  messagingSenderId: "958579500745",
-  appId: "1:958579500745:web:87ac53655cb9cbb8c54f18"
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_AUTH_DOMAIN",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_STORAGE_BUCKET",
+  messagingSenderId: "TU_MESSAGING_SENDER_ID",
+  appId: "TU_APP_ID"
 };
 
 // --- Verificación de la configuración de Firebase ---
 // Esta variable nos dirá si la configuración parece ser la de ejemplo.
-export const isFirebaseConfigInvalid = firebaseConfig.projectId === "TU_ID_DE_PROYECTO" || !firebaseConfig.apiKey || firebaseConfig.apiKey.includes("REEMPLAZAME");
+export const isFirebaseConfigInvalid = firebaseConfig.projectId === "TU_PROJECT_ID" || !firebaseConfig.apiKey;
 
 let app: FirebaseApp;
-let db;
-let auth;
+let db: any = null;
+let auth: any = null;
 
 // Solo inicializamos Firebase si la configuración es válida.
 if (!isFirebaseConfigInvalid) {
@@ -41,8 +41,6 @@ if (!isFirebaseConfigInvalid) {
   // Si la configuración no es válida, `db` será `null`.
   // Los componentes mostrarán una advertencia.
   console.warn("La configuración de Firebase en src/lib/firebase.ts no es válida. Por favor, introduce tus credenciales.");
-  db = null;
-  auth = null;
 }
 
 export { db, auth };
