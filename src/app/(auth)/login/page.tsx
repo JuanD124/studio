@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,8 +13,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Por favor, introduce un correo electrónico válido.' }),
-  password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' }),
+  username: z.string().min(1, { message: 'El usuario es requerido.' }),
+  password: z.string().min(1, { message: 'La contraseña es requerida.' }),
 });
 
 type LoginFormValues = z.infer<typeof formSchema>;
@@ -29,7 +28,7 @@ export default function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
     },
   });
@@ -37,16 +36,20 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      await login(data.email, data.password);
-      toast({
-        title: "¡Bienvenido de nuevo!",
-        description: "Has iniciado sesión correctamente.",
-      });
-      router.push('/dashboard');
+      const loginSuccess = await login(data.username, data.password);
+      if (loginSuccess) {
+        toast({
+          title: "¡Bienvenido de nuevo!",
+          description: "Has iniciado sesión correctamente.",
+        });
+        router.push('/dashboard');
+      } else {
+        throw new Error("Credenciales inválidas");
+      }
     } catch (error: any) {
       toast({
         title: "Error al iniciar sesión",
-        description: "Las credenciales son incorrectas. Por favor, inténtalo de nuevo.",
+        description: "El usuario o la contraseña son incorrectos.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -57,19 +60,19 @@ export default function LoginPage() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-headline">Iniciar Sesión</CardTitle>
-        <CardDescription>Introduce tus credenciales para acceder a tu panel.</CardDescription>
+        <CardDescription>Introduce tu usuario y contraseña para acceder.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="email"
+              name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Correo Electrónico</FormLabel>
+                  <FormLabel>Usuario</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="tu@correo.com" {...field} disabled={isLoading} />
+                    <Input placeholder="gerente" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -93,12 +96,6 @@ export default function LoginPage() {
             </Button>
           </form>
         </Form>
-        <div className="mt-4 text-center text-sm">
-          ¿No tienes una cuenta?{' '}
-          <Link href="/register" className="underline">
-            Regístrate
-          </Link>
-        </div>
       </CardContent>
     </Card>
   );

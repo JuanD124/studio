@@ -1,12 +1,25 @@
-import PriceList from '@/components/laundry-items/price-list';
-import type { Metadata } from 'next';
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Lista de Precios - Lanzaexpres',
-  description: 'Gestiona tus artículos de lavandería y precios.',
-};
+import PriceList from '@/components/laundry-items/price-list';
+import { useAuth } from '@/context/AuthContext';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldAlert } from 'lucide-react';
 
 export default function LaundryItemsPage() {
+  const { user } = useAuth();
+  
+  if (user?.role !== 'gerente') {
+    return (
+        <Alert variant="destructive">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Acceso Denegado</AlertTitle>
+            <AlertDescription>
+                No tienes permiso para ver esta página. Por favor, contacta a un administrador.
+            </AlertDescription>
+        </Alert>
+    )
+  }
+
   return (
     <div className="container mx-auto">
       <div className="mb-6">

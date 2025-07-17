@@ -19,7 +19,7 @@ export default function AuthLayout({
     }
   }, [user, loading, router]);
 
-  if (loading || user) {
+  if (loading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
         <div className="w-full max-w-md space-y-4">
@@ -29,6 +29,12 @@ export default function AuthLayout({
         </div>
       </main>
     );
+  }
+
+  // If user is already logged in, useEffect will redirect, so we can show a loader
+  // or nothing. If not logged in, show children.
+  if (user) {
+    return null;
   }
 
   return (

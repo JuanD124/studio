@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Shirt, Trash2, LogOut } from 'lucide-react';
+import { LayoutDashboard, Shirt, Trash2, LogOut, ShieldAlert } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -20,10 +20,11 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 function MainLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -48,9 +49,12 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-            <div className="flex items-center gap-2 p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-primary"><path d="M12 2a10 10 0 1 0 10 10c0-4.42-3.58-8-8-8"/><path d="M12 15a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"/><path d="M12 18a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"/><path d="M12 21a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/></svg>
-                <h1 className="text-xl font-headline font-semibold">Lanzaexpres</h1>
+            <div className="flex items-center justify-between p-2">
+                <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-primary"><path d="M12 2a10 10 0 1 0 10 10c0-4.42-3.58-8-8-8"/><path d="M12 15a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"/><path d="M12 18a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"/><path d="M12 21a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/></svg>
+                    <h1 className="text-xl font-headline font-semibold">Lanzaexpres</h1>
+                </div>
+                {user && <Badge variant={user.role === 'gerente' ? "destructive" : "secondary"}>{user.role}</Badge>}
             </div>
         </SidebarHeader>
         <SidebarContent>
@@ -67,30 +71,34 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === '/laundry-items'}
-                tooltip="Lista de Precios"
-              >
-                <Link href="/laundry-items">
-                  <Shirt />
-                  <span>Precios</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === '/reports'}
-                tooltip="Reportes y Papelera"
-              >
-                <Link href="/reports">
-                  <Trash2 />
-                  <span>Papelera</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+             {user?.role === 'gerente' && (
+                <>
+                    <SidebarMenuItem>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname === '/laundry-items'}
+                        tooltip="Lista de Precios"
+                    >
+                        <Link href="/laundry-items">
+                        <Shirt />
+                        <span>Precios</span>
+                        </Link>
+                    </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname === '/reports'}
+                        tooltip="Reportes y Papelera"
+                    >
+                        <Link href="/reports">
+                        <Trash2 />
+                        <span>Papelera</span>
+                        </Link>
+                    </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </>
+            )}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
