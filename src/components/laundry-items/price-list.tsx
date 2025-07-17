@@ -32,6 +32,8 @@ export default function PriceList() {
   const { toast } = useToast();
 
   React.useEffect(() => {
+    if (!db) return; // Wait for firebase to initialize
+
     const q = query(collection(db, 'laundryItems'), orderBy('name'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const itemsData: LaundryItem[] = [];
@@ -54,6 +56,7 @@ export default function PriceList() {
   };
 
   const handleSaveItem = async (itemData: Omit<LaundryItem, 'id'>, id?: string) => {
+    if (!db) return;
     try {
         if (id) {
           const itemRef = doc(db, 'laundryItems', id);
@@ -70,6 +73,7 @@ export default function PriceList() {
   };
 
   const handleDeleteItem = async (id: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, 'laundryItems', id));
         toast({ title: "Éxito", description: "Artículo eliminado.", variant: "destructive" });
