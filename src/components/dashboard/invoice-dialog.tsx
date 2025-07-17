@@ -51,6 +51,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             .total { display: flex; justify-content: space-between; }
             .total.grand-total { font-weight: bold; font-size: 18px; margin-top: 5px; }
             .footer { text-align: center; margin-top: 20px; font-size: 12px; }
+            .payment-summary { margin-top: 10px; }
           </style>
         `);
         printWindow.document.write('</head><body>');
@@ -64,6 +65,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
   };
 
   if (!item) return null;
+
+  const totalPaid = item.payments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -122,6 +125,35 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               <div className="total grand-total">
                   <span>TOTAL A PAGAR:</span>
                   <span>{formatCurrency(item.totalPrice)}</span>
+              </div>
+            </div>
+
+            {item.payments && item.payments.length > 0 && (
+              <div className="payment-summary">
+                <div className="separator"></div>
+                <div className="item-line">
+                    <span><strong>Pagos/Abonos</strong></span>
+                    <span><strong>Valor</strong></span>
+                </div>
+                <div className="separator"></div>
+                {item.payments.map((payment, index) => (
+                  <div key={index} className="item-line ml-2">
+                      <span>Abono ({new Date(payment.date).toLocaleDateString('es-CO')})</span>
+                      <span>{formatCurrency(payment.amount)}</span>
+                  </div>
+                ))}
+                <div className="separator"></div>
+              </div>
+            )}
+
+            <div className="total-section payment-summary">
+              <div className="total">
+                  <span>Total Abonado:</span>
+                  <span>{formatCurrency(totalPaid)}</span>
+              </div>
+              <div className="total grand-total">
+                  <span>SALDO PENDIENTE:</span>
+                  <span>{formatCurrency(item.remainingBalance)}</span>
               </div>
             </div>
 
