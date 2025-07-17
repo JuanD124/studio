@@ -99,10 +99,10 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
   }, [itemToEdit, isOpen, form]);
 
   const [selectedService, setSelectedService] = React.useState('');
-  const [quantity, setQuantity] = React.useState(1);
+  const [quantity, setQuantity] = React.useState(0);
 
   const addLaundryItem = () => {
-    if (!selectedService) return;
+    if (!selectedService || quantity <= 0) return;
     const service = laundryServices.find((s) => s.id === selectedService);
     if (service) {
       append({
@@ -112,7 +112,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
         quantity: quantity,
       });
       setSelectedService('');
-      setQuantity(1);
+      setQuantity(0);
     }
   };
 
@@ -301,12 +301,13 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
                   <Input
                       type="tel"
                       pattern="[0-9]*"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                      min="1"
+                      value={quantity === 0 ? '' : quantity}
+                      onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 0)}
+                      placeholder="0"
+                      min="0"
                   />
                 </div>
-                <Button type="button" variant="outline" onClick={addLaundryItem}>Añadir</Button>
+                <Button type="button" variant="outline" onClick={addLaundryItem} disabled={quantity <= 0 || !selectedService}>Añadir</Button>
               </div>
             </div>
 
