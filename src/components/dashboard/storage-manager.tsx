@@ -13,6 +13,7 @@ import { StoredItemCard } from './stored-item-card';
 import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { useAuth } from '@/context/AuthContext';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -25,6 +26,7 @@ export default function StorageManager() {
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
   const [paymentItem, setPaymentItem] = React.useState<StoredItem | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   React.useEffect(() => {
     if (!db) return;
@@ -61,8 +63,8 @@ export default function StorageManager() {
     return () => unsubscribe();
   }, []);
 
-  const handleSaveItem = React.useCallback(async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance'>, id?: string) => {
-    if (!db) return;
+  const handleSaveItem = React.useCallback(async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance' | 'editedBy'>, id?: string) => {
+    if (!db || !user) return;
     try {
       if (id) {
         // When editing, we need to preserve payments and recalculate remaining balance
@@ -74,6 +76,10 @@ export default function StorageManager() {
           ...itemData,
           payments: existingItem.payments || [],
           remainingBalance: itemData.totalPrice - totalPaid,
+          editedBy: {
+            username: user.username,
+            date: new Date().toISOString(),
+          }
         };
         const itemRef = doc(db, 'storedItems', id);
         await updateDoc(itemRef, updatedData);
@@ -121,7 +127,7 @@ export default function StorageManager() {
         variant: "destructive",
       });
     }
-  }, [items, toast]);
+  }, [items, toast, user]);
 
   const handleSavePayment = React.useCallback(async (itemId: string, amount: number) => {
     if (!db) return;

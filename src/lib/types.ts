@@ -29,6 +29,10 @@ export interface StoredItem {
   totalPrice: number;
   payments: Payment[];
   remainingBalance: number;
+  editedBy?: {
+    username: string;
+    date: string; // ISO string format
+  };
 }
 
 // Represents an item that has been claimed/delivered

@@ -13,6 +13,8 @@ import {
 import type { StoredItem } from '@/lib/types';
 import { Printer } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface InvoiceDialogProps {
   isOpen: boolean;
@@ -52,6 +54,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             .total.grand-total { font-weight: bold; font-size: 18px; margin-top: 5px; }
             .footer { text-align: center; margin-top: 20px; font-size: 12px; }
             .payment-summary { margin-top: 10px; }
+            .edit-info { text-align: center; font-style: italic; font-size: 12px; margin-top: 10px; color: #555; }
           </style>
         `);
         printWindow.document.write('</head><body>');
@@ -81,7 +84,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         <div ref={invoiceRef} className="py-4 font-mono text-sm">
             <div className="header">
                  <h1>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="w-8 h-8"><path d="M12 2a10 10 0 1 0 10 10c0-4.42-3.58-8-8-8"></path><path d="M12 15a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"></path><path d="M12 18a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"></path><path d="M12 21a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8"><path d="M12 2a10 10 0 1 0 10 10c0-4.42-3.58-8-8-8"></path><path d="M12 15a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"></path><path d="M12 18a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"></path><path d="M12 21a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"></path></svg>
                     <span>Lanzaexpres</span>
                 </h1>
                 <p>El mejor servicio para nuestros héroes</p>
@@ -97,6 +100,13 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 <p><strong>Fecha Ingreso:</strong> {new Date(item.storageDate).toLocaleDateString('es-CO')}</p>
             </div>
             
+            {item.editedBy && (
+              <div className="edit-info">
+                <div className="separator"></div>
+                <p>Última Edición por: {item.editedBy.username} el {format(new Date(item.editedBy.date), 'dd/MM/yyyy HH:mm', { locale: es })}</p>
+              </div>
+            )}
+
             <div className="separator"></div>
 
             <div className="item-line">
