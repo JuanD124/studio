@@ -14,6 +14,8 @@ import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
+import { DashboardSummary } from './dashboard-summary';
+import { Separator } from '../ui/separator';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -274,41 +276,50 @@ export default function StorageManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por ID, nombre, cédula, o descripción..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {user?.role === 'gerente' && <DashboardSummary items={items} />}
+
+      <div className="mt-8">
+        <div className="mb-6">
+            <h1 className="text-3xl font-bold font-headline">Panel de Almacenamiento</h1>
+            <p className="text-muted-foreground">Visualiza y gestiona todos los artículos almacenados.</p>
         </div>
-        <Button onClick={handleOpenAddDialog} className="flex items-center gap-2">
-          <PlusCircle className="h-5 w-5" />
-          <span>Almacenar Nuevo Artículo</span>
-        </Button>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+                placeholder="Buscar por ID, nombre, cédula, o descripción..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            </div>
+            <Button onClick={handleOpenAddDialog} className="flex items-center gap-2">
+            <PlusCircle className="h-5 w-5" />
+            <span>Almacenar Nuevo Artículo</span>
+            </Button>
+        </div>
+
+        {filteredItems.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-6">
+            {filteredItems.map((item) => (
+                <StoredItemCard 
+                key={item.id}
+                item={item}
+                onClaim={handleClaimItem}
+                onOpenInvoice={handleOpenInvoice}
+                onEdit={handleOpenEditDialog}
+                onAddPayment={handleOpenPaymentDialog}
+                />
+            ))}
+            </div>
+        ) : (
+            <div className="text-center py-16 border-2 border-dashed rounded-lg mt-6">
+            <p className="text-muted-foreground">No se encontraron artículos almacenados.</p>
+            <p className="text-sm text-muted-foreground">Intenta ajustar tu búsqueda o añade un nuevo artículo.</p>
+            </div>
+        )}
       </div>
 
-      {filteredItems.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredItems.map((item) => (
-            <StoredItemCard 
-              key={item.id}
-              item={item}
-              onClaim={handleClaimItem}
-              onOpenInvoice={handleOpenInvoice}
-              onEdit={handleOpenEditDialog}
-              onAddPayment={handleOpenPaymentDialog}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">No se encontraron artículos almacenados.</p>
-          <p className="text-sm text-muted-foreground">Intenta ajustar tu búsqueda o añade un nuevo artículo.</p>
-        </div>
-      )}
 
       <AddItemDialog
         isOpen={isAddDialogOpen}
