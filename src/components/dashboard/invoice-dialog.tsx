@@ -42,7 +42,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               font-size: 14px;
             }
             .header { text-align: center; margin-bottom: 20px; }
-            .header h1 { margin: 0; font-size: 24px; display: flex; align-items: center; justify-content: center; gap: 8px;}
+            .header h1 { margin: 0; font-size: 24px; }
             .header p { margin: 2px 0; }
             .item-line { display: flex; justify-content: space-between; margin-bottom: 2px; }
             .item-line span:first-child { text-align: left; }
@@ -58,7 +58,14 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           </style>
         `);
         printWindow.document.write('</head><body>');
-        printWindow.document.write(printContent.innerHTML);
+        // We create a clone of the content to modify it for printing
+        const contentClone = printContent.cloneNode(true) as HTMLDivElement;
+        // Find and remove the SVG logo from the clone
+        const logoSvg = contentClone.querySelector('.header h1 svg');
+        if (logoSvg) {
+          logoSvg.remove();
+        }
+        printWindow.document.write(contentClone.innerHTML);
         printWindow.document.write('</body></html>');
         printWindow.document.close();
         printWindow.print();
@@ -92,7 +99,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="w-8 h-8"
+                      className="w-8 h-8 hidden"
                     >
                       <path d="M12 2a10 10 0 0 0-10 10c0 5.52 4.48 10 10 10s10-4.48 10-10A10 10 0 0 0 12 2Z"/>
                       <path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z"/>
