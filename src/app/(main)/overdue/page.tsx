@@ -7,7 +7,7 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import type { StoredItem } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Package, ShieldAlert, Search, DollarSign } from 'lucide-react';
+import { Package, ShieldAlert, Search, DollarSign, ArrowDownWideNarrow, ArrowUpWideNarrow } from 'lucide-react';
 import { differenceInMonths } from 'date-fns';
 import { OverdueList } from '@/components/overdue/overdue-list';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,9 +15,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 
 type FilterType = 'all' | 'overdue';
+type SortOrder = 'asc' | 'desc';
 
 export default function OverduePage() {
   const { user } = useAuth();
@@ -26,11 +28,12 @@ export default function OverduePage() {
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [activeFilter, setActiveFilter] = React.useState<FilterType>('all');
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
 
   React.useEffect(() => {
     if (!db) return;
     
-    const q = query(collection(db, 'storedItems'), orderBy('storageDate', 'asc'));
+    const q = query(collection(db, 'storedItems'), orderBy('storageDate', sortOrder));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const items: StoredItem[] = [];
       querySnapshot.forEach((doc) => {
@@ -41,7 +44,7 @@ export default function OverduePage() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [sortOrder]);
 
   React.useEffect(() => {
     let newFilteredItems = allItems;
@@ -124,18 +127,39 @@ export default function OverduePage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-2 flex-wrap'>
+            <span className='text-sm font-medium'>Filtrar:</span>
             <Button 
-                variant={activeFilter === 'all' ? 'default' : 'outline'}
+                variant={activeFilter === 'all' ? 'secondary' : 'outline'}
                 onClick={() => setActiveFilter('all')}
+                size="sm"
             >
                 Todos
             </Button>
             <Button 
                 variant={activeFilter === 'overdue' ? 'destructive' : 'outline'}
                 onClick={() => setActiveFilter('overdue')}
+                size="sm"
             >
                 Más de 6 meses
+            </Button>
+            <Separator orientation='vertical' className="h-6 mx-2 hidden md:block" />
+            <span className='text-sm font-medium'>Ordenar:</span>
+            <Button 
+                variant={sortOrder === 'desc' ? 'secondary' : 'outline'}
+                onClick={() => setSortOrder('desc')}
+                size="sm"
+            >
+                <ArrowDownWideNarrow className='mr-2 h-4 w-4' />
+                Más Reciente
+            </Button>
+            <Button 
+                variant={sortOrder === 'asc' ? 'secondary' : 'outline'}
+                onClick={() => setSortOrder('asc')}
+                size="sm"
+            >
+                <ArrowUpWideNarrow className='mr-2 h-4 w-4' />
+                Más Antiguo
             </Button>
         </div>
       </div>
