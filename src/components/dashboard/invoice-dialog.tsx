@@ -11,7 +11,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import type { StoredItem } from '@/lib/types';
-import { Printer, History } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -94,12 +94,10 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                       strokeLinejoin="round"
                       className="w-8 h-8"
                     >
-                      <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                      <path d="M12 12a5 5 0 0 1 5 5" />
-                      <path d="M12 12a5 5 0 0 0-5 5" />
-                      <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                      <line x1="16" y1="6" x2="16.01" y2="6" />
-                      <line x1="19" y1="8" x2="19.01" y2="8" />
+                      <path d="M12 2a10 10 0 0 0-10 10c0 5.52 4.48 10 10 10s10-4.48 10-10A10 10 0 0 0 12 2Z"/>
+                      <path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z"/>
+                      <path d="M12 12v4"/>
+                      <path d="M12 8h.01"/>
                     </svg>
                     <span>Lanzaexpres</span>
                 </h1>
@@ -119,7 +117,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             {item.editedBy && (
               <div className="edit-info">
                 <div className="separator"></div>
-                <p>Última Edición por: {item.editedBy.username} el {format(new Date(item.editedBy.date), 'dd/MM/yyyy HH:mm', { locale: es })}</p>
+                <p>Últ. Edición: {item.editedBy.username} {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}</p>
               </div>
             )}
 
