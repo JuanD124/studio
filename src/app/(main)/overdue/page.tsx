@@ -65,7 +65,7 @@ export default function OverduePage() {
   }, [allItems, searchTerm, activeFilter]);
 
   const totalInventoryValue = React.useMemo(() => {
-    return allItems.reduce((total, item) => total + item.totalPrice, 0);
+    return allItems.reduce((total, item) => total + item.remainingBalance, 0);
   }, [allItems]);
 
 
@@ -108,7 +108,7 @@ export default function OverduePage() {
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(totalInventoryValue)}</div>
-                <p className="text-xs text-muted-foreground">Suma del precio total de cada artículo, sin descontar abonos.</p>
+                <p className="text-xs text-muted-foreground">Suma de todos los saldos pendientes de los artículos.</p>
             </CardContent>
         </Card>
       </div>
