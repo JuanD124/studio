@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface StoredItemCardProps {
   item: StoredItem;
@@ -107,6 +108,14 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
             <Clock className="mr-2 h-4 w-4" />
             <span>Duración: {getStorageDuration(item.storageDate)}</span>
           </div>
+          {item.editedBy && (
+            <div className="flex items-center text-xs text-amber-600 italic">
+              <History className="mr-2 h-3 w-3" />
+              <span>
+                Editado por {item.editedBy.username} el {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}
+              </span>
+            </div>
+          )}
         </div>
         
         {laundryItems.length > 0 && <LaundryItemsList items={laundryItems} />}
