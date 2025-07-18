@@ -25,13 +25,13 @@ export default function ReportsView() {
         const thirtyDaysAgo = subDays(new Date(), 30);
         const claimedQuery = query(
             collection(db, "claimedItems"), 
-            where("claimedDate", ">=", thirtyDaysAgo.toISOString()),
             orderBy("claimedDate", "desc")
         );
 
         const unsubscribeClaimed = onSnapshot(claimedQuery, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as ClaimedItem[];
-            setClaimedItems(items);
+            const recentItems = items.filter(item => new Date(item.claimedDate) >= thirtyDaysAgo);
+            setClaimedItems(recentItems);
         });
         
         const incomeQuery = query(collection(db, "incomeEntries"), orderBy("date", "desc"));
