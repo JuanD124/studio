@@ -91,7 +91,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             </div>
             
             <div className="details">
-                <p><strong>ID Artículo:</strong> {item.id.substring(0, 8)}</p>
+                <p><strong>ID Artículo:</strong> {item.id}</p>
                 <p><strong>Cliente:</strong> {item.customerName}</p>
                 <p><strong>Rango:</strong> {item.rank}</p>
                 <p><strong>Fecha Ingreso:</strong> {new Date(item.storageDate).toLocaleDateString('es-CO')}</p>

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction, getDoc, setDoc } from 'firebase/firestore';
 import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ export default function StorageManager() {
   React.useEffect(() => {
     if (!db) return;
 
-    const q = query(collection(db, 'storedItems'), orderBy('storageDate', 'desc'));
+    const q = query(collection(db, 'storedItems'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const itemsData: StoredItem[] = [];
       querySnapshot.forEach((doc) => {
@@ -40,6 +40,8 @@ export default function StorageManager() {
           storageDate: data.storageDate,
         } as StoredItem);
       });
+      // Sort by numeric ID descending
+      itemsData.sort((a, b) => Number(b.id) - Number(a.id));
       setItems(itemsData);
     });
     return () => unsubscribe();
@@ -80,14 +82,32 @@ export default function StorageManager() {
           description: "El artículo ha sido actualizado correctamente.",
         });
       } else {
-        // When creating a new item
-        const newItemData: Omit<StoredItem, 'id'> = {
-          ...itemData,
-          storageDate: new Date().toISOString(),
-          payments: [],
-          remainingBalance: itemData.totalPrice,
-        };
-        await addDoc(collection(db, 'storedItems'), newItemData);
+        // When creating a new item with a sequential ID
+        await runTransaction(db, async (transaction) => {
+          const counterRef = doc(db, 'counters', 'storedItems');
+          const counterDoc = await transaction.get(counterRef);
+
+          let newId = 1;
+          if (counterDoc.exists()) {
+            newId = counterDoc.data().lastId + 1;
+          } else {
+            // If counter doesn't exist, we will create it.
+            // No need to set it here, we'll set it in the transaction.
+          }
+
+          const newItemRef = doc(db, 'storedItems', newId.toString());
+          
+          const newItemData: Omit<StoredItem, 'id'> = {
+            ...itemData,
+            storageDate: new Date().toISOString(),
+            payments: [],
+            remainingBalance: itemData.totalPrice,
+          };
+
+          transaction.set(newItemRef, newItemData);
+          transaction.set(counterRef, { lastId: newId }, { merge: !counterDoc.exists() });
+        });
+        
         toast({
           title: "Éxito",
           description: "El artículo ha sido almacenado correctamente.",
@@ -228,7 +248,7 @@ export default function StorageManager() {
     items.filter(
       (item) =>
         item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.customerId && item.customerId.toLowerCase().includes(searchTerm.toLowerCase())) ||
         item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
   ), [items, searchTerm]);

@@ -22,7 +22,7 @@ function ClaimedItemCardComponent({ item, onRestore, onDelete }: ClaimedItemCard
       <CardHeader className="pb-4">
         <CardTitle className="font-headline text-lg flex items-center justify-between">
           <span>{item.customerName}</span>
-          <Badge variant="outline">ID: {item.id.substring(0,6)}</Badge>
+          <Badge variant="outline">ID: {item.id}</Badge>
         </CardTitle>
         <CardDescription className="flex items-center gap-2 pt-1 text-sm">
           <Package className="w-4 h-4" />

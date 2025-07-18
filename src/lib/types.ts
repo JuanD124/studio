@@ -10,7 +10,7 @@ export interface Payment {
 }
 
 export interface StoredItem {
-  id: string; // Firestore document ID
+  id: string; // Firestore document ID, now will be a sequential number as string
   customerName: string;
   customerId?: string;
   rank: string;

@@ -81,7 +81,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
-        <Badge variant="secondary" className="w-fit">ID: {item.id.substring(0,6)}</Badge>
+        <Badge variant="secondary" className="w-fit">ID: {item.id}</Badge>
         <CardDescription className="flex items-center gap-2 pt-2">
           <Package className="w-4 h-4" />
           <span>{item.itemsDescription}</span>
