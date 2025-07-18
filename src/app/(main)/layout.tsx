@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Shirt, Trash2, LogOut, ShieldAlert, Coins, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, Shirt, Trash2, LogOut, Coins, Archive } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -61,10 +61,11 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
                         strokeLinejoin="round"
                         className="w-8 h-8 text-primary"
                       >
-                        <path d="M12 2a10 10 0 0 0-10 10c0 5.52 4.48 10 10 10s10-4.48 10-10A10 10 0 0 0 12 2Z"/>
-                        <path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z"/>
-                        <path d="M12 12v4"/>
-                        <path d="M12 8h.01"/>
+                       <path d="M12 2a10 10 0 0 0-10 10c0 5.52 4.48 10 10 10s10-4.48 10-10A10 10 0 0 0 12 2Z" />
+                       <path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z" />
+                       <circle cx="12" cy="12" r="3" />
+                       <path d="M18 18.5a9 9 0 0 1-12 0" />
+                       <path d="M6 6.5a9 9 0 0 1 12 0" />
                     </svg>
                     <h1 className="text-xl font-headline font-semibold">LanzaExpress</h1>
                 </div>
@@ -77,11 +78,11 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
               <SidebarMenuButton
                 asChild
                 isActive={pathname === '/dashboard'}
-                tooltip="Panel de Almacenamiento"
+                tooltip="Facturación"
               >
                 <Link href="/dashboard">
                   <LayoutDashboard />
-                  <span>Panel</span>
+                  <span>Facturación</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -103,11 +104,11 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
                         <SidebarMenuButton
                             asChild
                             isActive={pathname === '/overdue'}
-                            tooltip="Artículos Vencidos"
+                            tooltip="Inventario"
                         >
                             <Link href="/overdue">
-                            <AlertTriangle />
-                            <span>Vencidos</span>
+                            <Archive />
+                            <span>Inventario</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
