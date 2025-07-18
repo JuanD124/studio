@@ -9,7 +9,7 @@ import { AlertTriangle, DollarSign, PackageCheck, TrendingUp, Package, Coins } f
 import { formatCurrency } from '@/lib/utils';
 import { ClaimedItemCard } from './claimed-item-card';
 import { useToast } from '@/hooks/use-toast';
-import { startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear, isWithinInterval } from 'date-fns';
+import { startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear, isWithinInterval, subDays } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
 
@@ -22,7 +22,13 @@ export default function ReportsView() {
     React.useEffect(() => {
         if (!db) return;
 
-        const claimedQuery = query(collection(db, "claimedItems"), orderBy("claimedDate", "desc"));
+        const thirtyDaysAgo = subDays(new Date(), 30);
+        const claimedQuery = query(
+            collection(db, "claimedItems"), 
+            where("claimedDate", ">=", thirtyDaysAgo.toISOString()),
+            orderBy("claimedDate", "desc")
+        );
+
         const unsubscribeClaimed = onSnapshot(claimedQuery, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as ClaimedItem[];
             setClaimedItems(items);
@@ -216,7 +222,7 @@ export default function ReportsView() {
                 ) : (
                     <div className="text-center py-16 border-2 border-dashed rounded-lg">
                         <p className="text-muted-foreground">La papelera está vacía.</p>
-                        <p className="text-sm text-muted-foreground">Los artículos marcados como "entregados" aparecerán aquí.</p>
+                        <p className="text-sm text-muted-foreground">Los artículos entregados en los últimos 30 días aparecerán aquí.</p>
                     </div>
                 )}
             </section>
