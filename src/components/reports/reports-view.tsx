@@ -207,7 +207,7 @@ export default function ReportsView() {
     return (
         <div className="space-y-8">
             <section>
-                <h2 className="text-2xl font-semibold mb-4">Resumen de Ingresos</h2>
+                <h2 className="text-2xl font-semibold mb-4">Resumen de Ingresos (Abonos)</h2>
                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Card className="lg:col-span-1 bg-primary/10 border-primary/40">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -223,13 +223,13 @@ export default function ReportsView() {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Saldos Liquidados (Hoy)</CardTitle>
+                            <CardTitle className="text-sm font-medium">Pagos Recibidos por Entregas (Hoy)</CardTitle>
                             <PackageCheck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{formatCurrency(entregasHoy)}</div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Pagos recibidos al entregar hoy.
+                                Suma de saldos pendientes liquidados al entregar artículos hoy.
                             </p>
                         </CardContent>
                     </Card>
