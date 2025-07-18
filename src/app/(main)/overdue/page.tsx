@@ -7,12 +7,15 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import type { StoredItem } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldAlert, Search } from 'lucide-react';
+import { Package, ShieldAlert, Search, DollarSign } from 'lucide-react';
 import { differenceInMonths } from 'date-fns';
 import { OverdueList } from '@/components/overdue/overdue-list';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/utils';
+
 
 type FilterType = 'all' | 'overdue';
 
@@ -61,6 +64,10 @@ export default function OverduePage() {
 
   }, [allItems, searchTerm, activeFilter]);
 
+  const totalInventoryValue = React.useMemo(() => {
+    return allItems.reduce((total, item) => total + item.totalPrice, 0);
+  }, [allItems]);
+
 
   if (user?.role !== 'gerente') {
     return (
@@ -82,6 +89,30 @@ export default function OverduePage() {
           Revisa todos los artículos, con filtros para controlar los más antiguos.
         </p>
       </div>
+
+      <div className="grid gap-4 md:grid-cols-2 mb-6">
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Artículos Almacenados</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{allItems.length}</div>
+                <p className="text-xs text-muted-foreground">Cantidad actual en inventario.</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Valor Total del Inventario</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(totalInventoryValue)}</div>
+                <p className="text-xs text-muted-foreground">Suma del precio total de cada artículo.</p>
+            </CardContent>
+        </Card>
+      </div>
+
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6 p-4 border rounded-lg bg-card">
         <div className="relative flex-1">
