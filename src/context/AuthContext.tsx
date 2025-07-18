@@ -31,7 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 });
 
-const SESSION_STORAGE_KEY = 'lanzaexpres-auth-user';
+const SESSION_STORAGE_KEY = 'lanzaexpress-auth-user';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);

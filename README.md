@@ -1,4 +1,4 @@
-# Lanzaexpres - App de Gestión de Lavandería
+# LanzaExpress - App de Gestión de Lavandería
 
 Este es un proyecto Next.js para gestionar artículos almacenados y servicios de lavandería, construido con React, TypeScript, Tailwind CSS, ShadCN UI y Firebase.
 

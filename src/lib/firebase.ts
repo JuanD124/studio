@@ -5,7 +5,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // --- Configuración de Firebase ---
-// Credenciales para el proyecto LavanderiaFacil
+// Credenciales para el proyecto LanzaExpress
 const firebaseConfig = {
   apiKey: "AIzaSyCvKWgTa0b71w9lK8umg_IGMiIF7rR75S0",
   authDomain: "lavanderiafacil-f86a2.firebaseapp.com",

@@ -91,22 +91,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         <div ref={invoiceRef} className="py-4 font-mono text-sm">
             <div className="header">
                  <h1>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="w-8 h-8 hidden"
-                    >
-                      <path d="M12 2a10 10 0 0 0-10 10c0 5.52 4.48 10 10 10s10-4.48 10-10A10 10 0 0 0 12 2Z"/>
-                      <path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z"/>
-                      <path d="M12 12v4"/>
-                      <path d="M12 8h.01"/>
-                    </svg>
-                    <span>Lanzaexpres</span>
+                    <span>LanzaExpress</span>
                 </h1>
                 <p>El mejor servicio para nuestros héroes</p>
                 <div className="separator"></div>
