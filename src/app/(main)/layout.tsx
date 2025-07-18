@@ -51,7 +51,23 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
         <SidebarHeader>
             <div className="flex items-center justify-between p-2">
                 <div className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-primary"><path d="M12 2a10 10 0 1 0 10 10c0-4.42-3.58-8-8-8"/><path d="M12 15a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"/><path d="M12 18a6 6 0 1 0 0-6 6 6 0 0 0 0 6Z"/><path d="M12 21a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/></svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-8 h-8 text-primary"
+                    >
+                      <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                      <path d="M12 12a5 5 0 0 1 5 5" />
+                      <path d="M12 12a5 5 0 0 0-5 5" />
+                      <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                      <line x1="16" y1="6" x2="16.01" y2="6" />
+                      <line x1="19" y1="8" x2="19.01" y2="8" />
+                    </svg>
                     <h1 className="text-xl font-headline font-semibold">Lanzaexpres</h1>
                 </div>
                 {user && <Badge variant={user.role === 'gerente' ? "destructive" : "secondary"}>{user.role}</Badge>}
