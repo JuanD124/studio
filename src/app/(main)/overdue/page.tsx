@@ -108,7 +108,7 @@ export default function OverduePage() {
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(totalInventoryValue)}</div>
-                <p className="text-xs text-muted-foreground">Suma del precio total de cada artículo.</p>
+                <p className="text-xs text-muted-foreground">Suma del precio total de cada artículo, sin descontar abonos.</p>
             </CardContent>
         </Card>
       </div>
