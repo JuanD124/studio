@@ -2,16 +2,17 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, where, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, where, getDocs, limit } from 'firebase/firestore';
 import type { ClaimedItem, IncomeEntry, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, DollarSign, PackageCheck, TrendingUp, Package, Coins } from 'lucide-react';
+import { AlertTriangle, DollarSign, PackageCheck, TrendingUp, Package, Coins, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { ClaimedItemCard } from './claimed-item-card';
 import { useToast } from '@/hooks/use-toast';
 import { startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear, isWithinInterval, subDays } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '../ui/button';
 
 export default function ReportsView() {
     const { user } = useAuth();
@@ -106,6 +107,46 @@ export default function ReportsView() {
             toast({
                 title: "Error",
                 description: "No se pudo eliminar el artículo.",
+                variant: "destructive",
+            });
+        }
+    }, [toast]);
+    
+    const handlePurgeOldestItems = React.useCallback(async () => {
+        if (!db) return;
+        if (!window.confirm("¿Estás seguro de que quieres eliminar permanentemente los 30 artículos más antiguos de la papelera? Esta acción no se puede deshacer.")) {
+            return;
+        }
+
+        try {
+            const oldestItemsQuery = query(
+                collection(db, "claimedItems"),
+                orderBy("claimedDate", "asc"), // Oldest first
+                limit(30)
+            );
+
+            const snapshot = await getDocs(oldestItemsQuery);
+            if (snapshot.empty) {
+                toast({ title: "Información", description: "No hay artículos antiguos que purgar." });
+                return;
+            }
+
+            const batch = writeBatch(db);
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            await batch.commit();
+
+            toast({
+                title: "Purga Exitosa",
+                description: `Se han eliminado ${snapshot.size} artículos antiguos de la papelera.`,
+            });
+        } catch (error) {
+            console.error("Error al purgar artículos antiguos: ", error);
+            toast({
+                title: "Error",
+                description: "No se pudieron eliminar los artículos antiguos.",
                 variant: "destructive",
             });
         }
@@ -207,7 +248,13 @@ export default function ReportsView() {
             </section>
             
             <section>
-                <h2 className="text-2xl font-semibold mb-4">Artículos Entregados Recientemente (Papelera)</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-semibold">Artículos Entregados Recientemente (Papelera)</h2>
+                    <Button variant="outline" size="sm" onClick={handlePurgeOldestItems}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Purgar 30 más antiguos
+                    </Button>
+                </div>
                 {claimedItems.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {claimedItems.map((item) => (
