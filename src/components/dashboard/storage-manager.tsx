@@ -14,8 +14,6 @@ import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
-import { DashboardSummary } from './dashboard-summary';
-import { Separator } from '../ui/separator';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -276,9 +274,7 @@ export default function StorageManager() {
 
   return (
     <div className="space-y-6">
-      {user?.role === 'gerente' && <DashboardSummary items={items} />}
-
-      <div className="mt-8">
+      <div>
         <div className="mb-6">
             <h1 className="text-3xl font-bold font-headline">Panel de Almacenamiento</h1>
             <p className="text-muted-foreground">Visualiza y gestiona todos los artículos almacenados.</p>

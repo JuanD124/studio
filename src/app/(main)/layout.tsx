@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Shirt, Trash2, LogOut, ShieldAlert, Coins } from 'lucide-react';
+import { LayoutDashboard, Shirt, Trash2, LogOut, ShieldAlert, Coins, AlertTriangle } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -84,6 +84,18 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
                         <span>Precios</span>
                         </Link>
                     </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={pathname === '/overdue'}
+                            tooltip="Artículos Vencidos"
+                        >
+                            <Link href="/overdue">
+                            <AlertTriangle />
+                            <span>Vencidos</span>
+                            </Link>
+                        </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                     <SidebarMenuButton
