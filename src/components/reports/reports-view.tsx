@@ -152,20 +152,28 @@ export default function ReportsView() {
         }
     }, [toast]);
 
-    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date) => {
+    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega' | 'Ambos') => {
         return entries
             .filter(entry => {
                 const entryDate = new Date(entry.date);
-                return isWithinInterval(entryDate, { start: startDate, end: endDate });
+                const isWithin = isWithinInterval(entryDate, { start: startDate, end: endDate });
+                if (!isWithin) return false;
+                if (type === 'Ambos') return true;
+                return entry.type === type;
             })
             .reduce((sum, entry) => sum + entry.amount, 0);
     }, []);
 
     const now = new Date();
-    const ingresosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now));
-    const ingresosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now));
-    const ingresosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now));
-    
+    // Ingresos para el empleado (Abonos + Entregas del día)
+    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Ambos');
+
+    // Ingresos para el gerente (separados)
+    const abonosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
+    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
+    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
+    const entregasHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Entrega');
+
     if (isFirebaseConfigInvalid) {
         return (
           <Alert variant="destructive" className="mt-4">
@@ -187,7 +195,7 @@ export default function ReportsView() {
                     <Coins className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-3xl font-bold">{formatCurrency(ingresosHoy)}</div>
+                    <div className="text-3xl font-bold">{formatCurrency(ingresosEmpleadoHoy)}</div>
                     <p className="text-xs text-muted-foreground mt-1">
                         Suma de todos los abonos y pagos de entregas del día.
                     </p>
@@ -200,40 +208,52 @@ export default function ReportsView() {
         <div className="space-y-8">
             <section>
                 <h2 className="text-2xl font-semibold mb-4">Resumen de Ingresos</h2>
-                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="bg-primary/10 border-primary/40">
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Card className="lg:col-span-1 bg-primary/10 border-primary/40">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-base font-medium">Ingresos de Hoy</CardTitle>
+                            <CardTitle className="text-base font-medium">Ingresos por Abonos (Hoy)</CardTitle>
                             <Coins className="h-5 w-5 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{formatCurrency(ingresosHoy)}</div>
+                            <div className="text-3xl font-bold">{formatCurrency(abonosHoy)}</div>
                              <p className="text-xs text-muted-foreground mt-1">
-                                Suma de abonos y entregas del día.
+                                Dinero que entró a caja hoy.
+                            </p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Saldos Liquidados (Hoy)</CardTitle>
+                            <PackageCheck className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{formatCurrency(entregasHoy)}</div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Pagos recibidos al entregar hoy.
                             </p>
                         </CardContent>
                     </Card>
                      <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ingresos de este Mes</CardTitle>
+                            <CardTitle className="text-sm font-medium">Total Abonos (Mes)</CardTitle>
                             <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(ingresosMes)}</div>
+                            <div className="text-2xl font-bold">{formatCurrency(abonosMes)}</div>
                              <p className="text-xs text-muted-foreground mt-1">
-                                Suma de abonos y entregas del mes.
+                                Suma de abonos durante el mes.
                             </p>
                         </CardContent>
                     </Card>
                      <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ingresos de este Año</CardTitle>
-                            <Package className="h-4 w-4 text-muted-foreground" />
+                            <CardTitle className="text-sm font-medium">Total Abonos (Año)</CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(ingresosAnio)}</div>
+                            <div className="text-2xl font-bold">{formatCurrency(abonosAnio)}</div>
                              <p className="text-xs text-muted-foreground mt-1">
-                                Suma de abonos y entregas del año.
+                                Suma de abonos durante el año.
                             </p>
                         </CardContent>
                     </Card>
