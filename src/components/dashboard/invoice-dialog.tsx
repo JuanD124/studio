@@ -34,27 +34,31 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         printWindow.document.write(`
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap');
+            * {
+              box-sizing: border-box;
+            }
             body { 
               font-family: 'Inconsolata', monospace;
               width: 210px; /* Adjusted for 58mm thermal paper */
-              margin: 0 auto;
-              padding: 10px;
-              font-size: 13px; /* Adjusted for smaller width */
+              margin: 0;
+              padding: 5px;
+              font-size: 12px;
+              line-height: 1.4;
             }
-            .header { text-align: center; margin-bottom: 20px; }
-            .header h1 { margin: 0; font-size: 20px; } /* Adjusted font size */
-            .header p { margin: 2px 0; }
-            .item-line { display: flex; justify-content: space-between; margin-bottom: 2px; }
-            .item-line span:first-child { text-align: left; }
+            .header { text-align: center; margin-bottom: 10px; }
+            .header h1 { margin: 0; font-size: 18px; }
+            .header p { margin: 0; }
+            .item-line { display: flex; justify-content: space-between; margin-bottom: 1px; word-break: break-all; }
+            .item-line span:first-child { text-align: left; padding-right: 5px; }
             .item-line span:last-child { text-align: right; }
-            .details p { margin: 2px 0; }
-            .separator { border-top: 1px dashed black; margin: 10px 0; }
-            .total-section { font-size: 14px; }
+            .details p { margin: 0; }
+            .separator { border-top: 1px dashed black; margin: 8px 0; }
+            .total-section { font-size: 13px; }
             .total { display: flex; justify-content: space-between; }
-            .total.grand-total { font-weight: bold; font-size: 16px; margin-top: 5px; }
-            .footer { text-align: center; margin-top: 20px; font-size: 11px; }
-            .payment-summary { margin-top: 10px; }
-            .edit-info { text-align: center; font-style: italic; font-size: 11px; margin-top: 10px; color: #555; }
+            .total.grand-total { font-weight: bold; font-size: 15px; margin-top: 4px; }
+            .footer { text-align: center; margin-top: 10px; font-size: 10px; }
+            .payment-summary { margin-top: 8px; }
+            .edit-info { text-align: center; font-style: italic; font-size: 10px; margin-top: 8px; color: #555; }
           </style>
         `);
         printWindow.document.write('</head><body>');
