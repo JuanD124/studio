@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -50,7 +51,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 color: #000;
                 background-color: #fff;
                 font-family: monospace;
-                font-size: 7pt;
+                font-size: 6pt;
                 word-break: break-word;
               }
               .receipt-container {
@@ -67,14 +68,14 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 text-align: center;
               }
               .header h1 {
-                font-size: 9pt;
+                font-size: 8pt;
                 margin: 0;
                 font-weight: bold;
               }
               hr {
                 border: none;
                 border-top: 1px dashed black;
-                margin: 2mm 0;
+                margin: 1mm 0;
               }
               .item-line {
                 display: flex;
@@ -98,9 +99,9 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               .edit-info {
                 text-align: center;
                 font-style: italic;
-                font-size: 6pt;
+                font-size: 5pt;
                 color: #555;
-                margin-top: 2mm;
+                margin-top: 1mm;
               }
             }
           </style>
