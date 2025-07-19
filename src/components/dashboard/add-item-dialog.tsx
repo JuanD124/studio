@@ -25,6 +25,7 @@ import { RANGOS, COLORES } from '@/lib/data';
 const formSchema = z.object({
   customerName: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
   customerId: z.string().optional(),
+  customerPhone: z.string().optional(),
   rank: z.string().min(1, { message: 'Debes seleccionar un rango.' }),
   battalion: z.string().optional(),
   contingent: z.string().optional(),
@@ -55,6 +56,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
     defaultValues: {
       customerName: '',
       customerId: '',
+      customerPhone: '',
       rank: '',
       battalion: '',
       contingent: '',
@@ -75,6 +77,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
       form.reset({
         customerName: itemToEdit.customerName,
         customerId: itemToEdit.customerId || '',
+        customerPhone: itemToEdit.customerPhone || '',
         rank: itemToEdit.rank,
         battalion: itemToEdit.battalion || '',
         contingent: itemToEdit.contingent || '',
@@ -87,6 +90,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
       form.reset({
         customerName: '',
         customerId: '',
+        customerPhone: '',
         rank: '',
         battalion: '',
         contingent: '',
@@ -148,21 +152,21 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
         </DialogHeader>
         <Form {...form}>
           <form id="add-item-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[65vh] overflow-y-auto pr-4">
+            <FormField
+              control={form.control}
+              name="customerName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre del Cliente</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-2 gap-4">
-               <FormField
-                control={form.control}
-                name="customerName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre del Cliente</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
+              <FormField
                 control={form.control}
                 name="customerId"
                 render={({ field }) => (
@@ -170,6 +174,19 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
                     <FormLabel>Cédula (Opcional)</FormLabel>
                     <FormControl>
                       <Input placeholder="123456789" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="customerPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Teléfono (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="3001234567" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

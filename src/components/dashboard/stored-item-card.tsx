@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign } from 'lucide-react';
+import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -109,6 +109,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                     <span>{item.rank}</span>
                 </div>
                 {item.customerId && <div className="flex items-center gap-2"><Fingerprint className="w-3 h-3"/><span>C.C. {item.customerId}</span></div>}
+                {item.customerPhone && <div className="flex items-center gap-2"><Phone className="w-3 h-3"/><span>{item.customerPhone}</span></div>}
                 {item.battalion && <div className="flex items-center gap-2"><Shield className="w-3 h-3"/><span>{item.battalion}</span></div>}
                 {item.contingent && <div className="flex items-center gap-2"><Users className="w-3 h-3"/><span>{item.contingent}</span></div>}
                 {item.editedBy && (

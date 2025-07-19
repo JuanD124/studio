@@ -13,6 +13,7 @@ export interface StoredItem {
   id: string; // Firestore document ID, now will be a sequential number as string
   customerName: string;
   customerId?: string;
+  customerPhone?: string;
   rank: string;
   battalion?: string;
   contingent?: string;

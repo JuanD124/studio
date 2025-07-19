@@ -58,8 +58,9 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 width: 56mm; 
                 padding: 0;
                 box-sizing: border-box;
+                overflow: hidden;
               }
-              p, span, div {
+              p, span, div, strong {
                 margin: 0;
                 padding: 0;
                 line-height: 1.4;
@@ -71,6 +72,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 font-weight: bold;
               }
               .separator {
+                  display: block;
                   border-top: 1px dashed black;
                   margin: 1mm 0;
               }
@@ -86,16 +88,15 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 text-align: left;
                 font-weight: bold;
               }
-              .total-line {
+              .total-line .price, .total-line .label {
                   display: block;
-                  font-weight: bold;
+                  text-align: left;
               }
-              .edit-info {
-                text-align: center;
-                font-style: italic;
-                font-size: 7pt;
-                color: #555;
-                margin-top: 1mm;
+              .price {
+                 font-weight: bold;
+              }
+              .total-line .label {
+                  font-weight: normal;
               }
             }
           </style>
@@ -134,7 +135,6 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             <div ref={invoiceRef} className="receipt-container">
                 <div className="header center">
                     <h1>LanzaExpress</h1>
-                    <p>Servicio de Lavandería</p>
                     <p>Contacto: 3157276196</p>
                     <p>{new Date().toLocaleString('es-CO')}</p>
                 </div>
@@ -143,18 +143,19 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
 
                 <p><strong>ID Ticket:</strong> {item.id}</p>
                 <p><strong>Cliente:</strong> {item.customerName}</p>
+                {item.customerPhone && <p><strong>Tel:</strong> {item.customerPhone}</p>}
                 <p><strong>Rango:</strong> {item.rank}</p>
                 <p><strong>Color:</strong> {item.color}</p>
                 <p><strong>Ingreso:</strong> {new Date(item.storageDate).toLocaleDateString('es-CO')}</p>
                 
                 {item.editedBy && (
-                    <p className="edit-info">Editado: {item.editedBy.username} {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}</p>
+                    <p style={{fontSize: '6pt', fontStyle: 'italic'}}>Editado: {item.editedBy.username} {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}</p>
                 )}
 
                 <div className="separator"></div>
 
                 <p><strong>DESCRIPCION Y VALOR</strong></p>
-                <div className="separator" style={{borderStyle: 'solid'}}></div>
+                <div className="separator"></div>
                 
                 <div className="item-block">
                     <span className="description">Almacenamiento: {item.itemsDescription}</span>
@@ -175,7 +176,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 <div className="separator"></div>
 
                 <div className="total-line">
-                    <span>TOTAL A PAGAR:</span>
+                    <span className="label">TOTAL A PAGAR:</span>
                     <span className="price">{formatCurrency(item.totalPrice)}</span>
                 </div>
 
@@ -195,11 +196,11 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 <div className="separator"></div>
                 
                 <div className="total-line">
-                    <span>Total Abonado:</span>
+                    <span className="label">Total Abonado:</span>
                     <span className="price">{formatCurrency(totalPaid)}</span>
                 </div>
                 <div className="total-line">
-                    <span>SALDO PENDIENTE:</span>
+                    <span className="label">SALDO PENDIENTE:</span>
                     <span className="price">{formatCurrency(item.remainingBalance)}</span>
                 </div>
 
