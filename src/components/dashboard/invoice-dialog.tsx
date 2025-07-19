@@ -51,7 +51,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 color: #000;
                 background-color: #fff;
                 font-family: monospace;
-                font-size: 7pt;
+                font-size: 8pt;
                 word-break: break-word;
               }
               .receipt-container {
@@ -59,16 +59,14 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 padding: 0;
                 box-sizing: border-box;
               }
-              p, span {
+              p, span, div {
                 margin: 0;
                 padding: 0;
-                line-height: 1.3;
+                line-height: 1.4;
               }
-              .center {
-                text-align: center;
-              }
+              .center { text-align: center; }
               .header h1 {
-                font-size: 9pt;
+                font-size: 10pt;
                 margin: 0;
                 font-weight: bold;
               }
@@ -84,12 +82,12 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               .item-line .description {
                 flex-grow: 1;
                 text-align: left;
-                margin-right: 4px;
                 word-break: break-word;
               }
               .item-line .price {
                 flex-shrink: 0;
                 text-align: right;
+                padding-left: 5px; /* Evita que los precios se peguen al borde */
                 white-space: nowrap;
               }
               .total-line {
@@ -98,7 +96,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               .edit-info {
                 text-align: center;
                 font-style: italic;
-                font-size: 6pt;
+                font-size: 7pt;
                 color: #555;
                 margin-top: 1mm;
               }
@@ -136,7 +134,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         </DialogHeader>
         
         <div className="border bg-white p-2 rounded-sm overflow-auto max-h-[50vh]">
-            <div ref={invoiceRef} className="receipt-container font-mono text-black text-[10pt]">
+            <div ref={invoiceRef} className="receipt-container">
                 <div className="header center">
                     <h1>LanzaExpress</h1>
                     <p>Servicio de Lavandería</p>
@@ -161,10 +159,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                     <span className="price"><strong>VALOR</strong></span>
                 </div>
                 
-                <div className="item-line">
-                    <span className="description">---------------------------------</span>
-                    <span className="price">---------</span>
-                </div>
+                <div className="separator" style={{borderStyle: 'solid'}}></div>
                 
                 <div className="item-line">
                     <span className="description">Almacenamiento: {item.itemsDescription}</span>
