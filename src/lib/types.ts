@@ -29,6 +29,7 @@ export interface StoredItem {
   totalPrice: number;
   payments: Payment[];
   remainingBalance: number;
+  location?: string; // e.g., "Estante A-3"
   editedBy?: {
     username: string;
     date: string; // ISO string format

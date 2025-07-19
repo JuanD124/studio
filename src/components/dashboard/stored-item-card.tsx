@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, CheckCircle2, MapPin } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -24,6 +24,7 @@ interface StoredItemCardProps {
   onOpenInvoice: (item: StoredItem) => void;
   onEdit: (item: StoredItem) => void;
   onAddPayment: (item: StoredItem) => void;
+  onEditLocation: (item: StoredItem) => void;
 }
 
 const PaymentHistory = ({ payments }: { payments: Payment[] }) => (
@@ -57,7 +58,7 @@ const LaundryItemsList = ({ items }: { items: StoredItem['laundryItems'] }) => (
 );
 
 
-function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment }: StoredItemCardProps) {
+function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment, onEditLocation }: StoredItemCardProps) {
   const { user } = useAuth();
   const payments = item.payments || [];
   const laundryItems = item.laundryItems || [];
@@ -102,6 +103,12 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 <Clock className="w-3 h-3" />
                 <span>{getStorageDuration(item.storageDate)}</span>
             </div>
+            <Button variant="ghost" size="sm" className="h-auto p-0 justify-start" onClick={() => onEditLocation(item)}>
+                <MapPin className="w-3 h-3 mr-2"/>
+                <span className={item.location ? '' : 'text-muted-foreground italic'}>
+                  {item.location || 'Sin ubicación'}
+                </span>
+            </Button>
         </div>
       </CardHeader>
 
