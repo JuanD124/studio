@@ -165,8 +165,8 @@ export default function ReportsView() {
     }, []);
 
     const now = new Date();
-    // Ingresos para el empleado (Abonos + Entregas del día)
-    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Ambos');
+    // Ingresos para el empleado (Solo Abonos del día)
+    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
 
     // Ingresos para el gerente (separados)
     const abonosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
@@ -197,7 +197,7 @@ export default function ReportsView() {
                 <CardContent>
                     <div className="text-3xl font-bold">{formatCurrency(ingresosEmpleadoHoy)}</div>
                     <p className="text-xs text-muted-foreground mt-1">
-                        Suma de todos los abonos y pagos de entregas del día.
+                        Suma de todos los abonos recibidos en el día.
                     </p>
                 </CardContent>
             </Card>
