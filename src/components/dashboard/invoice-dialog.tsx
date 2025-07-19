@@ -28,15 +28,9 @@ interface InvoiceDialogProps {
 const ThermalReceipt = React.forwardRef<HTMLDivElement, { item: StoredItem }>(({ item }, ref) => {
     const LINE_WIDTH = 32; // Characters for a 58mm receipt
 
-    const padLine = (left: string, right: string): string => {
-        const leftTrunc = left.substring(0, LINE_WIDTH - right.length - 1);
-        const spaces = ' '.repeat(LINE_WIDTH - leftTrunc.length - right.length);
-        return `${leftTrunc}${spaces}${right}`;
-    };
-
     const center = (text: string): string => {
         const spaces = ' '.repeat(Math.max(0, Math.floor((LINE_WIDTH - text.length) / 2)));
-        return `${spaces}${text}`;
+        return `${spaces}${text}${spaces}`;
     };
 
     const separator = '-'.repeat(LINE_WIDTH);
@@ -46,44 +40,44 @@ const ThermalReceipt = React.forwardRef<HTMLDivElement, { item: StoredItem }>(({
     return (
         <div ref={ref} className="thermal-receipt">
             <pre>
-                {center('LanzaExpress')}\n
-                {center('Contacto: 3157276196')}\n
-                {new Date().toLocaleString('es-CO')}\n
-                {separator}\n
-                ID Ticket: {item.id}\n
-                Cliente: {item.customerName}\n
-                {item.customerPhone && `Tel: ${item.customerPhone}\n`}
-                Rango: {item.rank}\n
-                Color: {item.color}\n
-                {item.location && `Ubicación: ${item.location}\n`}
-                Ingreso: {new Date(item.storageDate).toLocaleDateString('es-CO')}\n
-                {item.editedBy && `Editado: ${item.editedBy.username}\n`}
-                {separator}\n
-                DESCRIPCION Y VALOR\n
-                {`Almacenaje: ${item.itemsDescription}`}\n
-                {padLine('', formatCurrency(item.storagePrice))}\n
-                {item.laundryItems && item.laundryItems.length > 0 && item.laundryItems.map((laundryItem, index) =>
-                    <React.Fragment key={index}>
-                        {`${laundryItem.quantity}x ${laundryItem.name}`}\n
-                        {padLine('', formatCurrency(laundryItem.price * laundryItem.quantity))}\n
-                    </React.Fragment>
-                )}
-                {separator}\n
-                {padLine('TOTAL A PAGAR:', formatCurrency(item.totalPrice))}\n
-                {item.payments && item.payments.length > 0 &&
-                    <React.Fragment>
-                        {separator}\n
-                        Abonos Realizados:\n
-                        {item.payments.map((payment, index) =>
-                           `${new Date(payment.date).toLocaleDateString('es-CO')}   ${formatCurrency(payment.amount)}\n`
-                        )}
-                    </React.Fragment>
-                }
-                {separator}\n
-                {padLine('Total Abonado:', formatCurrency(totalPaid))}\n
-                {padLine('SALDO PENDIENTE:', formatCurrency(item.remainingBalance))}\n
-                {separator}\n
-                {center('¡Gracias por su preferencia!')}
+{`${center('LanzaExpress')}
+${center('Contacto: 3157276196')}
+${new Date().toLocaleString('es-CO')}
+${separator}
+ID Ticket: ${item.id}
+Cliente: ${item.customerName}
+${item.customerPhone ? `Tel: ${item.customerPhone}` : ''}
+Rango: ${item.rank}
+Color: ${item.color}
+${item.location ? `Ubicación: ${item.location}` : ''}
+Ingreso: ${new Date(item.storageDate).toLocaleDateString('es-CO')}
+${item.editedBy ? `Editado: ${item.editedBy.username}` : ''}
+${separator}
+DESCRIPCION Y VALOR:
+
+Almacenaje: ${item.itemsDescription}
+${formatCurrency(item.storagePrice)}
+${item.laundryItems && item.laundryItems.length > 0 ? '\nSERVICIOS DE LAVANDERIA:' : ''}
+${item.laundryItems?.map(laundryItem => 
+`\n${laundryItem.quantity}x ${laundryItem.name}
+${formatCurrency(laundryItem.price * laundryItem.quantity)}`
+).join('')}
+${separator}
+TOTAL A PAGAR:
+${formatCurrency(item.totalPrice)}
+${item.payments && item.payments.length > 0 ? `\n${separator}\nAbonos Realizados:` : ''}
+${item.payments?.map(payment => 
+`\n${new Date(payment.date).toLocaleDateString('es-CO')} - ${formatCurrency(payment.amount)}`
+).join('')}
+${separator}
+Total Abonado:
+${formatCurrency(totalPaid)}
+
+SALDO PENDIENTE:
+${formatCurrency(item.remainingBalance)}
+${separator}
+${center('¡Gracias por su preferencia!')}
+`}
             </pre>
         </div>
     );
@@ -115,20 +109,25 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 size: 58mm;
                 margin: 0;
               }
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
               html, body {
-                margin: 0 !important;
-                padding: 0 !important;
                 width: 100%;
-                font-family: 'Courier New', monospace;
-                font-size: 9pt;
                 color: #000;
                 background-color: #fff;
               }
               pre {
+                font-family: 'Courier New', monospace;
+                font-size: 8pt;
+                font-weight: bold;
                 margin: 0;
-                padding: 2mm;
-                white-space: pre-wrap; /* Wrap long lines */
-                word-break: break-all;
+                padding: 3mm 2mm;
+                white-space: pre-wrap;
+                word-break: break-word;
+                line-height: 1.2;
               }
             }
           </style>
