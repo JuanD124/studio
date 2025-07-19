@@ -43,7 +43,6 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             @media print {
               @page {
                 margin: 0;
-                padding: 0;
               }
               body {
                 margin: 0;
@@ -52,9 +51,10 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 background-color: #fff;
                 font-family: monospace;
                 font-size: 10pt;
+                word-break: break-word;
               }
               .receipt-container {
-                width: 56mm; /* Ancho para impresora de 58mm con un pequeño margen */
+                width: 56mm; 
                 padding: 1mm;
                 box-sizing: border-box;
               }
@@ -81,7 +81,6 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 justify-content: space-between;
                 align-items: flex-start;
                 margin-bottom: 1px;
-                word-break: break-all;
               }
               .item-line .description {
                 flex-grow: 1;
