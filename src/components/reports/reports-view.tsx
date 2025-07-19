@@ -152,13 +152,12 @@ export default function ReportsView() {
         }
     }, [toast]);
 
-    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega' | 'Ambos') => {
+    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega') => {
         return entries
             .filter(entry => {
                 const entryDate = new Date(entry.date);
                 const isWithin = isWithinInterval(entryDate, { start: startDate, end: endDate });
                 if (!isWithin) return false;
-                if (type === 'Ambos') return true;
                 return entry.type === type;
             })
             .reduce((sum, entry) => sum + entry.amount, 0);
@@ -223,13 +222,13 @@ export default function ReportsView() {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Pagos Recibidos por Entregas (Hoy)</CardTitle>
+                            <CardTitle className="text-sm font-medium">Valor de Entregas Liquidadas (Hoy)</CardTitle>
                             <PackageCheck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{formatCurrency(entregasHoy)}</div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Suma de saldos pendientes liquidados al entregar artículos hoy.
+                                Suma de saldos pendientes que se liquidaron al entregar artículos hoy.
                             </p>
                         </CardContent>
                     </Card>
