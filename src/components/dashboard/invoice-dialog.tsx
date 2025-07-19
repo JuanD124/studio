@@ -50,7 +50,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 color: #000;
                 background-color: #fff;
                 font-family: monospace;
-                font-size: 10pt;
+                font-size: 8pt;
                 word-break: break-word;
               }
               .receipt-container {
@@ -67,7 +67,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 text-align: center;
               }
               .header h1 {
-                font-size: 12pt;
+                font-size: 10pt;
                 margin: 0;
                 font-weight: bold;
               }
@@ -98,7 +98,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               .edit-info {
                 text-align: center;
                 font-style: italic;
-                font-size: 8pt;
+                font-size: 7pt;
                 color: #555;
                 margin-top: 2mm;
               }
