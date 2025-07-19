@@ -49,8 +49,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             .header h1 { margin: 0; font-size: 18px; }
             .header p { margin: 0; }
             .item-line { display: flex; justify-content: space-between; margin-bottom: 1px; word-break: break-all; }
-            .item-line span:first-child { text-align: left; padding-right: 5px; }
-            .item-line span:last-child { text-align: right; }
+            .item-line span:first-child { flex-basis: 70%; flex-grow: 1; text-align: left; padding-right: 5px; }
+            .item-line span:last-child { flex-basis: 30%; flex-shrink: 0; text-align: right; }
             .details p { margin: 0; }
             .separator { border-top: 1px dashed black; margin: 8px 0; }
             .total-section { font-size: 13px; }
