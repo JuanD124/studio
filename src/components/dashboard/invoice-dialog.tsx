@@ -43,15 +43,18 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         doc.write(`
           <style>
             @media print {
-              @page { margin: 0; }
+              @page { 
+                size: 58mm;
+                margin: 0; 
+              }
               body { 
                 font-family: monospace;
-                width: 58mm;
                 font-size: 10pt;
-                line-height: 1.4;
+                line-height: 1.3;
                 color: #000;
                 padding: 3mm;
                 box-sizing: border-box;
+                height: fit-content;
               }
               .receipt { width: 100%; }
               p, .item span { margin: 0; padding: 0; }
