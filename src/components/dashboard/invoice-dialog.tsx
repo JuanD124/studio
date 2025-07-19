@@ -46,29 +46,31 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 size: 58mm;
                 margin: 0;
               }
-              * { 
+              *, *::before, *::after {
+                box-sizing: border-box;
                 margin: 0;
                 padding: 0;
-                line-height: 1.4;
               }
               html, body {
-                width: 56mm;
-                margin: 1mm;
+                width: 100%;
+                font-family: monospace;
+                font-size: 8pt;
                 color: #000;
                 background-color: #fff;
               }
               .receipt-container {
-                font-family: monospace;
-                font-size: 8pt;
+                padding: 2mm;
                 word-break: break-word;
               }
               .center { text-align: center; }
               .header h1 {
                 font-size: 10pt;
                 font-weight: bold;
+                margin-bottom: 2px;
               }
               .header p {
                  margin-bottom: 2px;
+                 line-height: 1.2;
               }
               .separator {
                   display: block;
@@ -79,6 +81,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 display: flex;
                 justify-content: space-between;
                 align-items: flex-start;
+                line-height: 1.3;
               }
               .item-line .description {
                 flex-grow: 1;
