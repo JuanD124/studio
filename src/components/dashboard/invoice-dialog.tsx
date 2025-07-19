@@ -58,9 +58,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           </style>
         `);
         printWindow.document.write('</head><body>');
-        // We create a clone of the content to modify it for printing
         const contentClone = printContent.cloneNode(true) as HTMLDivElement;
-        // Find and remove the SVG logo from the clone
         const logoSvg = contentClone.querySelector('.header h1 svg');
         if (logoSvg) {
           logoSvg.remove();
@@ -68,8 +66,16 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         printWindow.document.write(contentClone.innerHTML);
         printWindow.document.write('</body></html>');
         printWindow.document.close();
+        
+        printWindow.onafterprint = () => {
+          printWindow.close();
+        };
         printWindow.print();
-        printWindow.close();
+        setTimeout(() => {
+            if (!printWindow.closed) {
+                printWindow.close();
+            }
+        }, 500);
       }
     }
   };
