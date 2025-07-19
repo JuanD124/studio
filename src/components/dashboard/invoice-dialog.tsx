@@ -28,18 +28,30 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
   const handlePrint = () => {
     const printContent = invoiceRef.current;
     if (printContent) {
-      const printWindow = window.open('', '', 'height=800,width=400');
-      if (printWindow) {
-        printWindow.document.write('<html><head><title>Factura</title>');
-        printWindow.document.write(`
+      const contentClone = printContent.cloneNode(true) as HTMLDivElement;
+      const logoSvg = contentClone.querySelector('.header h1 svg');
+      if (logoSvg) {
+        logoSvg.remove();
+      }
+      
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = 'none';
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow?.document;
+      if (doc) {
+        doc.open();
+        doc.write('<html><head><title>Factura</title>');
+        doc.write(`
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap');
-            * {
-              box-sizing: border-box;
-            }
+            * { box-sizing: border-box; }
             body { 
               font-family: 'Inconsolata', monospace;
-              width: 210px; /* Adjusted for 58mm thermal paper */
+              width: 210px;
               margin: 0;
               padding: 5px;
               font-size: 12px;
@@ -61,28 +73,22 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             .edit-info { text-align: center; font-style: italic; font-size: 10px; margin-top: 8px; color: #555; }
           </style>
         `);
-        printWindow.document.write('</head><body>');
-        const contentClone = printContent.cloneNode(true) as HTMLDivElement;
-        const logoSvg = contentClone.querySelector('.header h1 svg');
-        if (logoSvg) {
-          logoSvg.remove();
-        }
-        printWindow.document.write(contentClone.innerHTML);
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        
-        printWindow.onafterprint = () => {
-          printWindow.close();
-        };
-        printWindow.print();
-        setTimeout(() => {
-            if (!printWindow.closed) {
-                printWindow.close();
-            }
-        }, 500);
+        doc.write('</head><body>');
+        doc.write(contentClone.innerHTML);
+        doc.write('</body></html>');
+        doc.close();
+
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
       }
+
+      // Clean up the iframe after printing
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 500);
     }
   };
+
 
   if (!item) return null;
 
