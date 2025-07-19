@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -43,33 +42,32 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           <style>
             @media print {
               @page {
+                size: 58mm;
                 margin: 0;
               }
-              body {
+              html, body {
+                width: 56mm;
                 margin: 0;
                 padding: 1mm;
                 color: #000;
                 background-color: #fff;
+              }
+              .receipt-container {
                 font-family: monospace;
                 font-size: 8pt;
                 word-break: break-word;
-              }
-              .receipt-container {
-                width: 56mm; 
-                padding: 0;
-                box-sizing: border-box;
                 overflow: hidden;
-              }
-              p, span, div, strong {
-                margin: 0;
-                padding: 0;
-                line-height: 1.4;
               }
               .center { text-align: center; }
               .header h1 {
                 font-size: 10pt;
                 margin: 0;
                 font-weight: bold;
+              }
+              p, span, div {
+                margin: 0;
+                padding: 0;
+                line-height: 1.4;
               }
               .separator {
                   display: block;
@@ -85,18 +83,24 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               }
               .item-block .price {
                 display: block;
-                text-align: left;
                 font-weight: bold;
-              }
-              .total-line .price, .total-line .label {
-                  display: block;
-                  text-align: left;
-              }
-              .price {
-                 font-weight: bold;
+                text-align: left;
               }
               .total-line .label {
                   font-weight: normal;
+                  display: block;
+              }
+              .total-line .price {
+                  font-weight: bold;
+                  display: block;
+                  text-align: left;
+              }
+              strong {
+                  font-weight: bold;
+              }
+              .edited-by {
+                  font-size: 7pt;
+                  font-style: italic;
               }
             }
           </style>
@@ -146,10 +150,11 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 {item.customerPhone && <p><strong>Tel:</strong> {item.customerPhone}</p>}
                 <p><strong>Rango:</strong> {item.rank}</p>
                 <p><strong>Color:</strong> {item.color}</p>
+                {item.location && <p><strong>Ubicación:</strong> {item.location}</p>}
                 <p><strong>Ingreso:</strong> {new Date(item.storageDate).toLocaleDateString('es-CO')}</p>
                 
                 {item.editedBy && (
-                    <p style={{fontSize: '6pt', fontStyle: 'italic'}}>Editado: {item.editedBy.username} {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}</p>
+                    <p className="edited-by">Editado: {item.editedBy.username} {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}</p>
                 )}
 
                 <div className="separator"></div>

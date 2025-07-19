@@ -14,6 +14,7 @@ import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
+import { SetLocationDialog } from './set-location-dialog';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -22,9 +23,11 @@ export default function StorageManager() {
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = React.useState(false);
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
   const [paymentItem, setPaymentItem] = React.useState<StoredItem | null>(null);
+  const [locationItem, setLocationItem] = React.useState<StoredItem | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -74,6 +77,7 @@ export default function StorageManager() {
         const totalPaid = existingItem.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
         const updatedData = {
           ...itemData,
+          location: existingItem.location || '',
           payments: existingItem.payments || [],
           remainingBalance: itemData.totalPrice - totalPaid,
           editedBy: {
@@ -108,6 +112,7 @@ export default function StorageManager() {
             storageDate: new Date().toISOString(),
             payments: [],
             remainingBalance: itemData.totalPrice,
+            location: '',
           };
 
           transaction.set(newItemRef, newItemData);
@@ -221,6 +226,25 @@ export default function StorageManager() {
     }
   }, [toast]);
   
+  const handleSetLocation = React.useCallback(async (itemId: string, location: string) => {
+    if (!db) return;
+    try {
+      const itemRef = doc(db, 'storedItems', itemId);
+      await updateDoc(itemRef, { location });
+      toast({
+        title: "Ubicación Actualizada",
+        description: `La nueva ubicación ha sido guardada: ${location}.`,
+      });
+    } catch (error) {
+      console.error("Error al actualizar la ubicación: ", error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar la ubicación.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+  
   const handleOpenInvoice = React.useCallback((item: StoredItem) => {
     setInvoicingItem(item);
     setIsInvoiceOpen(true);
@@ -240,6 +264,11 @@ export default function StorageManager() {
     setPaymentItem(item);
     setIsPaymentDialogOpen(true);
   }, []);
+  
+  const handleOpenLocationDialog = React.useCallback((item: StoredItem) => {
+    setLocationItem(item);
+    setIsLocationDialogOpen(true);
+  }, []);
 
   const handleCloseDialogs = React.useCallback(() => {
     setIsAddDialogOpen(false);
@@ -248,6 +277,8 @@ export default function StorageManager() {
     setPaymentItem(null);
     setIsInvoiceOpen(false);
     setInvoicingItem(null);
+    setIsLocationDialogOpen(false);
+    setLocationItem(null);
   }, []);
 
   const filteredItems = React.useMemo(() => 
@@ -305,6 +336,7 @@ export default function StorageManager() {
                 onOpenInvoice={handleOpenInvoice}
                 onEdit={handleOpenEditDialog}
                 onAddPayment={handleOpenPaymentDialog}
+                onSetLocation={handleOpenLocationDialog}
                 />
             ))}
             </div>
@@ -334,6 +366,12 @@ export default function StorageManager() {
         isOpen={isInvoiceOpen}
         onClose={() => setIsInvoiceOpen(false)}
         item={invoicingItem}
+      />
+       <SetLocationDialog
+        isOpen={isLocationDialogOpen}
+        onClose={handleCloseDialogs}
+        onSave={handleSetLocation}
+        item={locationItem}
       />
     </div>
   );

@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone } from 'lucide-react';
+import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -23,6 +23,7 @@ interface StoredItemCardProps {
   onOpenInvoice: (item: StoredItem) => void;
   onEdit: (item: StoredItem) => void;
   onAddPayment: (item: StoredItem) => void;
+  onSetLocation: (item: StoredItem) => void;
 }
 
 const PaymentHistory = ({ payments }: { payments: Payment[] }) => (
@@ -56,7 +57,7 @@ const LaundryItemsList = ({ items }: { items: StoredItem['laundryItems'] }) => (
 );
 
 
-function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment }: StoredItemCardProps) {
+function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment, onSetLocation }: StoredItemCardProps) {
   
   const payments = item.payments || [];
   const laundryItems = item.laundryItems || [];
@@ -98,6 +99,11 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 <Clock className="w-3 h-3" />
                 <span>{getStorageDuration(item.storageDate)}</span>
             </div>
+            {item.location && 
+                <div className="flex items-center gap-2 font-semibold text-primary">
+                    <MapPin className="w-3 h-3"/><span>{item.location}</span>
+                </div>
+            }
         </div>
       </CardHeader>
 
@@ -164,15 +170,21 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 <Banknote className="mr-2 h-4 w-4" />
                 Abonar
             </Button>
+            <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => onSetLocation(item)}>
+                <MapPin className="mr-2 h-4 w-4" />
+                Ubicación
+            </Button>
+          </div>
+           <div className="flex flex-wrap gap-2 w-full">
             <Button variant="secondary" className="flex-1 min-w-[120px]" onClick={() => onClaim(item)}>
                 <PackageCheck className="mr-2 h-4 w-4" />
                 Entregado
             </Button>
+            <Button className="flex-grow w-full flex-1 min-w-[120px]" onClick={() => onOpenInvoice(item)}>
+                <Receipt className="mr-2 h-4 w-4" />
+                Factura
+            </Button>
           </div>
-          <Button className="flex-grow w-full" onClick={() => onOpenInvoice(item)}>
-            <Receipt className="mr-2 h-4 w-4" />
-            Factura
-          </Button>
       </CardFooter>
     </Card>
     </Collapsible>

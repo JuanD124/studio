@@ -34,6 +34,7 @@ export interface StoredItem {
     username: string;
     date: string; // ISO string format
   };
+  location?: string;
 }
 
 // Represents an item that has been claimed/delivered
