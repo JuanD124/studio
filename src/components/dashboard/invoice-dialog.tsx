@@ -135,6 +135,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 <div className="header center">
                     <h1>LanzaExpress</h1>
                     <p>Servicio de Lavandería</p>
+                    <p>Contacto: 3157276196</p>
                     <p>{new Date().toLocaleString('es-CO')}</p>
                 </div>
                 
@@ -143,6 +144,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 <p><strong>ID Ticket:</strong> {item.id}</p>
                 <p><strong>Cliente:</strong> {item.customerName}</p>
                 <p><strong>Rango:</strong> {item.rank}</p>
+                <p><strong>Color:</strong> {item.color}</p>
                 <p><strong>Ingreso:</strong> {new Date(item.storageDate).toLocaleDateString('es-CO')}</p>
                 
                 {item.editedBy && (
