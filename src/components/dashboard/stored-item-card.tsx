@@ -151,9 +151,13 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
             <span>Total a Pagar:</span>
             <span>{formatCurrency(item.totalPrice)}</span>
           </div>
-          <div className="flex justify-between text-destructive">
+          <div className="flex justify-between items-center text-destructive">
             <span>Saldo Pendiente:</span>
-            <span className="font-bold">{formatCurrency(item.remainingBalance)}</span>
+            {item.remainingBalance <= 0 ? (
+                <Badge variant="outline" className="text-green-600 border-green-600 font-bold">PAGADO</Badge>
+            ) : (
+                <span className="font-bold">{formatCurrency(item.remainingBalance)}</span>
+            )}
           </div>
         </div>
       </CardContent>
