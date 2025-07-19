@@ -43,59 +43,18 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           <style>
             @media print {
               @page {
-                margin: 0;
+                margin: 2mm;
               }
               body {
-                margin: 0;
-                padding: 1mm;
-                color: #000;
-                background-color: #fff;
-                font-family: monospace;
-                font-size: 8pt;
-                word-break: break-word;
-              }
-              .receipt-container {
-                width: 56mm; 
-                padding: 0;
-                box-sizing: border-box;
-              }
-              p, span, div {
-                margin: 0;
-                padding: 0;
-                line-height: 1.4;
-              }
-              .center { text-align: center; }
-              .header h1 {
+                font-family: 'Courier New', monospace;
                 font-size: 10pt;
+                color: #000;
+              }
+              pre {
+                white-space: pre-wrap;
+                word-break: break-word;
                 margin: 0;
-                font-weight: bold;
-              }
-              .separator {
-                  border-top: 1px dashed black;
-                  margin: 1mm 0;
-              }
-              .item-block {
-                margin-bottom: 1mm;
-              }
-              .item-block .description {
-                display: block;
-                text-align: left;
-              }
-              .item-block .price {
-                display: block;
-                text-align: left;
-                font-weight: bold;
-              }
-              .total-line {
-                  display: block;
-                  font-weight: bold;
-              }
-              .edit-info {
-                text-align: center;
-                font-style: italic;
-                font-size: 7pt;
-                color: #555;
-                margin-top: 1mm;
+                padding: 0;
               }
             }
           </style>
@@ -120,6 +79,64 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
 
   const totalPaid = item.payments.reduce((sum, p) => sum + p.amount, 0);
 
+  const generateInvoiceText = () => {
+    let text = '';
+    text += 'LanzaExpress\n';
+    text += 'Servicio de Lavanderia\n';
+    text += `Fecha: ${new Date().toLocaleString('es-CO')}\n`;
+    text += 'UBICACION: Batallon de servicios N20\n';
+    text += 'CONTACTO: 3157276196\n';
+    text += '--------------------------------\n';
+    text += `ID Ticket: ${item.id}\n`;
+    text += `Cliente: ${item.customerName}\n`;
+    text += `Rango: ${item.rank}\n`;
+    text += `Color: ${item.color}\n`;
+    text += `Ingreso: ${new Date(item.storageDate).toLocaleDateString('es-CO')}\n`;
+
+    if (item.editedBy) {
+      text += `Editado: ${item.editedBy.username} ${format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}\n`;
+    }
+
+    text += '--------------------------------\n';
+    text += 'DESCRIPCION Y VALOR\n';
+    text += '================================\n';
+
+    text += 'Almacenamiento:\n';
+    text += `${item.itemsDescription}\n`;
+    text += `... ${formatCurrency(item.storagePrice)}\n\n`;
+
+    if (item.laundryItems && item.laundryItems.length > 0) {
+      item.laundryItems.forEach(laundryItem => {
+        text += `${laundryItem.quantity}x ${laundryItem.name}\n`;
+        text += `... ${formatCurrency(laundryItem.price * laundryItem.quantity)}\n\n`;
+      });
+    }
+
+    text += '--------------------------------\n';
+    text += 'TOTAL A PAGAR:\n';
+    text += `${formatCurrency(item.totalPrice)}\n\n`;
+
+    if (item.payments && item.payments.length > 0) {
+      text += 'Abonos Realizados:\n';
+      item.payments.forEach(payment => {
+        text += `Abono (${new Date(payment.date).toLocaleDateString('es-CO')}):\n`;
+        text += `${formatCurrency(payment.amount)}\n`;
+      });
+      text += '\n';
+    }
+
+    text += 'Total Abonado:\n';
+    text += `${formatCurrency(totalPaid)}\n\n`;
+
+    text += 'SALDO PENDIENTE:\n';
+    text += `${formatCurrency(item.remainingBalance)}\n\n`;
+
+    text += '--------------------------------\n';
+    text += '¡Gracias por su preferencia!\n';
+
+    return text;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -131,79 +148,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         </DialogHeader>
         
         <div className="border bg-white p-2 rounded-sm overflow-auto max-h-[50vh]">
-            <div ref={invoiceRef} className="receipt-container">
-                <div className="header center">
-                    <h1>LanzaExpress</h1>
-                    <p>Servicio de Lavandería</p>
-                    <p>{new Date().toLocaleString('es-CO')}</p>
-                </div>
-                
-                <div className="separator"></div>
-
-                <p><strong>ID Ticket:</strong> {item.id}</p>
-                <p><strong>Cliente:</strong> {item.customerName}</p>
-                <p><strong>Rango:</strong> {item.rank}</p>
-                <p><strong>Ingreso:</strong> {new Date(item.storageDate).toLocaleDateString('es-CO')}</p>
-                
-                {item.editedBy && (
-                    <p className="edit-info">Editado: {item.editedBy.username} {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}</p>
-                )}
-
-                <div className="separator"></div>
-
-                <p><strong>DESCRIPCION Y VALOR</strong></p>
-                <div className="separator" style={{borderStyle: 'solid'}}></div>
-                
-                <div className="item-block">
-                    <span className="description">Almacenamiento: {item.itemsDescription}</span>
-                    <span className="price">{formatCurrency(item.storagePrice)}</span>
-                </div>
-
-                {item.laundryItems && item.laundryItems.length > 0 && (
-                    <>
-                        {item.laundryItems.map((laundryItem, index) => (
-                            <div key={index} className="item-block">
-                                <span className="description">{laundryItem.quantity}x {laundryItem.name}</span>
-                                <span className="price">{formatCurrency(laundryItem.price * laundryItem.quantity)}</span>
-                            </div>
-                        ))}
-                    </>
-                )}
-                
-                <div className="separator"></div>
-
-                <div className="total-line">
-                    <span>TOTAL A PAGAR:</span>
-                    <span className="price">{formatCurrency(item.totalPrice)}</span>
-                </div>
-
-                {item.payments && item.payments.length > 0 && (
-                  <>
-                    <div className="separator"></div>
-                    <p><strong>Abonos Realizados:</strong></p>
-                    {item.payments.map((payment, index) => (
-                      <div key={index} className="item-block">
-                          <span className='description'>Abono ({new Date(payment.date).toLocaleDateString('es-CO')})</span>
-                          <span className='price'>{formatCurrency(payment.amount)}</span>
-                      </div>
-                    ))}
-                  </>
-                )}
-
-                <div className="separator"></div>
-                
-                <div className="total-line">
-                    <span>Total Abonado:</span>
-                    <span className="price">{formatCurrency(totalPaid)}</span>
-                </div>
-                <div className="total-line">
-                    <span>SALDO PENDIENTE:</span>
-                    <span className="price">{formatCurrency(item.remainingBalance)}</span>
-                </div>
-
-                <div className="separator"></div>
-
-                <p className="center">¡Gracias por su preferencia!</p>
+            <div ref={invoiceRef}>
+              <pre>{generateInvoiceText()}</pre>
             </div>
         </div>
 

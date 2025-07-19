@@ -165,8 +165,8 @@ export default function ReportsView() {
     }, []);
 
     const now = new Date();
-    // Ingresos para el empleado (Abonos + Entregas del día)
-    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Ambos');
+    // Ingresos para el empleado (SOLO Abonos del día)
+    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
 
     // Ingresos para el gerente (separados)
     const abonosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
@@ -191,13 +191,13 @@ export default function ReportsView() {
         return (
              <Card className="lg:col-span-4 bg-primary/10 border-primary/40">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-base font-medium">Total a Recaudar Hoy</CardTitle>
+                    <CardTitle className="text-base font-medium">Total de Abonos Recibidos Hoy</CardTitle>
                     <Coins className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-3xl font-bold">{formatCurrency(ingresosEmpleadoHoy)}</div>
                     <p className="text-xs text-muted-foreground mt-1">
-                        Suma de todos los abonos y pagos de entregas del día.
+                        Suma del dinero en efectivo recibido por abonos hoy.
                     </p>
                 </CardContent>
             </Card>
@@ -223,7 +223,7 @@ export default function ReportsView() {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Ingresos por Entrega (Hoy)</CardTitle>
+                            <CardTitle className="text-sm font-medium">ingresos pendientes por Entrega (hoy)</CardTitle>
                             <PackageCheck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>

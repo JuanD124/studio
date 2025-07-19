@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign } from 'lucide-react';
+import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, CheckCircle2 } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -62,6 +62,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
   const payments = item.payments || [];
   const laundryItems = item.laundryItems || [];
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const isPaid = item.remainingBalance <= 0;
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
@@ -147,9 +148,16 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
             <span>Total a Pagar:</span>
             <span>{formatCurrency(item.totalPrice)}</span>
           </div>
-          <div className="flex justify-between text-destructive">
+          <div className="flex justify-between">
             <span>Saldo Pendiente:</span>
-            <span className="font-bold">{formatCurrency(item.remainingBalance)}</span>
+            {isPaid ? (
+                <Badge className="bg-green-100 text-green-800 border-green-300">
+                    <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                    PAGADO
+                </Badge>
+            ) : (
+                <span className="font-bold text-destructive">{formatCurrency(item.remainingBalance)}</span>
+            )}
           </div>
         </div>
       </CardContent>
@@ -162,11 +170,11 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
              </Button>
           </CollapsibleTrigger>
           <div className="flex flex-col sm:flex-row gap-2 w-full">
-            <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => onAddPayment(item)} disabled={item.remainingBalance <= 0}>
+            <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => onAddPayment(item)} disabled={isPaid}>
                 <Banknote className="mr-2 h-4 w-4" />
                 Abonar
             </Button>
-            <Button variant="secondary" className="flex-1 min-w-[120px]" onClick={() => onClaim(item)}>
+            <Button variant="secondary" className="flex-1 min-w-[120px]" onClick={() => onClaim(item)} disabled={!isPaid}>
                 <PackageCheck className="mr-2 h-4 w-4" />
                 Entregado
             </Button>
