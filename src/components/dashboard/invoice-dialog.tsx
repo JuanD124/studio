@@ -51,7 +51,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 color: #000;
                 background-color: #fff;
                 font-family: monospace;
-                font-size: 8pt;
+                font-size: 7pt;
                 word-break: break-word;
               }
               .receipt-container {
