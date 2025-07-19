@@ -66,37 +66,35 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               }
               .center { text-align: center; }
               .header h1 {
-                font-size: 10pt;
+                font-size: 9pt;
                 margin: 0;
                 font-weight: bold;
               }
               .separator {
                   border-top: 1px dashed black;
-                  margin: 2mm 0;
+                  margin: 1mm 0;
               }
-              .item-line {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
+              .item-block {
+                margin-bottom: 1mm;
               }
-              .item-line .description {
-                flex-grow: 1;
+              .item-block .description {
+                display: block;
                 text-align: left;
-                word-break: break-word;
               }
-              .item-line .price {
-                flex-shrink: 0;
+              .item-block .price {
+                display: block;
                 text-align: right;
-                padding-left: 5px; /* Evita que los precios se peguen al borde */
-                white-space: nowrap;
+                font-weight: bold;
               }
               .total-line {
+                  display: flex;
+                  justify-content: space-between;
                   font-weight: bold;
               }
               .edit-info {
                 text-align: center;
                 font-style: italic;
-                font-size: 7pt;
+                font-size: 6pt;
                 color: #555;
                 margin-top: 1mm;
               }
@@ -154,23 +152,18 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
 
                 <div className="separator"></div>
 
-                <div className="item-line">
-                    <span className="description"><strong>DESCRIPCION</strong></span>
-                    <span className="price"><strong>VALOR</strong></span>
-                </div>
-                
+                <p><strong>DESCRIPCION Y VALOR</strong></p>
                 <div className="separator" style={{borderStyle: 'solid'}}></div>
                 
-                <div className="item-line">
+                <div className="item-block">
                     <span className="description">Almacenamiento: {item.itemsDescription}</span>
                     <span className="price">{formatCurrency(item.storagePrice)}</span>
                 </div>
 
                 {item.laundryItems && item.laundryItems.length > 0 && (
                     <>
-                        <p style={{marginTop: '2mm'}}><strong>Servicios Lavandería:</strong></p>
                         {item.laundryItems.map((laundryItem, index) => (
-                            <div key={index} className="item-line">
+                            <div key={index} className="item-block">
                                 <span className="description">{laundryItem.quantity}x {laundryItem.name}</span>
                                 <span className="price">{formatCurrency(laundryItem.price * laundryItem.quantity)}</span>
                             </div>
@@ -180,9 +173,9 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 
                 <div className="separator"></div>
 
-                <div className="item-line total-line">
-                    <span className="description">TOTAL A PAGAR:</span>
-                    <span className="price">{formatCurrency(item.totalPrice)}</span>
+                <div className="total-line">
+                    <span>TOTAL A PAGAR:</span>
+                    <span>{formatCurrency(item.totalPrice)}</span>
                 </div>
 
                 {item.payments && item.payments.length > 0 && (
@@ -190,7 +183,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                     <div className="separator"></div>
                     <p><strong>Abonos Realizados:</strong></p>
                     {item.payments.map((payment, index) => (
-                      <div key={index} className="item-line">
+                      <div key={index} className="item-block">
                           <span className='description'>Abono ({new Date(payment.date).toLocaleDateString('es-CO')})</span>
                           <span className='price'>{formatCurrency(payment.amount)}</span>
                       </div>
@@ -200,13 +193,13 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
 
                 <div className="separator"></div>
                 
-                <div className="item-line">
-                    <span className="description">Total Abonado:</span>
-                    <span className="price">{formatCurrency(totalPaid)}</span>
+                <div className="total-line">
+                    <span>Total Abonado:</span>
+                    <span>{formatCurrency(totalPaid)}</span>
                 </div>
-                <div className="item-line total-line">
-                    <span className="description">SALDO PENDIENTE:</span>
-                    <span className="price">{formatCurrency(item.remainingBalance)}</span>
+                <div className="total-line">
+                    <span>SALDO PENDIENTE:</span>
+                    <span>{formatCurrency(item.remainingBalance)}</span>
                 </div>
 
                 <div className="separator"></div>
@@ -223,3 +216,4 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
     </Dialog>
   );
 }
+
