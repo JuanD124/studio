@@ -87,8 +87,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 font-weight: bold;
               }
               .total-line {
-                  display: flex;
-                  justify-content: space-between;
+                  display: block;
                   font-weight: bold;
               }
               .edit-info {
@@ -175,7 +174,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
 
                 <div className="total-line">
                     <span>TOTAL A PAGAR:</span>
-                    <span>{formatCurrency(item.totalPrice)}</span>
+                    <span className="price">{formatCurrency(item.totalPrice)}</span>
                 </div>
 
                 {item.payments && item.payments.length > 0 && (
@@ -195,11 +194,11 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 
                 <div className="total-line">
                     <span>Total Abonado:</span>
-                    <span>{formatCurrency(totalPaid)}</span>
+                    <span className="price">{formatCurrency(totalPaid)}</span>
                 </div>
                 <div className="total-line">
                     <span>SALDO PENDIENTE:</span>
-                    <span>{formatCurrency(item.remainingBalance)}</span>
+                    <span className="price">{formatCurrency(item.remainingBalance)}</span>
                 </div>
 
                 <div className="separator"></div>
@@ -216,4 +215,3 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
     </Dialog>
   );
 }
-
