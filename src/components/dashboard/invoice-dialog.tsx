@@ -29,10 +29,6 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
     const printContent = invoiceRef.current;
     if (printContent) {
       const contentClone = printContent.cloneNode(true) as HTMLDivElement;
-      const logoSvg = contentClone.querySelector('.header h1 svg');
-      if (logoSvg) {
-        logoSvg.remove();
-      }
       
       const iframe = document.createElement('iframe');
       iframe.style.position = 'absolute';
@@ -55,22 +51,23 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               margin: 0;
               padding: 5px;
               font-size: 12px;
-              line-height: 1.4;
+              line-height: 1.2;
+              color: #000;
             }
-            .header { text-align: center; margin-bottom: 10px; }
-            .header h1 { margin: 0; font-size: 18px; }
-            .header p { margin: 0; }
-            .item-line { display: flex; justify-content: space-between; margin-bottom: 1px; word-break: break-all; }
-            .item-line span:first-child { flex-basis: 70%; flex-grow: 1; text-align: left; padding-right: 5px; }
+            .header { text-align: center; margin-bottom: 5px; }
+            .header h1 { margin: 0; font-size: 16px; font-weight: 700; }
+            .header p { margin: 0; font-size: 11px; }
+            .item-line { display: flex; justify-content: space-between; margin-bottom: 0; word-break: break-all; }
+            .item-line span:first-child { flex-basis: 70%; flex-grow: 1; text-align: left; padding-right: 4px; }
             .item-line span:last-child { flex-basis: 30%; flex-shrink: 0; text-align: right; }
             .details p { margin: 0; }
-            .separator { border-top: 1px dashed black; margin: 8px 0; }
-            .total-section { font-size: 13px; }
+            .separator { border-top: 1px dashed black; margin: 5px 0; }
+            .total-section { font-size: 12px; }
             .total { display: flex; justify-content: space-between; }
-            .total.grand-total { font-weight: bold; font-size: 15px; margin-top: 4px; }
-            .footer { text-align: center; margin-top: 10px; font-size: 10px; }
-            .payment-summary { margin-top: 8px; }
-            .edit-info { text-align: center; font-style: italic; font-size: 10px; margin-top: 8px; color: #555; }
+            .total.grand-total { font-weight: bold; font-size: 14px; margin-top: 2px; }
+            .footer { text-align: center; margin-top: 5px; font-size: 10px; }
+            .payment-summary { margin-top: 5px; }
+            .edit-info { text-align: center; font-style: italic; font-size: 10px; margin-top: 5px; color: #555; }
           </style>
         `);
         doc.write('</head><body>');
@@ -106,9 +103,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         
         <div ref={invoiceRef} className="py-4 font-mono text-sm">
             <div className="header">
-                 <h1>
-                    <span>LanzaExpress</span>
-                </h1>
+                 <h1>LanzaExpress</h1>
                 <p>El mejor servicio para nuestros héroes</p>
                 <div className="separator"></div>
                 <p><strong>FACTURA SIMPLIFICADA</strong></p>
