@@ -151,11 +151,14 @@ export default function ReportsView() {
         }
     }, [toast]);
 
-    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date) => {
+    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega' | 'Ambos') => {
         return entries
             .filter(entry => {
                 const entryDate = new Date(entry.date);
-                return isWithinInterval(entryDate, { start: startDate, end: endDate }) && entry.type === 'Abono';
+                const isWithin = isWithinInterval(entryDate, { start: startDate, end: endDate });
+                if (!isWithin) return false;
+                if (type === 'Ambos') return true;
+                return entry.type === type;
             })
             .reduce((sum, entry) => sum + entry.amount, 0);
     }, []);
@@ -163,17 +166,15 @@ export default function ReportsView() {
     const now = new Date();
     const todayInterval = { start: startOfDay(now), end: endOfDay(now) };
 
-    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end);
+    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Abono');
 
-    const abonosHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end);
-    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now));
-    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now));
+    const abonosHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Abono');
+    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
+    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
     
-    const valorEntregadoHoy = React.useMemo(() => {
-        return claimedItems
-            .filter(item => isWithinInterval(new Date(item.claimedDate), todayInterval))
-            .reduce((sum, item) => sum + item.totalPrice, 0);
-    }, [claimedItems, todayInterval]);
+    const ingresosPorEntregaHoy = React.useMemo(() => {
+        return calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Entrega');
+    }, [incomeEntries, todayInterval, calculateTotalIncome]);
     
     const displayClaimedItems = React.useMemo(() => {
         const thirtyDaysAgo = subDays(new Date(), 30);
@@ -229,13 +230,13 @@ export default function ReportsView() {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Valor Total Entregado Hoy</CardTitle>
+                            <CardTitle className="text-sm font-medium">Ingresos por Entrega (Hoy)</CardTitle>
                             <PackageCheck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(valorEntregadoHoy)}</div>
+                            <div className="text-2xl font-bold">{formatCurrency(ingresosPorEntregaHoy)}</div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Suma del valor total de los artículos entregados hoy. Útil para contrastar con los abonos recibidos por el empleado.
+                                Suma de saldos liquidados al entregar artículos hoy.
                             </p>
                         </CardContent>
                     </Card>
