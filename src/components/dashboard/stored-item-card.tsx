@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, CheckCircle2, MapPin } from 'lucide-react';
+import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, CheckCircle2, MapPin, Phone } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -70,9 +70,18 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
     <Card className="flex flex-col transition-all hover:shadow-lg">
       <CardHeader>
         <div className="flex items-start justify-between">
-            <CardTitle className="font-headline flex-1">
-                {item.customerName}
-            </CardTitle>
+            <div className="flex-1">
+                <CardTitle className="font-headline">
+                    {item.customerName}
+                </CardTitle>
+                 {item.phone && (
+                    <CardDescription className="flex items-center gap-2 pt-1">
+                        <Phone className="w-3.5 h-3.5"/>
+                        <span>{item.phone}</span>
+                    </CardDescription>
+                )}
+            </div>
+
             {user && (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -94,7 +103,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 </DropdownMenu>
             )}
         </div>
-        <Badge variant="secondary" className="w-fit">ID: {item.id}</Badge>
+        <Badge variant="secondary" className="w-fit mt-2">ID: {item.id}</Badge>
         <CardDescription className="flex items-center gap-2 pt-2">
           <Package className="w-4 h-4" />
           <span>{item.itemsDescription}</span>
@@ -107,12 +116,12 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 <Clock className="w-3 h-3" />
                 <span>{getStorageDuration(item.storageDate)}</span>
             </div>
-            <Button variant="ghost" size="sm" className="h-auto p-0 justify-start" onClick={() => onEditLocation(item)}>
-                <MapPin className="w-3 h-3 mr-2"/>
-                <span className={item.location ? '' : 'text-muted-foreground italic'}>
-                  {item.location || 'Sin ubicación'}
-                </span>
-            </Button>
+             <Button variant="ghost" size="sm" className="h-auto p-0 justify-start" onClick={() => onEditLocation(item)}>
+                 <MapPin className="w-3 h-3 mr-2"/>
+                 <span className={item.location ? '' : 'text-muted-foreground italic'}>
+                   {item.location || 'Sin ubicación'}
+                 </span>
+             </Button>
         </div>
       </CardHeader>
 

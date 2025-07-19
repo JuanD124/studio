@@ -49,19 +49,19 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
+                font-family: 'Courier New', monospace;
+                font-size: 10pt;
+                line-height: 1.4;
               }
               body {
-                font-family: 'Courier New', monospace;
-                font-size: 8pt;
-                color: #000;
                 width: 100%;
+                color: #000;
               }
               pre {
                 white-space: pre-wrap;
                 word-wrap: break-word;
                 margin: 0;
                 padding: 0;
-                line-height: 1.2;
               }
             }
           </style>
@@ -96,6 +96,9 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
     text += '--------------------------------\n';
     text += `ID Ticket: ${item.id}\n`;
     text += `Cliente: ${item.customerName}\n`;
+    if (item.phone) {
+      text += `Telefono: ${item.phone}\n`;
+    }
     text += `Rango: ${item.rank}\n`;
     text += `Color: ${item.color}\n`;
     text += `Ingreso: ${new Date(item.storageDate).toLocaleDateString('es-CO')}\n`;
