@@ -174,7 +174,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 <Banknote className="mr-2 h-4 w-4" />
                 Abonar
             </Button>
-            <Button variant="secondary" className="flex-1 min-w-[120px]" onClick={() => onClaim(item)} disabled={!isPaid}>
+            <Button variant="secondary" className="flex-1 min-w-[120px]" onClick={() => onClaim(item)}>
                 <PackageCheck className="mr-2 h-4 w-4" />
                 Entregado
             </Button>
