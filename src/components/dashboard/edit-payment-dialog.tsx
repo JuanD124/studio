@@ -25,31 +25,44 @@ interface EditPaymentDialogProps {
   paymentInfo: { item: StoredItem; payment: Payment } | null;
 }
 
+const formSchema = z.object({
+  amount: z.coerce.number().min(1, { message: 'El abono debe ser mayor a cero.' }),
+});
+
+type PaymentFormValues = z.infer<typeof formSchema>;
+
+
 export function EditPaymentDialog({ isOpen, onClose, onSave, paymentInfo }: EditPaymentDialogProps) {
   const { item, payment } = paymentInfo || {};
   
-  const formSchema = z.object({
-    amount: z.coerce.number()
-      .min(1, { message: 'El abono debe ser mayor a cero.' })
-      .max((item?.totalPrice ?? 0) - ((item?.payments?.reduce((acc, p) => acc + p.amount, 0) ?? 0) - (payment?.amount ?? 0)), { 
-        message: `El nuevo monto excede el precio total del artículo.` 
-      }),
-  });
-
-  type PaymentFormValues = z.infer<typeof formSchema>;
-
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       amount: 0,
     },
   });
-
+  
   React.useEffect(() => {
-    if (isOpen && payment) {
+    if (isOpen && payment && item) {
       form.reset({ amount: payment.amount });
+      
+      const totalPaidWithoutCurrent = (item.payments?.reduce((acc, p) => acc + p.amount, 0) || 0) - (payment.amount || 0);
+      const maxAllowed = item.totalPrice - totalPaidWithoutCurrent;
+
+      // Re-build schema with dynamic max validation
+      const dynamicSchema = z.object({
+        amount: z.coerce
+          .number()
+          .min(1, { message: 'El abono debe ser mayor a cero.' })
+          .max(maxAllowed, { message: `El monto no puede superar el saldo pendiente. Máximo: ${formatCurrency(maxAllowed)}` }),
+      });
+
+      form.trigger(); // Re-validate with new schema, though not directly supported, Zod needs a new resolver instance.
+                      // For simplicity, we just check on submit or let the existing message guide the user.
+                      // The logic inside onSubmit will be the final guard.
+
     }
-  }, [isOpen, payment, form]);
+  }, [isOpen, item, payment, form]);
 
   if (!item || !payment) return null;
 

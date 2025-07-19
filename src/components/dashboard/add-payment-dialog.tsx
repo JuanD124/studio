@@ -21,7 +21,7 @@ import { formatCurrency } from '@/lib/utils';
 interface AddPaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (itemId: string, amount: number) => void;
+  onSave: (item: StoredItem, amount: number) => void;
   item: StoredItem | null;
 }
 
@@ -53,7 +53,7 @@ export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDi
   if (!item) return null;
   
   const onSubmit = (data: PaymentFormValues) => {
-    onSave(item.id, data.amount);
+    onSave(item, data.amount);
     onClose();
   };
 

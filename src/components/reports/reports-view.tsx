@@ -23,7 +23,6 @@ export default function ReportsView() {
     React.useEffect(() => {
         if (!db) return;
 
-        const thirtyDaysAgo = subDays(new Date(), 30);
         const claimedQuery = query(
             collection(db, "claimedItems"), 
             orderBy("claimedDate", "desc")
@@ -31,12 +30,15 @@ export default function ReportsView() {
 
         const unsubscribeClaimed = onSnapshot(claimedQuery, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as ClaimedItem[];
-            setClaimedItems(items); // Keep all claimed items for calculations, filter for display later
+            setClaimedItems(items);
         });
         
         const incomeQuery = query(collection(db, "incomeEntries"), orderBy("date", "desc"));
         const unsubscribeIncome = onSnapshot(incomeQuery, (snapshot) => {
-            const entries = snapshot.docs.map(doc => doc.data()) as IncomeEntry[];
+            let entries: IncomeEntry[] = [];
+            snapshot.forEach(doc => {
+                entries.push(doc.data() as IncomeEntry);
+            });
             setIncomeEntries(entries);
         });
 
@@ -91,7 +93,7 @@ export default function ReportsView() {
 
     const handleDeleteItem = React.useCallback(async (id: string) => {
         if (!db) return;
-        if (!window.confirm("¿Estás seguro de que quieres eliminar este artículo permanentemente? Esta acción no se puede deshacer y no afectará los reportes de ingresos ya registrados.")) {
+        if (!window.confirm("¿Estás seguro de que quieres eliminar este artículo permanentemente? Esta acción no se puede deshacer.")) {
             return;
         }
         try {
@@ -172,9 +174,7 @@ export default function ReportsView() {
     const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
     const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
     
-    const ingresosPorEntregaHoy = React.useMemo(() => {
-        return calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Entrega');
-    }, [incomeEntries, todayInterval, calculateTotalIncome]);
+    const ingresosPorEntregaHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Entrega');
     
     const displayClaimedItems = React.useMemo(() => {
         const thirtyDaysAgo = subDays(new Date(), 30);
@@ -296,7 +296,3 @@ export default function ReportsView() {
         </div>
     );
 }
-
-    
-
-    

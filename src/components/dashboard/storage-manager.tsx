@@ -70,11 +70,13 @@ export default function StorageManager() {
     if (!db || !user) return;
     try {
       if (id) {
-        // When editing, we need to preserve payments and recalculate remaining balance
-        const existingItem = items.find(i => i.id === id);
-        if (!existingItem) throw new Error("Item no encontrado");
+        const itemRef = doc(db, 'storedItems', id);
+        const itemDoc = await getDoc(itemRef);
+        if (!itemDoc.exists()) throw new Error("Item no encontrado");
 
+        const existingItem = itemDoc.data() as StoredItem;
         const totalPaid = existingItem.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+        
         const updatedData = {
           ...itemData,
           location: existingItem.location || '',
@@ -85,14 +87,12 @@ export default function StorageManager() {
             date: new Date().toISOString(),
           }
         };
-        const itemRef = doc(db, 'storedItems', id);
         await updateDoc(itemRef, updatedData);
         toast({
           title: "Éxito",
           description: "El artículo ha sido actualizado correctamente.",
         });
       } else {
-        // When creating a new item with a sequential ID
         await runTransaction(db, async (transaction) => {
           const counterRef = doc(db, 'counters', 'storedItems');
           const counterDoc = await transaction.get(counterRef);
@@ -100,9 +100,6 @@ export default function StorageManager() {
           let newId = 1;
           if (counterDoc.exists()) {
             newId = counterDoc.data().lastId + 1;
-          } else {
-            // If counter doesn't exist, we will create it.
-            // No need to set it here, we'll set it in the transaction.
           }
 
           const newItemRef = doc(db, 'storedItems', newId.toString());
@@ -116,7 +113,7 @@ export default function StorageManager() {
           };
 
           transaction.set(newItemRef, newItemData);
-          transaction.set(counterRef, { lastId: newId }, { merge: !counterDoc.exists() });
+          transaction.set(counterRef, { lastId: newId }, { merge: true });
         });
         
         toast({
@@ -132,19 +129,13 @@ export default function StorageManager() {
         variant: "destructive",
       });
     }
-  }, [items, toast, user]);
+  }, [toast, user]);
 
-  const handleSavePayment = React.useCallback(async (itemId: string, amount: number) => {
+  const handleSavePayment = React.useCallback(async (item: StoredItem, amount: number) => {
     if (!db) return;
 
-    const itemRef = doc(db, 'storedItems', itemId);
+    const itemRef = doc(db, 'storedItems', item.id);
     const incomeEntryRef = doc(collection(db, 'incomeEntries'));
-    const item = items.find(i => i.id === itemId);
-
-    if (!item) {
-        toast({ title: "Error", description: "Artículo no encontrado.", variant: "destructive" });
-        return;
-    }
 
     try {
         const batch = writeBatch(db);
@@ -156,13 +147,11 @@ export default function StorageManager() {
 
         const newRemainingBalance = item.remainingBalance - amount;
 
-        // Update stored item with new payment and remaining balance
         batch.update(itemRef, {
             payments: arrayUnion(newPayment),
             remainingBalance: newRemainingBalance,
         });
 
-        // Create a new income entry
         const incomeEntry: IncomeEntry = {
             amount,
             date: new Date().toISOString(),
@@ -178,7 +167,7 @@ export default function StorageManager() {
         console.error("Error al registrar el abono: ", error);
         toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
     }
-}, [items, toast]);
+}, [toast]);
 
   const handleClaimItem = React.useCallback(async (item: StoredItem) => {
     if (!db) return;
@@ -195,7 +184,6 @@ export default function StorageManager() {
       
       batch.set(claimedItemRef, claimedItemData);
       
-      // If there's a remaining balance, create an income entry for it
       if (item.remainingBalance > 0) {
         const finalPaymentEntryRef = doc(collection(db, 'incomeEntries'));
         const finalIncomeEntry: IncomeEntry = {
