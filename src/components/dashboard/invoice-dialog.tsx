@@ -43,18 +43,25 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           <style>
             @media print {
               @page {
-                margin: 2mm;
+                margin: 0;
+              }
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
               }
               body {
                 font-family: 'Courier New', monospace;
-                font-size: 10pt;
+                font-size: 8pt;
                 color: #000;
+                width: 100%;
               }
               pre {
                 white-space: pre-wrap;
-                word-break: break-word;
+                word-wrap: break-word;
                 margin: 0;
                 padding: 0;
+                line-height: 1.2;
               }
             }
           </style>
@@ -99,16 +106,16 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
 
     text += '--------------------------------\n';
     text += 'DESCRIPCION Y VALOR\n';
-    text += '================================\n';
+    text += '================================\n\n';
 
     text += 'Almacenamiento:\n';
     text += `${item.itemsDescription}\n`;
-    text += `... ${formatCurrency(item.storagePrice)}\n\n`;
+    text += `${formatCurrency(item.storagePrice)}\n\n`;
 
     if (item.laundryItems && item.laundryItems.length > 0) {
       item.laundryItems.forEach(laundryItem => {
         text += `${laundryItem.quantity}x ${laundryItem.name}\n`;
-        text += `... ${formatCurrency(laundryItem.price * laundryItem.quantity)}\n\n`;
+        text += `${formatCurrency(laundryItem.price * laundryItem.quantity)}\n\n`;
       });
     }
 
