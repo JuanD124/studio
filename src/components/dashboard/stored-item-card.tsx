@@ -11,10 +11,9 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { CalendarDays, Clock, Package, PackageCheck, Palette, Shield, User, Users, Fingerprint, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, CheckCircle2, MapPin, Phone } from 'lucide-react';
+import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2 } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { useAuth } from '@/context/AuthContext';
 
@@ -24,46 +23,66 @@ interface StoredItemCardProps {
   onOpenInvoice: (item: StoredItem) => void;
   onEdit: (item: StoredItem) => void;
   onAddPayment: (item: StoredItem) => void;
+  onEditPayment: (item: StoredItem, payment: Payment) => void;
   onEditLocation: (item: StoredItem) => void;
 }
 
-const PaymentHistory = ({ payments }: { payments: Payment[] }) => (
-    <div className="space-y-1 text-xs">
-        <div className="flex items-center gap-2 font-medium">
-            <History className="w-3.5 h-3.5" />
-            <span>Historial de Abonos</span>
-        </div>
-        {payments.map((p, index) => (
-            <div key={index} className="flex justify-between items-center pl-4">
-                <span>{format(new Date(p.date), 'dd/MM/yyyy')}</span>
-                <Badge variant="outline">{formatCurrency(p.amount)}</Badge>
+const PaymentHistory = ({ payments, onEditPayment }: { payments: Payment[], onEditPayment: (payment: Payment) => void }) => {
+    const { user } = useAuth();
+    if (!payments || payments.length === 0) return null;
+    
+    return (
+        <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2 font-medium">
+                <History className="w-3.5 h-3.5" />
+                <span>Historial de Abonos</span>
             </div>
-        ))}
-    </div>
-);
+            {payments.map((p, index) => (
+                <div key={p.id || index} className="flex justify-between items-center pl-4 group">
+                    <div>
+                        <span className='font-mono'>{formatCurrency(p.amount)}</span>
+                        <span className='text-muted-foreground ml-2'>({format(new Date(p.date), 'dd/MM/yy')})</span>
+                    </div>
+                    {user?.role === 'gerente' && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => onEditPayment(p)}>
+                            <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
 
-const LaundryItemsList = ({ items }: { items: StoredItem['laundryItems'] }) => (
-  <div className="space-y-1 text-xs">
-      <div className="flex items-center gap-2 font-medium">
-          <Shirt className="w-3.5 h-3.5" />
-          <span>Servicios de Lavandería</span>
-      </div>
-      {items.map((item, index) => (
-          <div key={index} className="flex justify-between items-center pl-4">
-              <span>{item.quantity} &times; {item.name}</span>
-              <Badge variant="outline">{formatCurrency(item.price * item.quantity)}</Badge>
-          </div>
-      ))}
-  </div>
-);
+const LaundryItemsList = ({ items }: { items: StoredItem['laundryItems'] }) => {
+    if (!items || items.length === 0) return null;
 
+    return (
+        <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2 font-medium">
+                <Shirt className="w-3.5 h-3.5" />
+                <span>Servicios de Lavandería</span>
+            </div>
+            {items.map((item, index) => (
+                <div key={index} className="flex justify-between items-center pl-4">
+                    <span>{item.quantity} &times; {item.name}</span>
+                    <Badge variant="outline">{formatCurrency(item.price * item.quantity)}</Badge>
+                </div>
+            ))}
+        </div>
+    );
+};
 
-function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment, onEditLocation }: StoredItemCardProps) {
+function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment, onEditPayment, onEditLocation }: StoredItemCardProps) {
   const { user } = useAuth();
   const payments = item.payments || [];
   const laundryItems = item.laundryItems || [];
   const [isExpanded, setIsExpanded] = React.useState(false);
   const isPaid = item.remainingBalance <= 0;
+
+  const handleEditSpecificPayment = (payment: Payment) => {
+    onEditPayment(item, payment);
+  };
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
@@ -74,10 +93,10 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 <CardTitle className="font-headline">
                     {item.customerName}
                 </CardTitle>
-                 {item.phone && (
+                 {item.customerPhone && (
                     <CardDescription className="flex items-center gap-2 pt-1">
                         <Phone className="w-3.5 h-3.5"/>
-                        <span>{item.phone}</span>
+                        <span>{item.customerPhone}</span>
                     </CardDescription>
                 )}
             </div>
@@ -133,6 +152,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                     <span>{item.rank}</span>
                 </div>
                 {item.customerId && <div className="flex items-center gap-2"><Fingerprint className="w-3 h-3"/><span>C.C. {item.customerId}</span></div>}
+                {item.customerPhone && <div className="flex items-center gap-2"><Phone className="w-3 h-3"/><span>{item.customerPhone}</span></div>}
                 {item.battalion && <div className="flex items-center gap-2"><Shield className="w-3 h-3"/><span>{item.battalion}</span></div>}
                 {item.contingent && <div className="flex items-center gap-2"><Users className="w-3 h-3"/><span>{item.contingent}</span></div>}
                 {item.editedBy && (
@@ -156,8 +176,8 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 </div>
             </div>
 
-            {laundryItems.length > 0 && <LaundryItemsList items={laundryItems} />}
-            {payments.length > 0 && <PaymentHistory payments={payments} />}
+            <LaundryItemsList items={laundryItems} />
+            <PaymentHistory payments={payments} onEditPayment={handleEditSpecificPayment} />
         </CardContent>
       </CollapsibleContent>
 
@@ -189,20 +209,20 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 {isExpanded ? 'Ver menos detalles' : 'Ver más detalles'}
              </Button>
           </CollapsibleTrigger>
-          <div className="flex flex-col sm:flex-row gap-2 w-full">
-            <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => onAddPayment(item)} disabled={isPaid}>
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <Button variant="outline" className="flex-1" onClick={() => onAddPayment(item)} disabled={isPaid}>
                 <Banknote className="mr-2 h-4 w-4" />
                 Abonar
             </Button>
-            <Button variant="secondary" className="flex-1 min-w-[120px]" onClick={() => onClaim(item)}>
+            <Button variant="secondary" className="flex-1" onClick={() => onClaim(item)}>
                 <PackageCheck className="mr-2 h-4 w-4" />
                 Entregado
             </Button>
+            <Button className="col-span-2" onClick={() => onOpenInvoice(item)}>
+                <Receipt className="mr-2 h-4 w-4" />
+                Factura
+            </Button>
           </div>
-          <Button className="flex-grow w-full" onClick={() => onOpenInvoice(item)}>
-            <Receipt className="mr-2 h-4 w-4" />
-            Factura
-          </Button>
       </CardFooter>
     </Card>
     </Collapsible>

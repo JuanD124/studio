@@ -11,10 +11,12 @@ import { AddItemDialog } from './add-item-dialog';
 import { InvoiceDialog } from './invoice-dialog';
 import { StoredItemCard } from './stored-item-card';
 import { AddPaymentDialog } from './add-payment-dialog';
-import { EditLocationDialog } from './edit-location-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
+import { SetLocationDialog } from './set-location-dialog';
+import { EditPaymentDialog } from './edit-payment-dialog';
+import { EditLocationDialog } from './edit-location-dialog';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -23,10 +25,12 @@ export default function StorageManager() {
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
+  const [isEditPaymentDialogOpen, setIsEditPaymentDialogOpen] = React.useState(false);
   const [isLocationDialogOpen, setIsLocationDialogOpen] = React.useState(false);
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
   const [paymentItem, setPaymentItem] = React.useState<StoredItem | null>(null);
+  const [editingPaymentInfo, setEditingPaymentInfo] = React.useState<{ item: StoredItem; payment: Payment } | null>(null);
   const [locationItem, setLocationItem] = React.useState<StoredItem | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -36,7 +40,7 @@ export default function StorageManager() {
 
     const q = query(collection(db, 'storedItems'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const itemsData: StoredItem[] = [];
+      let itemsData: StoredItem[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         itemsData.push({ 
@@ -45,9 +49,10 @@ export default function StorageManager() {
           storageDate: data.storageDate,
         } as StoredItem);
       });
-      // Sort by numeric ID descending
       itemsData.sort((a, b) => Number(b.id) - Number(a.id));
       setItems(itemsData);
+    }, (error) => {
+        console.error("Error fetching stored items:", error);
     });
     return () => unsubscribe();
   }, []);
@@ -62,22 +67,26 @@ export default function StorageManager() {
         servicesData.push({ id: doc.id, ...doc.data() } as LaundryItem);
       });
       setLaundryServices(servicesData);
+    }, (error) => {
+        console.error("Error fetching laundry services:", error);
     });
     return () => unsubscribe();
   }, []);
 
-  const handleSaveItem = React.useCallback(async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance' | 'editedBy' | 'location'>, id?: string) => {
+  const handleSaveItem = React.useCallback(async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance' | 'editedBy' >, id?: string) => {
     if (!db || !user) return;
     try {
       if (id) {
-        // When editing, we need to preserve payments and recalculate remaining balance
-        const existingItem = items.find(i => i.id === id);
-        if (!existingItem) throw new Error("Item no encontrado");
+        const itemRef = doc(db, 'storedItems', id);
+        const itemDoc = await getDoc(itemRef);
+        if (!itemDoc.exists()) throw new Error("Item no encontrado");
 
+        const existingItem = itemDoc.data() as StoredItem;
         const totalPaid = existingItem.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-        const updatedData = {
+        
+        const updatedData: Omit<StoredItem, 'id' | 'storageDate'> = {
           ...itemData,
-          location: existingItem.location || '',
+          location: itemData.location || existingItem.location || '',
           payments: existingItem.payments || [],
           remainingBalance: itemData.totalPrice - totalPaid,
           editedBy: {
@@ -85,14 +94,12 @@ export default function StorageManager() {
             date: new Date().toISOString(),
           }
         };
-        const itemRef = doc(db, 'storedItems', id);
         await updateDoc(itemRef, updatedData);
         toast({
           title: "Éxito",
           description: "El artículo ha sido actualizado correctamente.",
         });
       } else {
-        // When creating a new item with a sequential ID
         await runTransaction(db, async (transaction) => {
           const counterRef = doc(db, 'counters', 'storedItems');
           const counterDoc = await transaction.get(counterRef);
@@ -100,9 +107,6 @@ export default function StorageManager() {
           let newId = 1;
           if (counterDoc.exists()) {
             newId = counterDoc.data().lastId + 1;
-          } else {
-            // If counter doesn't exist, we will create it.
-            // No need to set it here, we'll set it in the transaction.
           }
 
           const newItemRef = doc(db, 'storedItems', newId.toString());
@@ -112,11 +116,11 @@ export default function StorageManager() {
             storageDate: new Date().toISOString(),
             payments: [],
             remainingBalance: itemData.totalPrice,
-            location: '',
+            location: itemData.location || '',
           };
 
           transaction.set(newItemRef, newItemData);
-          transaction.set(counterRef, { lastId: newId }, { merge: !counterDoc.exists() });
+          transaction.set(counterRef, { lastId: newId }, { merge: true });
         });
         
         toast({
@@ -132,37 +136,31 @@ export default function StorageManager() {
         variant: "destructive",
       });
     }
-  }, [items, toast, user]);
+  }, [toast, user]);
 
-  const handleSavePayment = React.useCallback(async (itemId: string, amount: number) => {
-    if (!db) return;
+  const handleSavePayment = React.useCallback(async (item: StoredItem, amount: number) => {
+    if (!db || !user) return;
 
-    const itemRef = doc(db, 'storedItems', itemId);
+    const itemRef = doc(db, 'storedItems', item.id);
     const incomeEntryRef = doc(collection(db, 'incomeEntries'));
-    const item = items.find(i => i.id === itemId);
-
-    if (!item) {
-        toast({ title: "Error", description: "Artículo no encontrado.", variant: "destructive" });
-        return;
-    }
 
     try {
         const batch = writeBatch(db);
 
         const newPayment: Payment = {
+            id: new Date().toISOString() + Math.random().toString(36).substr(2, 9),
             amount,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
+            createdBy: user.username,
         };
 
         const newRemainingBalance = item.remainingBalance - amount;
 
-        // Update stored item with new payment and remaining balance
         batch.update(itemRef, {
             payments: arrayUnion(newPayment),
             remainingBalance: newRemainingBalance,
         });
 
-        // Create a new income entry
         const incomeEntry: IncomeEntry = {
             amount,
             date: new Date().toISOString(),
@@ -178,7 +176,45 @@ export default function StorageManager() {
         console.error("Error al registrar el abono: ", error);
         toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
     }
-}, [items, toast]);
+  }, [toast, user]);
+
+  const handleEditPayment = React.useCallback(async (itemId: string, oldPayment: Payment, newAmount: number) => {
+    if (!db) return;
+    try {
+      await runTransaction(db, async (transaction) => {
+        const itemRef = doc(db, 'storedItems', itemId);
+        const itemDoc = await transaction.get(itemRef);
+
+        if (!itemDoc.exists()) {
+          throw new Error("Artículo no encontrado");
+        }
+        
+        const currentItem = itemDoc.data() as StoredItem;
+        const payments = currentItem.payments || [];
+        
+        const paymentIndex = payments.findIndex(p => p.id === oldPayment.id);
+        if (paymentIndex === -1) {
+          throw new Error("Abono no encontrado para editar");
+        }
+
+        const updatedPayments = [...payments];
+        updatedPayments[paymentIndex] = { ...updatedPayments[paymentIndex], amount: newAmount };
+
+        const newTotalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
+        const newRemainingBalance = currentItem.totalPrice - newTotalPaid;
+
+        transaction.update(itemRef, {
+          payments: updatedPayments,
+          remainingBalance: newRemainingBalance
+        });
+      });
+      toast({ title: "Éxito", description: "Abono actualizado correctamente." });
+    } catch(error) {
+      console.error("Error al editar el abono:", error);
+      toast({ title: "Error", description: "No se pudo actualizar el abono.", variant: "destructive" });
+    }
+  }, [toast]);
+
 
   const handleClaimItem = React.useCallback(async (item: StoredItem) => {
     if (!db) return;
@@ -195,7 +231,6 @@ export default function StorageManager() {
       
       batch.set(claimedItemRef, claimedItemData);
       
-      // If there's a remaining balance, create an income entry for it
       if (item.remainingBalance > 0) {
         const finalPaymentEntryRef = doc(collection(db, 'incomeEntries'));
         const finalIncomeEntry: IncomeEntry = {
@@ -265,6 +300,11 @@ export default function StorageManager() {
     setIsPaymentDialogOpen(true);
   }, []);
 
+  const handleOpenEditPaymentDialog = React.useCallback((item: StoredItem, payment: Payment) => {
+    setEditingPaymentInfo({ item, payment });
+    setIsEditPaymentDialogOpen(true);
+  }, []);
+  
   const handleOpenLocationDialog = React.useCallback((item: StoredItem) => {
     setLocationItem(item);
     setIsLocationDialogOpen(true);
@@ -280,6 +320,8 @@ export default function StorageManager() {
     setInvoicingItem(null);
     setIsLocationDialogOpen(false);
     setLocationItem(null);
+    setIsEditPaymentDialogOpen(false);
+    setEditingPaymentInfo(null);
   }, []);
 
   const filteredItems = React.useMemo(() => 
@@ -331,13 +373,14 @@ export default function StorageManager() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-6">
             {filteredItems.map((item) => (
                 <StoredItemCard 
-                key={item.id}
-                item={item}
-                onClaim={handleClaimItem}
-                onOpenInvoice={handleOpenInvoice}
-                onEdit={handleOpenEditDialog}
-                onAddPayment={handleOpenPaymentDialog}
-                onEditLocation={handleOpenLocationDialog}
+                    key={item.id}
+                    item={item}
+                    onClaim={handleClaimItem}
+                    onOpenInvoice={handleOpenInvoice}
+                    onEdit={handleOpenEditDialog}
+                    onAddPayment={handleOpenPaymentDialog}
+                    onEditPayment={handleOpenEditPaymentDialog}
+                    onEditLocation={handleOpenLocationDialog}
                 />
             ))}
             </div>
@@ -363,12 +406,18 @@ export default function StorageManager() {
         onSave={handleSavePayment}
         item={paymentItem}
       />
+      <EditPaymentDialog
+        isOpen={isEditPaymentDialogOpen}
+        onClose={handleCloseDialogs}
+        onSave={handleEditPayment}
+        paymentInfo={editingPaymentInfo}
+      />
       <InvoiceDialog
         isOpen={isInvoiceOpen}
-        onClose={() => setIsInvoiceOpen(false)}
+        onClose={handleCloseDialogs}
         item={invoicingItem}
       />
-      <EditLocationDialog
+       <EditLocationDialog
         isOpen={isLocationDialogOpen}
         onClose={handleCloseDialogs}
         onSave={handleSaveLocation}

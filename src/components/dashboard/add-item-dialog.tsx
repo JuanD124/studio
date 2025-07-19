@@ -25,13 +25,14 @@ import { RANGOS, COLORES } from '@/lib/data';
 const formSchema = z.object({
   customerName: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
   customerId: z.string().optional(),
-  phone: z.string().optional(),
+  customerPhone: z.string().optional(),
   rank: z.string().min(1, { message: 'Debes seleccionar un rango.' }),
   battalion: z.string().optional(),
   contingent: z.string().optional(),
   color: z.string().min(1, { message: 'Debes seleccionar un color.' }),
   itemsDescription: z.string().min(5, { message: 'La descripción debe tener al menos 5 caracteres.' }),
   storagePrice: z.coerce.number().min(0, { message: 'El precio debe ser un número positivo.' }).default(0),
+  location: z.string().optional(),
   laundryItems: z.array(z.object({
     laundryItemId: z.string(),
     name: z.string(),
@@ -56,13 +57,14 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
     defaultValues: {
       customerName: '',
       customerId: '',
-      phone: '',
+      customerPhone: '',
       rank: '',
       battalion: '',
       contingent: '',
       color: '',
       itemsDescription: '',
       storagePrice: 0,
+      location: '',
       laundryItems: [],
     },
   });
@@ -77,26 +79,28 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
       form.reset({
         customerName: itemToEdit.customerName,
         customerId: itemToEdit.customerId || '',
-        phone: itemToEdit.phone || '',
+        customerPhone: itemToEdit.customerPhone || '',
         rank: itemToEdit.rank,
         battalion: itemToEdit.battalion || '',
         contingent: itemToEdit.contingent || '',
         color: itemToEdit.color,
         itemsDescription: itemToEdit.itemsDescription,
         storagePrice: itemToEdit.storagePrice,
+        location: itemToEdit.location || '',
         laundryItems: itemToEdit.laundryItems || [],
       });
     } else if (isOpen) {
       form.reset({
         customerName: '',
         customerId: '',
-        phone: '',
+        customerPhone: '',
         rank: '',
         battalion: '',
         contingent: '',
         color: '',
         itemsDescription: '',
         storagePrice: 0,
+        location: '',
         laundryItems: [],
       });
     }
@@ -166,7 +170,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
               )}
             />
             <div className="grid grid-cols-2 gap-4">
-               <FormField
+              <FormField
                 control={form.control}
                 name="customerId"
                 render={({ field }) => (
@@ -181,10 +185,10 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
               />
                <FormField
                 control={form.control}
-                name="phone"
+                name="customerPhone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Teléfono del Cliente (Opcional)</FormLabel>
+                    <FormLabel>Teléfono (Opcional)</FormLabel>
                     <FormControl>
                       <Input placeholder="3001234567" {...field} />
                     </FormControl>
@@ -294,7 +298,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
                 </FormItem>
                 )}
             />
-
+            
             <div className="space-y-2">
               <FormLabel>Añadir Servicio de Lavandería</FormLabel>
               <div className="flex items-end gap-2">

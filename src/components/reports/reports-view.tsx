@@ -23,7 +23,6 @@ export default function ReportsView() {
     React.useEffect(() => {
         if (!db) return;
 
-        const thirtyDaysAgo = subDays(new Date(), 30);
         const claimedQuery = query(
             collection(db, "claimedItems"), 
             orderBy("claimedDate", "desc")
@@ -31,13 +30,15 @@ export default function ReportsView() {
 
         const unsubscribeClaimed = onSnapshot(claimedQuery, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as ClaimedItem[];
-            const recentItems = items.filter(item => new Date(item.claimedDate) >= thirtyDaysAgo);
-            setClaimedItems(recentItems);
+            setClaimedItems(items);
         });
         
         const incomeQuery = query(collection(db, "incomeEntries"), orderBy("date", "desc"));
         const unsubscribeIncome = onSnapshot(incomeQuery, (snapshot) => {
-            const entries = snapshot.docs.map(doc => doc.data()) as IncomeEntry[];
+            let entries: IncomeEntry[] = [];
+            snapshot.forEach(doc => {
+                entries.push(doc.data() as IncomeEntry);
+            });
             setIncomeEntries(entries);
         });
 
@@ -92,7 +93,7 @@ export default function ReportsView() {
 
     const handleDeleteItem = React.useCallback(async (id: string) => {
         if (!db) return;
-        if (!window.confirm("¿Estás seguro de que quieres eliminar este artículo permanentemente? Esta acción no se puede deshacer y no afectará los reportes de ingresos ya registrados.")) {
+        if (!window.confirm("¿Estás seguro de que quieres eliminar este artículo permanentemente? Esta acción no se puede deshacer.")) {
             return;
         }
         try {
@@ -165,14 +166,20 @@ export default function ReportsView() {
     }, []);
 
     const now = new Date();
-    // Ingresos para el empleado (SOLO Abonos del día)
-    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
+    const todayInterval = { start: startOfDay(now), end: endOfDay(now) };
 
-    // Ingresos para el gerente (separados)
-    const abonosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
+    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Abono');
+
+    const abonosHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Abono');
     const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
     const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
-    const entregasHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Entrega');
+    
+    const ingresosPorEntregaHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Entrega');
+    
+    const displayClaimedItems = React.useMemo(() => {
+        const thirtyDaysAgo = subDays(new Date(), 30);
+        return claimedItems.filter(item => new Date(item.claimedDate) >= thirtyDaysAgo);
+    }, [claimedItems]);
 
     if (isFirebaseConfigInvalid) {
         return (
@@ -197,7 +204,7 @@ export default function ReportsView() {
                 <CardContent>
                     <div className="text-3xl font-bold">{formatCurrency(ingresosEmpleadoHoy)}</div>
                     <p className="text-xs text-muted-foreground mt-1">
-                        Suma del dinero en efectivo recibido por abonos hoy.
+                        Suma de todos los abonos recibidos en el día.
                     </p>
                 </CardContent>
             </Card>
@@ -227,7 +234,7 @@ export default function ReportsView() {
                             <PackageCheck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(entregasHoy)}</div>
+                            <div className="text-2xl font-bold">{formatCurrency(ingresosPorEntregaHoy)}</div>
                             <p className="text-xs text-muted-foreground mt-1">
                                 Suma de saldos liquidados al entregar artículos hoy.
                             </p>
@@ -268,9 +275,9 @@ export default function ReportsView() {
                         Purgar 30 más antiguos
                     </Button>
                 </div>
-                {claimedItems.length > 0 ? (
+                {displayClaimedItems.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {claimedItems.map((item) => (
+                        {displayClaimedItems.map((item) => (
                            <ClaimedItemCard 
                                 key={item.id}
                                 item={item}

@@ -5,15 +5,17 @@ export interface LaundryItem {
 }
 
 export interface Payment {
+  id: string;
   amount: number;
   date: string; // ISO string format
+  createdBy: string;
 }
 
 export interface StoredItem {
   id: string; // Firestore document ID, now will be a sequential number as string
   customerName: string;
   customerId?: string;
-  phone?: string;
+  customerPhone?: string;
   rank: string;
   battalion?: string;
   contingent?: string;

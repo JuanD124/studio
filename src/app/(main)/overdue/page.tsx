@@ -129,38 +129,42 @@ export default function OverduePage() {
         </div>
         <div className='flex items-center gap-2 flex-wrap'>
             <span className='text-sm font-medium'>Filtrar:</span>
-            <Button 
-                variant={activeFilter === 'all' ? 'secondary' : 'outline'}
-                onClick={() => setActiveFilter('all')}
-                size="sm"
-            >
-                Todos
-            </Button>
-            <Button 
-                variant={activeFilter === 'overdue' ? 'destructive' : 'outline'}
-                onClick={() => setActiveFilter('overdue')}
-                size="sm"
-            >
-                Más de 6 meses
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                  variant={activeFilter === 'all' ? 'secondary' : 'outline'}
+                  onClick={() => setActiveFilter('all')}
+                  size="sm"
+              >
+                  Todos
+              </Button>
+              <Button 
+                  variant={activeFilter === 'overdue' ? 'destructive' : 'outline'}
+                  onClick={() => setActiveFilter('overdue')}
+                  size="sm"
+              >
+                  Más de 6 meses
+              </Button>
+            </div>
             <Separator orientation='vertical' className="h-6 mx-2 hidden md:block" />
             <span className='text-sm font-medium'>Ordenar:</span>
-            <Button 
-                variant={sortOrder === 'desc' ? 'secondary' : 'outline'}
-                onClick={() => setSortOrder('desc')}
-                size="sm"
-            >
-                <ArrowDownWideNarrow className='mr-2 h-4 w-4' />
-                Más Reciente
-            </Button>
-            <Button 
-                variant={sortOrder === 'asc' ? 'secondary' : 'outline'}
-                onClick={() => setSortOrder('asc')}
-                size="sm"
-            >
-                <ArrowUpWideNarrow className='mr-2 h-4 w-4' />
-                Más Antiguo
-            </Button>
+             <div className="flex gap-2 flex-wrap">
+              <Button 
+                  variant={sortOrder === 'desc' ? 'secondary' : 'outline'}
+                  onClick={() => setSortOrder('desc')}
+                  size="sm"
+              >
+                  <ArrowDownWideNarrow className='mr-2 h-4 w-4' />
+                  Más Reciente
+              </Button>
+              <Button 
+                  variant={sortOrder === 'asc' ? 'secondary' : 'outline'}
+                  onClick={() => setSortOrder('asc')}
+                  size="sm"
+              >
+                  <ArrowUpWideNarrow className='mr-2 h-4 w-4' />
+                  Más Antiguo
+              </Button>
+            </div>
         </div>
       </div>
 

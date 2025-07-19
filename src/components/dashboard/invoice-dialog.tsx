@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -14,7 +13,6 @@ import {
 import type { StoredItem } from '@/lib/types';
 import { Printer } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { format } from 'date-fns';
 
 interface InvoiceDialogProps {
   isOpen: boolean;
@@ -43,25 +41,28 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           <style>
             @media print {
               @page {
+                size: 58mm;
                 margin: 0;
               }
               * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
-                font-family: 'Courier New', monospace;
-                font-size: 10pt;
-                line-height: 1.4;
               }
-              body {
+              html, body {
                 width: 100%;
                 color: #000;
+                background-color: #fff;
               }
               pre {
-                white-space: pre-wrap;
-                word-wrap: break-word;
+                font-family: 'Courier New', monospace;
+                font-size: 8pt;
+                font-weight: bold;
                 margin: 0;
-                padding: 0;
+                padding: 3mm 2mm;
+                white-space: pre-wrap;
+                word-break: break-word;
+                line-height: 1.2;
               }
             }
           </style>
@@ -81,7 +82,6 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
     }
   };
 
-
   if (!item) return null;
 
   const totalPaid = item.payments.reduce((sum, p) => sum + p.amount, 0);
@@ -96,20 +96,22 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
     text += '--------------------------------\n';
     text += `ID Ticket: ${item.id}\n`;
     text += `Cliente: ${item.customerName}\n`;
-    if (item.phone) {
-      text += `Telefono: ${item.phone}\n`;
+    if (item.customerPhone) {
+      text += `Telefono: ${item.customerPhone}\n`;
     }
     text += `Rango: ${item.rank}\n`;
     text += `Color: ${item.color}\n`;
     text += `Ingreso: ${new Date(item.storageDate).toLocaleDateString('es-CO')}\n`;
 
     if (item.editedBy) {
-      text += `Editado: ${item.editedBy.username} ${format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}\n`;
+      text += `Editado: ${item.editedBy.username}\n`;
+    }
+    if (item.location) {
+      text += `Ubicacion: ${item.location}\n`;
     }
 
     text += '--------------------------------\n';
-    text += 'DESCRIPCION Y VALOR\n';
-    text += '================================\n\n';
+    text += 'DESCRIPCION Y VALOR\n\n';
 
     text += 'Almacenamiento:\n';
     text += `${item.itemsDescription}\n`;
@@ -157,10 +159,10 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           </DialogDescription>
         </DialogHeader>
         
-        <div className="border bg-white p-2 rounded-sm overflow-auto max-h-[50vh]">
-            <div ref={invoiceRef}>
-              <pre>{generateInvoiceText()}</pre>
-            </div>
+        <div className="border bg-white p-2 rounded-sm overflow-auto max-h-[60vh] sm:max-h-[70vh]">
+          <div ref={invoiceRef}>
+            <pre>{generateInvoiceText()}</pre>
+          </div>
         </div>
 
         <DialogFooter>
