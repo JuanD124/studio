@@ -16,6 +16,7 @@ import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { useAuth } from '@/context/AuthContext';
 
 interface StoredItemCardProps {
   item: StoredItem;
@@ -57,7 +58,7 @@ const LaundryItemsList = ({ items }: { items: StoredItem['laundryItems'] }) => (
 
 
 function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment }: StoredItemCardProps) {
-  
+  const { user } = useAuth();
   const payments = item.payments || [];
   const laundryItems = item.laundryItems || [];
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -70,20 +71,22 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
             <CardTitle className="font-headline flex-1">
                 {item.customerName}
             </CardTitle>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Abrir menú</span>
-                    <MoreVertical className="h-4 w-4" />
-                </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(item)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    <span>Editar Artículo</span>
-                </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {user && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Abrir menú</span>
+                        <MoreVertical className="h-4 w-4" />
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEdit(item)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        <span>Editar Artículo</span>
+                    </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
         </div>
         <Badge variant="secondary" className="w-fit">ID: {item.id}</Badge>
         <CardDescription className="flex items-center gap-2 pt-2">
@@ -158,7 +161,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 {isExpanded ? 'Ver menos detalles' : 'Ver más detalles'}
              </Button>
           </CollapsibleTrigger>
-          <div className="flex flex-wrap gap-2 w-full">
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
             <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => onAddPayment(item)} disabled={item.remainingBalance <= 0}>
                 <Banknote className="mr-2 h-4 w-4" />
                 Abonar

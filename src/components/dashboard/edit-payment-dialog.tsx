@@ -28,11 +28,20 @@ interface EditPaymentDialogProps {
 export function EditPaymentDialog({ isOpen, onClose, onSave, paymentInfo }: EditPaymentDialogProps) {
   const { item, payment } = paymentInfo || {};
   
+  // This calculates the maximum valid amount for the edited payment.
+  // It's the total price minus all *other* payments.
+  const maxAllowedAmount = React.useMemo(() => {
+    if (!item || !payment) return 0;
+    const totalPaid = item.payments?.reduce((acc, p) => acc + p.amount, 0) || 0;
+    const paidWithoutThisPayment = totalPaid - payment.amount;
+    return item.totalPrice - paidWithoutThisPayment;
+  }, [item, payment]);
+
   const formSchema = z.object({
     amount: z.coerce.number()
       .min(1, { message: 'El abono debe ser mayor a cero.' })
-      .max((item?.totalPrice ?? 0) - ((item?.payments?.reduce((acc, p) => acc + p.amount, 0) ?? 0) - (payment?.amount ?? 0)), { 
-        message: `El nuevo monto excede el precio total del artículo.` 
+      .max(maxAllowedAmount, { 
+        message: `El monto excede el precio total del artículo. Máximo: ${formatCurrency(maxAllowedAmount)}` 
       }),
   });
 
@@ -43,6 +52,7 @@ export function EditPaymentDialog({ isOpen, onClose, onSave, paymentInfo }: Edit
     defaultValues: {
       amount: 0,
     },
+    mode: 'onChange',
   });
 
   React.useEffect(() => {
