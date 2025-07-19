@@ -97,22 +97,22 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
             <CardTitle className="font-headline flex-1">
                 {item.customerName}
             </CardTitle>
-            {user?.role === 'gerente' && (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menú</span>
-                        <MoreVertical className="h-4 w-4" />
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(item)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        <span>Editar Artículo</span>
-                    </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )}
+            
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Abrir menú</span>
+                    <MoreVertical className="h-4 w-4" />
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(item)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    <span>Editar Artículo</span>
+                </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            
         </div>
         <Badge variant="secondary" className="w-fit">ID: {item.id}</Badge>
         <CardDescription className="flex items-center gap-2 pt-2">
