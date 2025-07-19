@@ -135,7 +135,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           </DialogDescription>
         </DialogHeader>
         
-        <div className="border bg-white p-2 rounded-sm overflow-auto max-h-[50vh]">
+        <div className="border bg-white p-2 rounded-sm overflow-auto max-h-[60vh] sm:max-h-[70vh]">
             <div ref={invoiceRef} className="receipt-container">
                 <div className="header center">
                     <h1>LanzaExpress</h1>
