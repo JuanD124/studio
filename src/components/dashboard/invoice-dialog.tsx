@@ -22,6 +22,75 @@ interface InvoiceDialogProps {
   item: StoredItem | null;
 }
 
+// --- Thermal Printer Receipt Component ---
+// This component is designed to generate a plain text receipt
+// suitable for a 58mm thermal printer.
+const ThermalReceipt = React.forwardRef<HTMLDivElement, { item: StoredItem }>(({ item }, ref) => {
+    const LINE_WIDTH = 32; // Characters for a 58mm receipt
+
+    const padLine = (left: string, right: string): string => {
+        const leftTrunc = left.substring(0, LINE_WIDTH - right.length - 1);
+        const spaces = ' '.repeat(LINE_WIDTH - leftTrunc.length - right.length);
+        return `${leftTrunc}${spaces}${right}`;
+    };
+
+    const center = (text: string): string => {
+        const spaces = ' '.repeat(Math.max(0, Math.floor((LINE_WIDTH - text.length) / 2)));
+        return `${spaces}${text}`;
+    };
+
+    const separator = '-'.repeat(LINE_WIDTH);
+
+    const totalPaid = item.payments.reduce((sum, p) => sum + p.amount, 0);
+
+    return (
+        <div ref={ref} className="thermal-receipt">
+            <pre>
+                {center('LanzaExpress')}\n
+                {center('Contacto: 3157276196')}\n
+                {new Date().toLocaleString('es-CO')}\n
+                {separator}\n
+                ID Ticket: {item.id}\n
+                Cliente: {item.customerName}\n
+                {item.customerPhone && `Tel: ${item.customerPhone}\n`}
+                Rango: {item.rank}\n
+                Color: {item.color}\n
+                {item.location && `Ubicación: ${item.location}\n`}
+                Ingreso: {new Date(item.storageDate).toLocaleDateString('es-CO')}\n
+                {item.editedBy && `Editado: ${item.editedBy.username}\n`}
+                {separator}\n
+                DESCRIPCION Y VALOR\n
+                {`Almacenaje: ${item.itemsDescription}`}\n
+                {padLine('', formatCurrency(item.storagePrice))}\n
+                {item.laundryItems && item.laundryItems.length > 0 && item.laundryItems.map((laundryItem, index) =>
+                    <React.Fragment key={index}>
+                        {`${laundryItem.quantity}x ${laundryItem.name}`}\n
+                        {padLine('', formatCurrency(laundryItem.price * laundryItem.quantity))}\n
+                    </React.Fragment>
+                )}
+                {separator}\n
+                {padLine('TOTAL A PAGAR:', formatCurrency(item.totalPrice))}\n
+                {item.payments && item.payments.length > 0 &&
+                    <React.Fragment>
+                        {separator}\n
+                        Abonos Realizados:\n
+                        {item.payments.map((payment, index) =>
+                           `${new Date(payment.date).toLocaleDateString('es-CO')}   ${formatCurrency(payment.amount)}\n`
+                        )}
+                    </React.Fragment>
+                }
+                {separator}\n
+                {padLine('Total Abonado:', formatCurrency(totalPaid))}\n
+                {padLine('SALDO PENDIENTE:', formatCurrency(item.remainingBalance))}\n
+                {separator}\n
+                {center('¡Gracias por su preferencia!')}
+            </pre>
+        </div>
+    );
+});
+ThermalReceipt.displayName = 'ThermalReceipt';
+
+
 export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
   const invoiceRef = React.useRef<HTMLDivElement>(null);
 
@@ -47,65 +116,19 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 margin: 0;
               }
               html, body {
+                margin: 0 !important;
+                padding: 0 !important;
                 width: 100%;
                 font-family: 'Courier New', monospace;
-                font-size: 8pt;
+                font-size: 9pt;
                 color: #000;
                 background-color: #fff;
               }
-              * {
+              pre {
                 margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-              }
-              .receipt-container {
                 padding: 2mm;
-                word-break: break-word;
-              }
-              .center { text-align: center; }
-              .header h1 {
-                font-size: 10pt;
-                font-weight: bold;
-                margin-bottom: 2px;
-              }
-              .header p {
-                 margin-bottom: 2px;
-                 line-height: 1.2;
-              }
-              .separator {
-                  display: block;
-                  border-top: 1px dashed black;
-                  margin: 4px 0;
-              }
-              .line-item, .total-line {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                line-height: 1.3;
-              }
-              .line-item .description, .total-line .label {
-                flex-grow: 1;
-                margin-right: 5px;
-                text-align: left;
-                word-break: break-word;
-              }
-              .line-item .price, .total-line .price {
-                flex-shrink: 0;
-                text-align: right;
-              }
-              .total-line .price {
-                  font-weight: bold;
-              }
-              strong {
-                  font-weight: bold;
-              }
-              .edited-by {
-                  font-size: 7pt;
-                  font-style: italic;
-                  margin-top: 1mm;
-              }
-              .info-line {
-                  margin-bottom: 2px;
+                white-space: pre-wrap; /* Wrap long lines */
+                word-break: break-all;
               }
             }
           </style>
@@ -128,8 +151,6 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
 
   if (!item) return null;
 
-  const totalPaid = item.payments.reduce((sum, p) => sum + p.amount, 0);
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -141,82 +162,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         </DialogHeader>
         
         <div className="border bg-white p-2 rounded-sm overflow-auto max-h-[60vh] sm:max-h-[70vh]">
-            <div ref={invoiceRef} className="receipt-container">
-                <div className="header center">
-                    <h1>LanzaExpress</h1>
-                    <p>Contacto: 3157276196</p>
-                    <p>{new Date().toLocaleString('es-CO')}</p>
-                </div>
-                
-                <div className="separator"></div>
-
-                <div className="info-line"><strong>ID Ticket:</strong> {item.id}</div>
-                <div className="info-line"><strong>Cliente:</strong> {item.customerName}</div>
-                {item.customerPhone && <div className="info-line"><strong>Tel:</strong> {item.customerPhone}</div>}
-                <div className="info-line"><strong>Rango:</strong> {item.rank}</div>
-                <div className="info-line"><strong>Color:</strong> {item.color}</div>
-                {item.location && <div className="info-line"><strong>Ubicación:</strong> {item.location}</div>}
-                <div className="info-line"><strong>Ingreso:</strong> {new Date(item.storageDate).toLocaleDateString('es-CO')}</div>
-                
-                {item.editedBy && (
-                    <p className="edited-by">Editado: {item.editedBy.username} {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}</p>
-                )}
-
-                <div className="separator"></div>
-
-                <p><strong>DESCRIPCION Y VALOR</strong></p>
-                
-                <div className="line-item">
-                    <span className="description">Almacenamiento: {item.itemsDescription}</span>
-                    <span className="price">{formatCurrency(item.storagePrice)}</span>
-                </div>
-
-                {item.laundryItems && item.laundryItems.length > 0 && (
-                    <>
-                        {item.laundryItems.map((laundryItem, index) => (
-                            <div key={index} className="line-item">
-                                <span className="description">{laundryItem.quantity}x {laundryItem.name}</span>
-                                <span className="price">{formatCurrency(laundryItem.price * laundryItem.quantity)}</span>
-                            </div>
-                        ))}
-                    </>
-                )}
-                
-                <div className="separator"></div>
-
-                <div className="total-line">
-                    <span className="label">TOTAL A PAGAR:</span>
-                    <span className="price">{formatCurrency(item.totalPrice)}</span>
-                </div>
-
-                {item.payments && item.payments.length > 0 && (
-                  <>
-                    <div className="separator"></div>
-                    <p><strong>Abonos Realizados:</strong></p>
-                    {item.payments.map((payment, index) => (
-                      <div key={index} className="line-item">
-                          <span className='description'>Abono ({new Date(payment.date).toLocaleDateString('es-CO')})</span>
-                          <span className='price'>{formatCurrency(payment.amount)}</span>
-                      </div>
-                    ))}
-                  </>
-                )}
-
-                <div className="separator"></div>
-                
-                <div className="total-line">
-                    <span className="label">Total Abonado:</span>
-                    <span className="price">{formatCurrency(totalPaid)}</span>
-                </div>
-                <div className="total-line">
-                    <span className="label">SALDO PENDIENTE:</span>
-                    <span className="price">{formatCurrency(item.remainingBalance)}</span>
-                </div>
-
-                <div className="separator"></div>
-
-                <p className="center">¡Gracias por su preferencia!</p>
-            </div>
+          {/* We render the receipt component here for the user to see */}
+          <ThermalReceipt ref={invoiceRef} item={item} />
         </div>
 
         <DialogFooter>
