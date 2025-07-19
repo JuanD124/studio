@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -47,8 +48,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               }
               html, body {
                 width: 56mm;
-                margin: 0;
-                padding: 1mm;
+                margin: 1mm;
+                padding: 0;
                 color: #000;
                 background-color: #fff;
               }
@@ -56,7 +57,6 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 font-family: monospace;
                 font-size: 8pt;
                 word-break: break-word;
-                overflow: hidden;
               }
               .center { text-align: center; }
               .header h1 {
@@ -72,28 +72,30 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               .separator {
                   display: block;
                   border-top: 1px dashed black;
-                  margin: 1mm 0;
+                  margin: 2mm 0;
               }
-              .item-block {
-                margin-bottom: 1mm;
+              .item-line, .total-line {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
               }
-              .item-block .description {
-                display: block;
+              .item-line .description {
+                flex-grow: 1;
+                margin-right: 5px;
                 text-align: left;
+                word-break: break-word;
               }
-              .item-block .price {
-                display: block;
-                font-weight: bold;
-                text-align: left;
+              .item-line .price {
+                flex-shrink: 0;
+                text-align: right;
               }
               .total-line .label {
-                  font-weight: normal;
-                  display: block;
+                font-weight: normal;
+                text-align: left;
               }
               .total-line .price {
                   font-weight: bold;
-                  display: block;
-                  text-align: left;
+                  text-align: right;
               }
               strong {
                   font-weight: bold;
@@ -101,6 +103,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               .edited-by {
                   font-size: 7pt;
                   font-style: italic;
+                  margin-top: 1mm;
               }
             }
           </style>
@@ -160,9 +163,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 <div className="separator"></div>
 
                 <p><strong>DESCRIPCION Y VALOR</strong></p>
-                <div className="separator"></div>
                 
-                <div className="item-block">
+                <div className="item-line">
                     <span className="description">Almacenamiento: {item.itemsDescription}</span>
                     <span className="price">{formatCurrency(item.storagePrice)}</span>
                 </div>
@@ -170,7 +172,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 {item.laundryItems && item.laundryItems.length > 0 && (
                     <>
                         {item.laundryItems.map((laundryItem, index) => (
-                            <div key={index} className="item-block">
+                            <div key={index} className="item-line">
                                 <span className="description">{laundryItem.quantity}x {laundryItem.name}</span>
                                 <span className="price">{formatCurrency(laundryItem.price * laundryItem.quantity)}</span>
                             </div>
@@ -190,7 +192,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                     <div className="separator"></div>
                     <p><strong>Abonos Realizados:</strong></p>
                     {item.payments.map((payment, index) => (
-                      <div key={index} className="item-block">
+                      <div key={index} className="item-line">
                           <span className='description'>Abono ({new Date(payment.date).toLocaleDateString('es-CO')})</span>
                           <span className='price'>{formatCurrency(payment.amount)}</span>
                       </div>
