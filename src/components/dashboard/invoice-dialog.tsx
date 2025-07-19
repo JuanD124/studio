@@ -42,26 +42,29 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         doc.write('<html><head><title>Factura</title>');
         doc.write(`
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap');
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: 'Inconsolata', monospace;
-              width: 210px; /* Approx 58mm */
-              font-size: 11px;
-              line-height: 1.3;
-              color: #000;
+            @media print {
+              @page { margin: 0; }
+              body { 
+                font-family: monospace;
+                width: 58mm;
+                font-size: 10pt;
+                line-height: 1.4;
+                color: #000;
+                padding: 3mm;
+                box-sizing: border-box;
+              }
+              .receipt { width: 100%; }
+              p, .item span { margin: 0; padding: 0; }
+              .center { text-align: center; }
+              .header h1 { font-size: 14pt; margin: 0; }
+              hr { border: none; border-top: 1px dashed black; margin: 2mm 0; }
+              .item, .total { display: table; width: 100%; table-layout: fixed; }
+              .item span, .total span { display: table-cell; vertical-align: top; }
+              .item span:first-child, .total span:first-child { text-align: left; word-break: break-word; }
+              .item span:last-child, .total span:last-child { text-align: right; white-space: nowrap; }
+              .grand-total { font-weight: bold; font-size: 11pt; }
+              .edit-info { text-align: center; font-style: italic; font-size: 8pt; color: #555; }
             }
-            .receipt { padding: 5px; }
-            p, .item { margin-bottom: 2px; }
-            .center { text-align: center; }
-            .header h1 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
-            hr { border: none; border-top: 1px dashed black; margin: 4px 0; }
-            .item, .total { display: table; width: 100%; }
-            .item span, .total span { display: table-cell; vertical-align: top; }
-            .item span:first-child, .total span:first-child { text-align: left; word-break: break-word; padding-right: 5px; }
-            .item span:last-child, .total span:last-child { text-align: right; white-space: nowrap; }
-            .grand-total { font-weight: bold; font-size: 12px; }
-            .edit-info { text-align: center; font-style: italic; font-size: 9px; color: #555; }
           </style>
         `);
         doc.write('</head><body>');
@@ -72,12 +75,9 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         iframe.contentWindow?.focus();
         iframe.contentWindow?.print();
         
-        // Clean up the iframe after printing
-        iframe.onload = () => {
-             setTimeout(() => {
-                document.body.removeChild(iframe);
-            }, 500);
-        }
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 500);
       }
     }
   };
@@ -97,7 +97,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           </DialogDescription>
         </DialogHeader>
         
-        <div ref={invoiceRef} className="font-mono text-sm bg-white text-black p-2 rounded-sm">
+        <div ref={invoiceRef} className="font-mono text-xs bg-white text-black p-4 rounded-sm border">
             <div className="receipt">
               <div className="header center">
                   <h1>LanzaExpress</h1>
