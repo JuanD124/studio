@@ -43,22 +43,25 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
             @media print {
               @page {
                 margin: 0;
+                padding: 0;
               }
               body {
                 margin: 0;
-                padding: 3mm;
+                padding: 0;
                 color: #000;
                 background-color: #fff;
                 font-family: monospace;
                 font-size: 10pt;
               }
-              .receipt {
-                width: 100%;
-                overflow: hidden;
+              .receipt-container {
+                width: 56mm; /* Ancho para impresora de 58mm con un pequeño margen */
+                padding: 1mm;
+                box-sizing: border-box;
               }
               p {
-                margin: 0;
-                line-height: 1.3;
+                margin: 0 0 2px 0;
+                padding: 0;
+                line-height: 1.2;
               }
               .center {
                 text-align: center;
@@ -66,21 +69,23 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
               .header h1 {
                 font-size: 12pt;
                 margin: 0;
+                font-weight: bold;
               }
               hr {
                 border: none;
                 border-top: 1px dashed black;
-                margin: 3mm 0;
+                margin: 2mm 0;
               }
               .item-line {
                 display: flex;
                 justify-content: space-between;
-                line-height: 1.4;
+                align-items: flex-start;
+                margin-bottom: 1px;
+                word-break: break-all;
               }
               .item-line .description {
                 flex-grow: 1;
                 text-align: left;
-                word-break: break-word;
                 margin-right: 5px;
               }
               .item-line .price {
@@ -88,8 +93,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 text-align: right;
                 white-space: nowrap;
               }
-              .grand-total {
-                font-weight: bold;
+              .total-line {
+                  font-weight: bold;
               }
               .edit-info {
                 text-align: center;
@@ -109,7 +114,6 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
         iframe.contentWindow?.focus();
         iframe.contentWindow?.print();
         
-        // Remove the iframe after a delay to ensure printing process starts
         setTimeout(() => {
           document.body.removeChild(iframe);
         }, 500);
@@ -132,9 +136,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
           </DialogDescription>
         </DialogHeader>
         
-        {/* The content to be printed */}
-        <div className="border bg-white p-2 rounded-sm">
-            <div ref={invoiceRef} className="receipt font-mono text-black text-[10pt]">
+        <div className="border bg-white p-2 rounded-sm overflow-auto max-h-[50vh]">
+            <div ref={invoiceRef} className="receipt-container font-mono text-black text-[10pt]">
                 <div className="header center">
                     <h1>LanzaExpress</h1>
                     <p>El mejor servicio para nuestros héroes</p>
@@ -145,13 +148,13 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 
                 <hr />
 
-                <p><strong>ID Artículo:</strong> {item.id}</p>
+                <p><strong>ID:</strong> {item.id}</p>
                 <p><strong>Cliente:</strong> {item.customerName}</p>
                 <p><strong>Rango:</strong> {item.rank}</p>
-                <p><strong>Fecha Ingreso:</strong> {new Date(item.storageDate).toLocaleDateString('es-CO')}</p>
+                <p><strong>Ingreso:</strong> {new Date(item.storageDate).toLocaleDateString('es-CO')}</p>
                 
                 {item.editedBy && (
-                    <p className="edit-info">Últ. Edición: {item.editedBy.username} {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}</p>
+                    <p className="edit-info">Editado: {item.editedBy.username} {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}</p>
                 )}
 
                 <hr />
@@ -170,7 +173,7 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
 
                 {item.laundryItems && item.laundryItems.length > 0 && (
                     <>
-                        <p style={{marginTop: '2mm'}}><strong>Serv. Lavandería:</strong></p>
+                        <p style={{marginTop: '2mm'}}><strong>Lavandería:</strong></p>
                         {item.laundryItems.map((laundryItem, index) => (
                             <div key={index} className="item-line">
                                 <span className="description">- {laundryItem.quantity}x {laundryItem.name}</span>
@@ -182,15 +185,15 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                 
                 <hr />
 
-                <div className="item-line grand-total">
-                    <span className="description">TOTAL A PAGAR:</span>
+                <div className="item-line total-line">
+                    <span className="description">TOTAL:</span>
                     <span className="price">{formatCurrency(item.totalPrice)}</span>
                 </div>
 
                 {item.payments && item.payments.length > 0 && (
                   <>
                     <hr />
-                    <p><strong>Pagos/Abonos:</strong></p>
+                    <p><strong>Abonos:</strong></p>
                     {item.payments.map((payment, index) => (
                       <div key={index} className="item-line">
                           <span className='description'>- Abono ({new Date(payment.date).toLocaleDateString('es-CO')})</span>
@@ -206,8 +209,8 @@ export function InvoiceDialog({ isOpen, onClose, item }: InvoiceDialogProps) {
                     <span className="description">Total Abonado:</span>
                     <span className="price">{formatCurrency(totalPaid)}</span>
                 </div>
-                <div className="item-line grand-total">
-                    <span className="description">SALDO PENDIENTE:</span>
+                <div className="item-line total-line">
+                    <span className="description">SALDO:</span>
                     <span className="price">{formatCurrency(item.remainingBalance)}</span>
                 </div>
 
