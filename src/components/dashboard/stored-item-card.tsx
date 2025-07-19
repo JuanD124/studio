@@ -86,6 +86,10 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                         <Pencil className="mr-2 h-4 w-4" />
                         <span>Editar Artículo</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEditLocation(item)}>
+                        <MapPin className="mr-2 h-4 w-4" />
+                        <span>Editar Ubicación</span>
+                    </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )}
