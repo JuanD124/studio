@@ -31,8 +31,7 @@ export default function ReportsView() {
 
         const unsubscribeClaimed = onSnapshot(claimedQuery, (snapshot) => {
             const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as ClaimedItem[];
-            const recentItems = items.filter(item => new Date(item.claimedDate) >= thirtyDaysAgo);
-            setClaimedItems(recentItems);
+            setClaimedItems(items); // Keep all claimed items for calculations, filter for display later
         });
         
         const incomeQuery = query(collection(db, "incomeEntries"), orderBy("date", "desc"));
@@ -152,26 +151,34 @@ export default function ReportsView() {
         }
     }, [toast]);
 
-    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega') => {
+    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date) => {
         return entries
             .filter(entry => {
                 const entryDate = new Date(entry.date);
-                const isWithin = isWithinInterval(entryDate, { start: startDate, end: endDate });
-                if (!isWithin) return false;
-                return entry.type === type;
+                return isWithinInterval(entryDate, { start: startDate, end: endDate }) && entry.type === 'Abono';
             })
             .reduce((sum, entry) => sum + entry.amount, 0);
     }, []);
 
     const now = new Date();
-    // Ingresos para el empleado (Solo Abonos del día)
-    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
+    const todayInterval = { start: startOfDay(now), end: endOfDay(now) };
 
-    // Ingresos para el gerente (separados)
-    const abonosHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Abono');
-    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
-    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
-    const entregasHoy = calculateTotalIncome(incomeEntries, startOfDay(now), endOfDay(now), 'Entrega');
+    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end);
+
+    const abonosHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end);
+    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now));
+    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now));
+    
+    const valorEntregadoHoy = React.useMemo(() => {
+        return claimedItems
+            .filter(item => isWithinInterval(new Date(item.claimedDate), todayInterval))
+            .reduce((sum, item) => sum + item.totalPrice, 0);
+    }, [claimedItems, todayInterval]);
+    
+    const displayClaimedItems = React.useMemo(() => {
+        const thirtyDaysAgo = subDays(new Date(), 30);
+        return claimedItems.filter(item => new Date(item.claimedDate) >= thirtyDaysAgo);
+    }, [claimedItems]);
 
     if (isFirebaseConfigInvalid) {
         return (
@@ -222,13 +229,13 @@ export default function ReportsView() {
                     </Card>
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Valor de Entregas Liquidadas (Hoy)</CardTitle>
+                            <CardTitle className="text-sm font-medium">Valor Total Entregado Hoy</CardTitle>
                             <PackageCheck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(entregasHoy)}</div>
+                            <div className="text-2xl font-bold">{formatCurrency(valorEntregadoHoy)}</div>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Suma de saldos pendientes que se liquidaron al entregar artículos hoy.
+                                Suma del valor total de los artículos entregados hoy. Útil para contrastar con los abonos recibidos por el empleado.
                             </p>
                         </CardContent>
                     </Card>
@@ -267,9 +274,9 @@ export default function ReportsView() {
                         Purgar 30 más antiguos
                     </Button>
                 </div>
-                {claimedItems.length > 0 ? (
+                {displayClaimedItems.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {claimedItems.map((item) => (
+                        {displayClaimedItems.map((item) => (
                            <ClaimedItemCard 
                                 key={item.id}
                                 item={item}
@@ -288,3 +295,5 @@ export default function ReportsView() {
         </div>
     );
 }
+
+    
