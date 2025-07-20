@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction, getDoc, setDoc } from 'firebase/firestore';
-import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry } from '@/lib/types';
+import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry, ActivityLogEntry } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, PlusCircle, Search } from 'lucide-react';
@@ -18,6 +18,24 @@ import { EditLocationDialog } from './edit-location-dialog';
 import { EditPaymentDialog } from './edit-payment-dialog';
 import { ConfirmationDialog } from './confirmation-dialog';
 import { formatCurrency } from '@/lib/utils';
+
+
+async function logActivity(user: { username: string }, action: ActivityLogEntry['action'], itemId: string, details: string) {
+    if (!db || !user) return;
+    try {
+      const log: Omit<ActivityLogEntry, 'id'> = {
+        date: new Date().toISOString(),
+        user: user.username,
+        action,
+        itemId,
+        details,
+      };
+      await addDoc(collection(db, 'activityLog'), log);
+    } catch (error) {
+      console.error("Error logging activity:", error);
+    }
+}
+
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -88,7 +106,7 @@ export default function StorageManager() {
         const existingItem = itemDoc.data() as StoredItem;
         const totalPaid = existingItem.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
         
-        const updatedData: Omit<StoredItem, 'id' | 'storageDate'> = {
+        const updatedData = {
           ...itemData,
           customerPhone: itemData.customerPhone || '',
           location: itemData.location || existingItem.location || '',
@@ -100,6 +118,7 @@ export default function StorageManager() {
           }
         };
         await updateDoc(itemRef, updatedData);
+        await logActivity(user, 'edited', id, `Artículo de ${itemData.customerName} editado.`);
         toast({
           title: "Éxito",
           description: "El artículo ha sido actualizado correctamente.",
@@ -113,8 +132,9 @@ export default function StorageManager() {
           if (counterDoc.exists()) {
             newId = counterDoc.data().lastId + 1;
           }
+          const newIdString = newId.toString();
 
-          const newItemRef = doc(db, 'storedItems', newId.toString());
+          const newItemRef = doc(db, 'storedItems', newIdString);
           
           const newItemData: Omit<StoredItem, 'id'> = {
             ...(itemData as Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance'>),
@@ -126,6 +146,8 @@ export default function StorageManager() {
 
           transaction.set(newItemRef, newItemData);
           transaction.set(counterRef, { lastId: newId }, { merge: true });
+
+          await logActivity(user, 'created', newIdString, `Nuevo artículo para ${itemData.customerName}.`);
         });
         
         toast({
@@ -182,6 +204,8 @@ export default function StorageManager() {
             batch.set(incomeEntryRef, incomeEntry);
 
             await batch.commit();
+
+            await logActivity(user, 'payment_added', item.id, `Abono de ${formatCurrency(amount)} (${method}) para ${item.customerName}.`);
             toast({ title: "Éxito", description: "Abono registrado correctamente." });
         } catch (error) {
             console.error("Error al registrar el abono: ", error);
@@ -193,7 +217,7 @@ export default function StorageManager() {
   }, [toast, user]);
 
   const handleEditPayment = React.useCallback(async (itemId: string, oldPayment: Payment, newAmount: number) => {
-    if (!db) return;
+    if (!db || !user) return;
     try {
       await runTransaction(db, async (transaction) => {
         const itemRef = doc(db, 'storedItems', itemId);
@@ -213,7 +237,7 @@ export default function StorageManager() {
 
         const updatedPayments = [...payments];
         const originalAmount = updatedPayments[paymentIndex].amount;
-        updatedPayments[paymentIndex] = { ...updatedPayments[paymentIndex], amount: newAmount };
+        updatedPayments[paymentIndex] = { ...updatedPayments[paymentIndex], amount: newAmount, editedBy: { username: user.username, date: new Date().toISOString() }};
 
         // For simplicity, we assume income entries are not updated. 
         // A more robust solution would find and update the corresponding income entry.
@@ -226,12 +250,13 @@ export default function StorageManager() {
           remainingBalance: newRemainingBalance
         });
       });
+      await logActivity(user, 'payment_edited', itemId, `Abono editado para ${itemId}.`);
       toast({ title: "Éxito", description: "Abono actualizado correctamente." });
     } catch(error) {
       console.error("Error al editar el abono:", error);
       toast({ title: "Error", description: "No se pudo actualizar el abono.", variant: "destructive" });
     }
-  }, [toast]);
+  }, [toast, user]);
 
 
   const handleClaimItem = React.useCallback((item: StoredItem) => {
@@ -243,7 +268,7 @@ export default function StorageManager() {
       title: 'Confirmar Entrega de Artículo',
       description,
       onConfirm: async () => {
-        if (!db) return;
+        if (!db || !user) return;
         try {
           const batch = writeBatch(db);
           
@@ -273,7 +298,8 @@ export default function StorageManager() {
           batch.delete(originalItemRef);
           
           await batch.commit();
-    
+
+          await logActivity(user, 'claimed', item.id, `Artículo de ${item.customerName} entregado.`);
           toast({
             title: "Artículo Entregado",
             description: `${item.itemsDescription} ha sido movido a la papelera.`,
@@ -289,13 +315,14 @@ export default function StorageManager() {
       }
     });
     setIsConfirmationOpen(true);
-  }, [toast]);
+  }, [toast, user]);
   
   const handleSaveLocation = React.useCallback(async (itemId: string, location: string) => {
-    if (!db) return;
+    if (!db || !user) return;
     try {
       const itemRef = doc(db, 'storedItems', itemId);
       await updateDoc(itemRef, { location });
+      await logActivity(user, 'location_changed', itemId, `Ubicación cambiada a "${location}" para el artículo ${itemId}.`);
       toast({
         title: 'Ubicación Guardada',
         description: 'La ubicación del artículo se ha actualizado.',
@@ -308,7 +335,7 @@ export default function StorageManager() {
         variant: 'destructive',
       });
     }
-  }, [toast]);
+  }, [toast, user]);
   
   const handleOpenInvoice = React.useCallback((item: StoredItem) => {
     setInvoicingItem(item);

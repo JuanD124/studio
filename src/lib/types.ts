@@ -10,6 +10,10 @@ export interface Payment {
   date: string; // ISO string format
   createdBy: string;
   method: 'Efectivo' | 'Transferencia';
+  editedBy?: {
+    username: string;
+    date: string; // ISO string format
+  };
 }
 
 export interface StoredItem {
@@ -53,4 +57,13 @@ export interface IncomeEntry {
     customerName: string;
     type: 'Abono' | 'Entrega';
     method: 'Efectivo' | 'Transferencia';
+}
+
+export interface ActivityLogEntry {
+  id: string;
+  date: string; // ISO string format
+  user: string;
+  action: 'created' | 'edited' | 'payment_added' | 'payment_edited' | 'claimed' | 'restored' | 'deleted' | 'purged' | 'location_changed';
+  itemId: string;
+  details: string; // e.g., "Item for John Doe created."
 }

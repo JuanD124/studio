@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Shirt, Trash2, LogOut, Coins, Archive } from 'lucide-react';
+import { LayoutDashboard, Shirt, Trash2, LogOut, Coins, Archive, History } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -109,6 +109,18 @@ function MainLayoutContent({ children }: { children: React.ReactNode }) {
                             <Link href="/overdue">
                             <Archive />
                             <span>Inventario</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={pathname === '/activity'}
+                            tooltip="Registro de Actividad"
+                        >
+                            <Link href="/activity">
+                            <History />
+                            <span>Actividad</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

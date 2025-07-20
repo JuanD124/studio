@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { StoredItem, Payment } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 interface EditPaymentDialogProps {
   isOpen: boolean;

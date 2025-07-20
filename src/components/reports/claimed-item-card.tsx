@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 interface ClaimedItemCardProps {
   item: ClaimedItem;
   onRestore: (item: ClaimedItem) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, customerName: string) => void;
 }
 
 function ClaimedItemCardComponent({ item, onRestore, onDelete }: ClaimedItemCardProps) {
@@ -45,7 +45,7 @@ function ClaimedItemCardComponent({ item, onRestore, onDelete }: ClaimedItemCard
                         <RotateCcw className="mr-2 h-4 w-4" />
                         <span>Restaurar</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive">
+                    <DropdownMenuItem onClick={() => onDelete(item.id, item.customerName)} className="text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" />
                         <span>Eliminar</span>
                     </DropdownMenuItem>

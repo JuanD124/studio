@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, where, getDocs, limit } from 'firebase/firestore';
-import type { ClaimedItem, IncomeEntry, StoredItem } from '@/lib/types';
+import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, where, getDocs, limit, addDoc } from 'firebase/firestore';
+import type { ClaimedItem, IncomeEntry, StoredItem, ActivityLogEntry } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, DollarSign, PackageCheck, TrendingUp, Package, Coins, Trash2, Wallet, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
@@ -14,6 +14,24 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
+
+
+async function logActivity(user: { username: string }, action: ActivityLogEntry['action'], itemId: string, details: string) {
+    if (!db || !user) return;
+    try {
+      const log: Omit<ActivityLogEntry, 'id'> = {
+        date: new Date().toISOString(),
+        user: user.username,
+        action,
+        itemId,
+        details,
+      };
+      await addDoc(collection(db, 'activityLog'), log);
+    } catch (error) {
+      console.error("Error logging activity:", error);
+    }
+}
+
 
 export default function ReportsView() {
     const { user } = useAuth();
@@ -50,7 +68,7 @@ export default function ReportsView() {
     }, []);
     
     const handleRestoreItem = React.useCallback(async (itemToRestore: ClaimedItem) => {
-        if (!db) return;
+        if (!db || !user) return;
     
         const { claimedDate, ...originalItemData } = itemToRestore;
     
@@ -77,7 +95,7 @@ export default function ReportsView() {
             }
     
             await batch.commit();
-    
+            await logActivity(user, 'restored', itemToRestore.id, `Artículo de ${itemToRestore.customerName} restaurado desde la papelera.`);
             toast({
                 title: "Artículo Restaurado",
                 description: "El artículo ha vuelto al almacén y el ingreso final ha sido anulado.",
@@ -90,15 +108,16 @@ export default function ReportsView() {
                 variant: "destructive",
             });
         }
-    }, [toast]);
+    }, [toast, user]);
 
-    const handleDeleteItem = React.useCallback(async (id: string) => {
-        if (!db) return;
+    const handleDeleteItem = React.useCallback(async (id: string, customerName: string) => {
+        if (!db || !user) return;
         if (!window.confirm("¿Estás seguro de que quieres eliminar este artículo permanentemente? Esta acción no se puede deshacer.")) {
             return;
         }
         try {
             await deleteDoc(doc(db, "claimedItems", id));
+            await logActivity(user, 'deleted', id, `Artículo de ${customerName} eliminado permanentemente.`);
             toast({
                 title: "Artículo Eliminado",
                 description: "El artículo ha sido eliminado permanentemente de la papelera.",
@@ -112,10 +131,10 @@ export default function ReportsView() {
                 variant: "destructive",
             });
         }
-    }, [toast]);
+    }, [toast, user]);
     
     const handlePurgeOldestItems = React.useCallback(async () => {
-        if (!db) return;
+        if (!db || !user) return;
         if (!window.confirm("¿Estás seguro de que quieres eliminar permanentemente los 30 artículos más antiguos de la papelera? Esta acción no se puede deshacer.")) {
             return;
         }
@@ -139,7 +158,8 @@ export default function ReportsView() {
             });
 
             await batch.commit();
-
+            
+            await logActivity(user, 'purged', '', `Se purgaron ${snapshot.size} artículos antiguos de la papelera.`);
             toast({
                 title: "Purga Exitosa",
                 description: `Se han eliminado ${snapshot.size} artículos antiguos de la papelera.`,
@@ -152,7 +172,7 @@ export default function ReportsView() {
                 variant: "destructive",
             });
         }
-    }, [toast]);
+    }, [toast, user]);
 
     const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega' | 'Ambos', method?: 'Efectivo' | 'Transferencia' | 'Ambos') => {
         return entries
@@ -307,7 +327,7 @@ export default function ReportsView() {
                                 key={item.id}
                                 item={item}
                                 onRestore={handleRestoreItem}
-                                onDelete={handleDeleteItem}
+                                onDelete={() => handleDeleteItem(item.id, item.customerName)}
                            />
                         ))}
                     </div>
