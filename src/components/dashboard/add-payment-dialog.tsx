@@ -26,25 +26,21 @@ interface AddPaymentDialogProps {
   item: StoredItem | null;
 }
 
-const paymentFormSchemaBase = z.object({
-  amount: z.coerce.number()
-    .min(1, { message: 'El abono debe ser mayor a cero.' }),
-  method: z.enum(['Efectivo', 'Transferencia'], {
-    required_error: 'Debes seleccionar un método de pago.',
-  }),
-});
-
+const createFormSchema = (maxAmount: number) => {
+    return z.object({
+        amount: z.coerce
+            .number()
+            .min(1, { message: 'El abono debe ser mayor a cero.' })
+            .max(maxAmount, { message: `El abono no puede superar el saldo pendiente de ${formatCurrency(maxAmount)}.` }),
+        method: z.enum(['Efectivo', 'Transferencia'], {
+            required_error: 'Debes seleccionar un método de pago.',
+        }),
+    });
+};
 
 export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDialogProps) {
   
-  const remainingBalance = item?.remainingBalance ?? 0;
-  
-  const formSchema = paymentFormSchemaBase.extend({
-      amount: z.coerce.number()
-      .min(1, { message: 'El abono debe ser mayor a cero.' })
-      .max(remainingBalance, { message: `El abono no puede superar el saldo pendiente de ${formatCurrency(remainingBalance)}.` }),
-  })
-
+  const formSchema = createFormSchema(item?.remainingBalance ?? 0);
   type PaymentFormValues = z.infer<typeof formSchema>;
   
   const form = useForm<PaymentFormValues>({
@@ -57,8 +53,14 @@ export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDi
   });
 
   React.useEffect(() => {
-    if (isOpen) {
+    if (isOpen && item) {
+      // Re-create the resolver with the correct max amount when the dialog opens or item changes
       form.reset({ amount: undefined, method: 'Efectivo' });
+      // This part is tricky with react-hook-form's resolver. The simplest way
+      // is to let the component re-render with a new schema.
+      // We are already doing this by defining formSchema inside the component body.
+      // We just need to trigger a re-validation.
+      form.trigger();
     }
   }, [isOpen, item, form]);
   
