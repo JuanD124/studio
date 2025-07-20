@@ -171,45 +171,52 @@ export default function StorageManager() {
       description: `Estás a punto de registrar un abono de ${formatCurrency(amount)} por ${method}. ¿Deseas continuar?`,
       onConfirm: async () => {
         if (!db || !user) return;
-
-        const itemRef = doc(db, 'storedItems', item.id);
-        const incomeEntryRef = doc(collection(db, 'incomeEntries'));
-
+        
         try {
-            const batch = writeBatch(db);
+          await runTransaction(db, async (transaction) => {
+            const itemRef = doc(db, 'storedItems', item.id);
+            const itemDoc = await transaction.get(itemRef);
 
+            if (!itemDoc.exists()) {
+              throw new Error("Artículo no encontrado");
+            }
+            
+            const currentItem = itemDoc.data() as StoredItem;
+            
             const newPayment: Payment = {
-                id: new Date().toISOString() + Math.random().toString(36).substr(2, 9),
-                amount,
-                date: new Date().toISOString(),
-                createdBy: user.username,
-                method,
+              id: new Date().toISOString() + Math.random().toString(36).substr(2, 9),
+              amount,
+              date: new Date().toISOString(),
+              createdBy: user.username,
+              method,
             };
+            
+            const updatedPayments = [...(currentItem.payments || []), newPayment];
+            const newRemainingBalance = currentItem.remainingBalance - amount;
 
-            const newRemainingBalance = item.remainingBalance - amount;
-
-            batch.update(itemRef, {
-                payments: arrayUnion(newPayment),
-                remainingBalance: newRemainingBalance,
+            transaction.update(itemRef, {
+              payments: updatedPayments,
+              remainingBalance: newRemainingBalance,
             });
 
+            const incomeEntryRef = doc(collection(db, 'incomeEntries'));
             const incomeEntry: IncomeEntry = {
-                amount,
-                date: new Date().toISOString(),
-                itemId: item.id,
-                customerName: item.customerName,
-                type: 'Abono',
-                method,
+              amount,
+              date: new Date().toISOString(),
+              itemId: item.id,
+              customerName: item.customerName,
+              type: 'Abono',
+              method,
             };
-            batch.set(incomeEntryRef, incomeEntry);
+            transaction.set(incomeEntryRef, incomeEntry);
+          });
 
-            await batch.commit();
+          await logActivity(user, 'payment_added', item.id, `Abono de ${formatCurrency(amount)} (${method}) para ${item.customerName}.`);
+          toast({ title: "Éxito", description: "Abono registrado correctamente." });
 
-            await logActivity(user, 'payment_added', item.id, `Abono de ${formatCurrency(amount)} (${method}) para ${item.customerName}.`);
-            toast({ title: "Éxito", description: "Abono registrado correctamente." });
         } catch (error) {
-            console.error("Error al registrar el abono: ", error);
-            toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
+          console.error("Error al registrar el abono: ", error);
+          toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
         }
       }
     });
