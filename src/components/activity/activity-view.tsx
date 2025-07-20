@@ -35,13 +35,10 @@ const ACTION_COLORS: { [key in ActivityLogEntry['action']]: string } = {
     location_changed: 'text-indigo-500',
 };
 
-type FilterType = 'all' | 'today';
-
 export default function ActivityView() {
     const [allActivities, setAllActivities] = React.useState<ActivityLogEntry[]>([]);
-    const [filteredActivities, setFilteredActivities] = React.useState<ActivityLogEntry[]>([]);
+    const [todaysActivities, setTodaysActivities] = React.useState<ActivityLogEntry[]>([]);
     const [loading, setLoading] = React.useState(true);
-    const [activeFilter, setActiveFilter] = React.useState<FilterType>('all');
 
     React.useEffect(() => {
         if (!db) return;
@@ -60,12 +57,8 @@ export default function ActivityView() {
     }, []);
 
     React.useEffect(() => {
-        if (activeFilter === 'today') {
-            setFilteredActivities(allActivities.filter(activity => isToday(new Date(activity.date))));
-        } else {
-            setFilteredActivities(allActivities);
-        }
-    }, [allActivities, activeFilter]);
+        setTodaysActivities(allActivities.filter(activity => isToday(new Date(activity.date))));
+    }, [allActivities]);
 
     if (loading) {
         return (
@@ -81,35 +74,16 @@ export default function ActivityView() {
 
     return (
         <Card>
-            <CardHeader className='flex-row items-center justify-between'>
-                <CardTitle>Últimas Actividades</CardTitle>
-                <div className="flex items-center gap-2">
-                    <Button 
-                        variant={activeFilter === 'all' ? 'secondary' : 'outline'}
-                        size="sm"
-                        onClick={() => setActiveFilter('all')}
-                    >
-                        Toda
-                    </Button>
-                    <Button 
-                        variant={activeFilter === 'today' ? 'secondary' : 'outline'}
-                        size="sm"
-                        onClick={() => setActiveFilter('today')}
-                    >
-                        Hoy
-                    </Button>
-                </div>
+            <CardHeader>
+                <CardTitle>Actividad de Hoy</CardTitle>
             </CardHeader>
             <CardContent>
-                {filteredActivities.length === 0 ? (
+                {todaysActivities.length === 0 ? (
                      <div className="text-center py-16 border-2 border-dashed rounded-lg">
                         <History className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-medium">No hay actividad registrada</h3>
+                        <h3 className="mt-4 text-lg font-medium">No hay actividad registrada hoy</h3>
                         <p className="mt-1 text-sm text-muted-foreground">
-                        {activeFilter === 'today'
-                            ? 'No se han realizado acciones hoy.'
-                            : 'Las acciones como crear o editar artículos aparecerán aquí.'
-                        }
+                            Las acciones que se realicen durante el día aparecerán aquí.
                         </p>
                     </div>
                 ) : (
@@ -117,7 +91,7 @@ export default function ActivityView() {
                         {/* Vertical line */}
                         <div className="absolute left-0 top-0 h-full w-0.5 bg-border -translate-x-1/2 ml-3"></div>
 
-                        {filteredActivities.map((activity) => {
+                        {todaysActivities.map((activity) => {
                             const Icon = ACTION_ICONS[activity.action] || History;
                             const iconColor = ACTION_COLORS[activity.action] || 'text-gray-500';
 
