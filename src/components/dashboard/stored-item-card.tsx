@@ -155,7 +155,6 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                     <span>{item.rank}</span>
                 </div>
                 {item.customerId && <div className="flex items-center gap-2"><Fingerprint className="w-3 h-3"/><span>C.C. {item.customerId}</span></div>}
-                {item.customerPhone && <div className="flex items-center gap-2"><Phone className="w-3 h-3"/><span>{item.customerPhone}</span></div>}
                 {item.battalion && <div className="flex items-center gap-2"><Shield className="w-3 h-3"/><span>{item.battalion}</span></div>}
                 {item.contingent && <div className="flex items-center gap-2"><Users className="w-3 h-3"/><span>{item.contingent}</span></div>}
                 {item.editedBy && (

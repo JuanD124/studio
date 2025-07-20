@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction, getDoc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry, ActivityLogEntry } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,6 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { EditLocationDialog } from './edit-location-dialog';
 import { EditPaymentDialog } from './edit-payment-dialog';
-import { ConfirmationDialog } from './confirmation-dialog';
 import { formatCurrency } from '@/lib/utils';
 
 
@@ -46,8 +45,6 @@ export default function StorageManager() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
   const [isEditPaymentDialogOpen, setIsEditPaymentDialogOpen] = React.useState(false);
   const [isLocationDialogOpen, setIsLocationDialogOpen] = React.useState(false);
-  const [isConfirmationOpen, setIsConfirmationOpen] = React.useState(false);
-  const [confirmationData, setConfirmationData] = React.useState<{ title: string; description: string; onConfirm: () => void; } | null>(null);
   
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
@@ -165,63 +162,56 @@ export default function StorageManager() {
     }
   }, [toast, user]);
 
-  const handleSavePayment = React.useCallback((item: StoredItem, amount: number, method: Payment['method']) => {
-    setConfirmationData({
-      title: '¿Confirmar Abono?',
-      description: `Estás a punto de registrar un abono de ${formatCurrency(amount)} por ${method}. ¿Deseas continuar?`,
-      onConfirm: async () => {
-        if (!db || !user) return;
-        
-        try {
-          await runTransaction(db, async (transaction) => {
-            const itemRef = doc(db, 'storedItems', item.id);
-            const itemDoc = await transaction.get(itemRef);
+  const handleSavePayment = React.useCallback(async (item: StoredItem, amount: number, method: Payment['method']) => {
+    if (!db || !user) return;
 
-            if (!itemDoc.exists()) {
-              throw new Error("Artículo no encontrado");
-            }
-            
-            const currentItem = itemDoc.data() as StoredItem;
-            
-            const newPayment: Payment = {
-              id: new Date().toISOString() + Math.random().toString(36).substr(2, 9),
-              amount,
-              date: new Date().toISOString(),
-              createdBy: user.username,
-              method,
-            };
-            
-            const updatedPayments = [...(currentItem.payments || []), newPayment];
-            const newRemainingBalance = currentItem.remainingBalance - amount;
+    try {
+      await runTransaction(db, async (transaction) => {
+        const itemRef = doc(db, 'storedItems', item.id);
+        const itemDoc = await transaction.get(itemRef);
 
-            transaction.update(itemRef, {
-              payments: updatedPayments,
-              remainingBalance: newRemainingBalance,
-            });
-
-            const incomeEntryRef = doc(collection(db, 'incomeEntries'));
-            const incomeEntry: IncomeEntry = {
-              amount,
-              date: new Date().toISOString(),
-              itemId: item.id,
-              customerName: item.customerName,
-              type: 'Abono',
-              method,
-            };
-            transaction.set(incomeEntryRef, incomeEntry);
-          });
-
-          await logActivity(user, 'payment_added', item.id, `Abono de ${formatCurrency(amount)} (${method}) para ${item.customerName}.`);
-          toast({ title: "Éxito", description: "Abono registrado correctamente." });
-
-        } catch (error) {
-          console.error("Error al registrar el abono: ", error);
-          toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
+        if (!itemDoc.exists()) {
+          throw new Error("Artículo no encontrado");
         }
-      }
-    });
-    setIsConfirmationOpen(true);
+        
+        const currentItem = itemDoc.data() as StoredItem;
+        
+        const newPayment: Payment = {
+          id: new Date().toISOString() + Math.random().toString(36).substr(2, 9),
+          amount,
+          date: new Date().toISOString(),
+          createdBy: user.username,
+          method,
+        };
+        
+        const updatedPayments = [...(currentItem.payments || []), newPayment];
+        const newRemainingBalance = currentItem.remainingBalance - amount;
+
+        transaction.update(itemRef, {
+          payments: updatedPayments,
+          remainingBalance: newRemainingBalance,
+        });
+
+        const incomeEntryRef = doc(collection(db, 'incomeEntries'));
+        const incomeEntry: IncomeEntry = {
+          amount,
+          date: new Date().toISOString(),
+          itemId: item.id,
+          customerName: item.customerName,
+          type: 'Abono',
+          method,
+        };
+        transaction.set(incomeEntryRef, incomeEntry);
+      });
+
+      await logActivity(user, 'payment_added', item.id, `Abono de ${formatCurrency(amount)} (${method}) para ${item.customerName}.`);
+      toast({ title: "Éxito", description: "Abono registrado correctamente." });
+    } catch (error) {
+      console.error("Error al registrar el abono: ", error);
+      toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
+    }
   }, [toast, user]);
+
 
   const handleEditPayment = React.useCallback(async (itemId: string, oldPayment: Payment, newAmount: number) => {
     if (!db || !user) return;
@@ -267,61 +257,59 @@ export default function StorageManager() {
 
 
   const handleClaimItem = React.useCallback((item: StoredItem) => {
-    const description = item.remainingBalance > 0
+    const confirmationMessage = item.remainingBalance > 0
       ? `Este artículo tiene un saldo pendiente de ${formatCurrency(item.remainingBalance)}. Al entregarlo, se registrará el saldo como un ingreso final. ¿Deseas continuar?`
       : `Estás a punto de marcar el artículo de ${item.customerName} como entregado. ¿Estás seguro?`;
     
-    setConfirmationData({
-      title: 'Confirmar Entrega de Artículo',
-      description,
-      onConfirm: async () => {
-        if (!db || !user) return;
-        try {
-          const batch = writeBatch(db);
-          
-          const originalItemRef = doc(db, 'storedItems', item.id);
-          const claimedItemRef = doc(db, 'claimedItems', item.id);
+    if (window.confirm(confirmationMessage)) {
+        const claimAction = async () => {
+            if (!db || !user) return;
+            try {
+              const batch = writeBatch(db);
+              
+              const originalItemRef = doc(db, 'storedItems', item.id);
+              const claimedItemRef = doc(db, 'claimedItems', item.id);
+        
+              const claimedItemData: ClaimedItem = {
+                  ...item,
+                  claimedDate: new Date().toISOString() 
+              };
+              
+              batch.set(claimedItemRef, claimedItemData);
+              
+              if (item.remainingBalance > 0) {
+                const finalPaymentEntryRef = doc(collection(db, 'incomeEntries'));
+                const finalIncomeEntry: IncomeEntry = {
+                    amount: item.remainingBalance,
+                    date: new Date().toISOString(),
+                    itemId: item.id,
+                    customerName: item.customerName,
+                    type: 'Entrega',
+                    method: 'Efectivo', // Default method for final settlement
+                };
+                batch.set(finalPaymentEntryRef, finalIncomeEntry);
+              }
+        
+              batch.delete(originalItemRef);
+              
+              await batch.commit();
     
-          const claimedItemData: ClaimedItem = {
-              ...item,
-              claimedDate: new Date().toISOString() 
-          };
-          
-          batch.set(claimedItemRef, claimedItemData);
-          
-          if (item.remainingBalance > 0) {
-            const finalPaymentEntryRef = doc(collection(db, 'incomeEntries'));
-            const finalIncomeEntry: IncomeEntry = {
-                amount: item.remainingBalance,
-                date: new Date().toISOString(),
-                itemId: item.id,
-                customerName: item.customerName,
-                type: 'Entrega',
-                method: 'Efectivo', // Default method for final settlement
-            };
-            batch.set(finalPaymentEntryRef, finalIncomeEntry);
-          }
-    
-          batch.delete(originalItemRef);
-          
-          await batch.commit();
-
-          await logActivity(user, 'claimed', item.id, `Artículo de ${item.customerName} entregado.`);
-          toast({
-            title: "Artículo Entregado",
-            description: `${item.itemsDescription} ha sido movido a la papelera.`,
-          });
-        } catch (error) {
-          console.error("Error al entregar el artículo: ", error);
-          toast({
-            title: "Error",
-            description: "No se pudo procesar la entrega del artículo.",
-            variant: "destructive",
-          });
+              await logActivity(user, 'claimed', item.id, `Artículo de ${item.customerName} entregado.`);
+              toast({
+                title: "Artículo Entregado",
+                description: `${item.itemsDescription} ha sido movido a la papelera.`,
+              });
+            } catch (error) {
+              console.error("Error al entregar el artículo: ", error);
+              toast({
+                title: "Error",
+                description: "No se pudo procesar la entrega del artículo.",
+                variant: "destructive",
+              });
+            }
         }
-      }
-    });
-    setIsConfirmationOpen(true);
+        claimAction();
+    }
   }, [toast, user]);
   
   const handleSaveLocation = React.useCallback(async (itemId: string, location: string) => {
@@ -386,8 +374,6 @@ export default function StorageManager() {
     setLocationItem(null);
     setIsEditPaymentDialogOpen(false);
     setEditingPaymentInfo(null);
-    setIsConfirmationOpen(false);
-    setConfirmationData(null);
   }, []);
 
   const filteredItems = React.useMemo(() => 
@@ -489,15 +475,6 @@ export default function StorageManager() {
         onSave={handleSaveLocation}
         item={locationItem}
       />
-       {confirmationData && (
-        <ConfirmationDialog
-          isOpen={isConfirmationOpen}
-          onClose={handleCloseDialogs}
-          title={confirmationData.title}
-          description={confirmationData.description}
-          onConfirm={confirmationData.onConfirm}
-        />
-      )}
     </div>
   );
 }
