@@ -26,7 +26,7 @@ interface AddPaymentDialogProps {
   item: StoredItem | null;
 }
 
-const paymentFormSchema = z.object({
+const paymentFormSchemaBase = z.object({
   amount: z.coerce.number()
     .min(1, { message: 'El abono debe ser mayor a cero.' }),
   method: z.enum(['Efectivo', 'Transferencia'], {
@@ -39,7 +39,7 @@ export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDi
   
   const remainingBalance = item?.remainingBalance ?? 0;
   
-  const formSchema = paymentFormSchema.extend({
+  const formSchema = paymentFormSchemaBase.extend({
       amount: z.coerce.number()
       .min(1, { message: 'El abono debe ser mayor a cero.' })
       .max(remainingBalance, { message: `El abono no puede superar el saldo pendiente de ${formatCurrency(remainingBalance)}.` }),
@@ -107,6 +107,7 @@ export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDi
                       type="number" 
                       placeholder="5000" 
                       {...field}
+                      onChange={e => field.onChange(e.target.valueAsNumber || 0)}
                       value={field.value ?? ''}
                       autoFocus
                     />
