@@ -17,6 +17,7 @@ import { useAuth } from '@/context/AuthContext';
 import { EditLocationDialog } from './edit-location-dialog';
 import { EditPaymentDialog } from './edit-payment-dialog';
 import { ConfirmationDialog } from './confirmation-dialog';
+import { formatCurrency } from '@/lib/utils';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
