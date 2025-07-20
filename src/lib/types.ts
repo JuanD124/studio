@@ -9,6 +9,7 @@ export interface Payment {
   amount: number;
   date: string; // ISO string format
   createdBy: string;
+  method: 'Efectivo' | 'Transferencia';
 }
 
 export interface StoredItem {
@@ -51,4 +52,5 @@ export interface IncomeEntry {
     itemId: string;
     customerName: string;
     type: 'Abono' | 'Entrega';
+    method: 'Efectivo' | 'Transferencia';
 }

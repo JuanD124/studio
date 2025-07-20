@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2 } from 'lucide-react';
+import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
@@ -39,9 +39,12 @@ const PaymentHistory = ({ payments, onEditPayment }: { payments: Payment[], onEd
             </div>
             {payments.map((p, index) => (
                 <div key={p.id || index} className="flex justify-between items-center pl-4 group">
-                    <div>
-                        <span className='font-mono'>{formatCurrency(p.amount)}</span>
-                        <span className='text-muted-foreground ml-2'>({format(new Date(p.date), 'dd/MM/yy')})</span>
+                    <div className='flex items-center gap-2'>
+                       {p.method === 'Transferencia' ? <CreditCard className="w-3.5 h-3.5 text-blue-500"/> : <Wallet className="w-3.5 h-3.5 text-green-500"/>}
+                        <div>
+                            <span className='font-mono'>{formatCurrency(p.amount)}</span>
+                            <span className='text-muted-foreground ml-2'>({format(new Date(p.date), 'dd/MM/yy')})</span>
+                        </div>
                     </div>
                     {user?.role === 'gerente' && (
                         <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => onEditPayment(p)}>

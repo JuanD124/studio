@@ -14,9 +14,9 @@ import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
-import { SetLocationDialog } from './set-location-dialog';
-import { EditPaymentDialog } from './edit-payment-dialog';
 import { EditLocationDialog } from './edit-location-dialog';
+import { EditPaymentDialog } from './edit-payment-dialog';
+import { ConfirmationDialog } from './confirmation-dialog';
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -27,6 +27,9 @@ export default function StorageManager() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
   const [isEditPaymentDialogOpen, setIsEditPaymentDialogOpen] = React.useState(false);
   const [isLocationDialogOpen, setIsLocationDialogOpen] = React.useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = React.useState(false);
+  const [confirmationData, setConfirmationData] = React.useState<{ title: string; description: string; onConfirm: () => void; } | null>(null);
+  
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
   const [paymentItem, setPaymentItem] = React.useState<StoredItem | null>(null);
@@ -86,6 +89,7 @@ export default function StorageManager() {
         
         const updatedData: Omit<StoredItem, 'id' | 'storageDate'> = {
           ...itemData,
+          customerPhone: itemData.customerPhone || '',
           location: itemData.location || existingItem.location || '',
           payments: existingItem.payments || [],
           remainingBalance: itemData.totalPrice - totalPaid,
@@ -138,44 +142,53 @@ export default function StorageManager() {
     }
   }, [toast, user]);
 
-  const handleSavePayment = React.useCallback(async (item: StoredItem, amount: number) => {
-    if (!db || !user) return;
+  const handleSavePayment = React.useCallback((item: StoredItem, amount: number, method: Payment['method']) => {
+    setConfirmationData({
+      title: '¿Confirmar Abono?',
+      description: `Estás a punto de registrar un abono de ${formatCurrency(amount)} por ${method}. ¿Deseas continuar?`,
+      onConfirm: async () => {
+        if (!db || !user) return;
 
-    const itemRef = doc(db, 'storedItems', item.id);
-    const incomeEntryRef = doc(collection(db, 'incomeEntries'));
+        const itemRef = doc(db, 'storedItems', item.id);
+        const incomeEntryRef = doc(collection(db, 'incomeEntries'));
 
-    try {
-        const batch = writeBatch(db);
+        try {
+            const batch = writeBatch(db);
 
-        const newPayment: Payment = {
-            id: new Date().toISOString() + Math.random().toString(36).substr(2, 9),
-            amount,
-            date: new Date().toISOString(),
-            createdBy: user.username,
-        };
+            const newPayment: Payment = {
+                id: new Date().toISOString() + Math.random().toString(36).substr(2, 9),
+                amount,
+                date: new Date().toISOString(),
+                createdBy: user.username,
+                method,
+            };
 
-        const newRemainingBalance = item.remainingBalance - amount;
+            const newRemainingBalance = item.remainingBalance - amount;
 
-        batch.update(itemRef, {
-            payments: arrayUnion(newPayment),
-            remainingBalance: newRemainingBalance,
-        });
+            batch.update(itemRef, {
+                payments: arrayUnion(newPayment),
+                remainingBalance: newRemainingBalance,
+            });
 
-        const incomeEntry: IncomeEntry = {
-            amount,
-            date: new Date().toISOString(),
-            itemId: item.id,
-            customerName: item.customerName,
-            type: 'Abono',
-        };
-        batch.set(incomeEntryRef, incomeEntry);
+            const incomeEntry: IncomeEntry = {
+                amount,
+                date: new Date().toISOString(),
+                itemId: item.id,
+                customerName: item.customerName,
+                type: 'Abono',
+                method,
+            };
+            batch.set(incomeEntryRef, incomeEntry);
 
-        await batch.commit();
-        toast({ title: "Éxito", description: "Abono registrado correctamente." });
-    } catch (error) {
-        console.error("Error al registrar el abono: ", error);
-        toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
-    }
+            await batch.commit();
+            toast({ title: "Éxito", description: "Abono registrado correctamente." });
+        } catch (error) {
+            console.error("Error al registrar el abono: ", error);
+            toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
+        }
+      }
+    });
+    setIsConfirmationOpen(true);
   }, [toast, user]);
 
   const handleEditPayment = React.useCallback(async (itemId: string, oldPayment: Payment, newAmount: number) => {
@@ -198,7 +211,11 @@ export default function StorageManager() {
         }
 
         const updatedPayments = [...payments];
+        const originalAmount = updatedPayments[paymentIndex].amount;
         updatedPayments[paymentIndex] = { ...updatedPayments[paymentIndex], amount: newAmount };
+
+        // For simplicity, we assume income entries are not updated. 
+        // A more robust solution would find and update the corresponding income entry.
 
         const newTotalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
         const newRemainingBalance = currentItem.totalPrice - newTotalPaid;
@@ -216,49 +233,61 @@ export default function StorageManager() {
   }, [toast]);
 
 
-  const handleClaimItem = React.useCallback(async (item: StoredItem) => {
-    if (!db) return;
-    try {
-      const batch = writeBatch(db);
-      
-      const originalItemRef = doc(db, 'storedItems', item.id);
-      const claimedItemRef = doc(db, 'claimedItems', item.id);
-
-      const claimedItemData: ClaimedItem = {
-          ...item,
-          claimedDate: new Date().toISOString() 
-      };
-      
-      batch.set(claimedItemRef, claimedItemData);
-      
-      if (item.remainingBalance > 0) {
-        const finalPaymentEntryRef = doc(collection(db, 'incomeEntries'));
-        const finalIncomeEntry: IncomeEntry = {
-            amount: item.remainingBalance,
-            date: new Date().toISOString(),
-            itemId: item.id,
-            customerName: item.customerName,
-            type: 'Entrega'
-        };
-        batch.set(finalPaymentEntryRef, finalIncomeEntry);
+  const handleClaimItem = React.useCallback((item: StoredItem) => {
+    const description = item.remainingBalance > 0
+      ? `Este artículo tiene un saldo pendiente de ${formatCurrency(item.remainingBalance)}. Al entregarlo, se registrará el saldo como un ingreso final. ¿Deseas continuar?`
+      : `Estás a punto de marcar el artículo de ${item.customerName} como entregado. ¿Estás seguro?`;
+    
+    setConfirmationData({
+      title: 'Confirmar Entrega de Artículo',
+      description,
+      onConfirm: async () => {
+        if (!db) return;
+        try {
+          const batch = writeBatch(db);
+          
+          const originalItemRef = doc(db, 'storedItems', item.id);
+          const claimedItemRef = doc(db, 'claimedItems', item.id);
+    
+          const claimedItemData: ClaimedItem = {
+              ...item,
+              claimedDate: new Date().toISOString() 
+          };
+          
+          batch.set(claimedItemRef, claimedItemData);
+          
+          if (item.remainingBalance > 0) {
+            const finalPaymentEntryRef = doc(collection(db, 'incomeEntries'));
+            const finalIncomeEntry: IncomeEntry = {
+                amount: item.remainingBalance,
+                date: new Date().toISOString(),
+                itemId: item.id,
+                customerName: item.customerName,
+                type: 'Entrega',
+                method: 'Efectivo', // Default method for final settlement
+            };
+            batch.set(finalPaymentEntryRef, finalIncomeEntry);
+          }
+    
+          batch.delete(originalItemRef);
+          
+          await batch.commit();
+    
+          toast({
+            title: "Artículo Entregado",
+            description: `${item.itemsDescription} ha sido movido a la papelera.`,
+          });
+        } catch (error) {
+          console.error("Error al entregar el artículo: ", error);
+          toast({
+            title: "Error",
+            description: "No se pudo procesar la entrega del artículo.",
+            variant: "destructive",
+          });
+        }
       }
-
-      batch.delete(originalItemRef);
-      
-      await batch.commit();
-
-      toast({
-        title: "Artículo Entregado",
-        description: `${item.itemsDescription} ha sido movido a la papelera.`,
-      });
-    } catch (error) {
-      console.error("Error al entregar el artículo: ", error);
-      toast({
-        title: "Error",
-        description: "No se pudo procesar la entrega del artículo.",
-        variant: "destructive",
-      });
-    }
+    });
+    setIsConfirmationOpen(true);
   }, [toast]);
   
   const handleSaveLocation = React.useCallback(async (itemId: string, location: string) => {
@@ -322,6 +351,8 @@ export default function StorageManager() {
     setLocationItem(null);
     setIsEditPaymentDialogOpen(false);
     setEditingPaymentInfo(null);
+    setIsConfirmationOpen(false);
+    setConfirmationData(null);
   }, []);
 
   const filteredItems = React.useMemo(() => 
@@ -423,6 +454,15 @@ export default function StorageManager() {
         onSave={handleSaveLocation}
         item={locationItem}
       />
+       {confirmationData && (
+        <ConfirmationDialog
+          isOpen={isConfirmationOpen}
+          onClose={handleCloseDialogs}
+          title={confirmationData.title}
+          description={confirmationData.description}
+          onConfirm={confirmationData.onConfirm}
+        />
+      )}
     </div>
   );
 }

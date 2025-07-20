@@ -5,7 +5,7 @@ import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy, doc, writeBatch, deleteDoc, where, getDocs, limit } from 'firebase/firestore';
 import type { ClaimedItem, IncomeEntry, StoredItem } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, DollarSign, PackageCheck, TrendingUp, Package, Coins, Trash2 } from 'lucide-react';
+import { AlertTriangle, DollarSign, PackageCheck, TrendingUp, Package, Coins, Trash2, Wallet, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { ClaimedItemCard } from './claimed-item-card';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +13,7 @@ import { startOfDay, startOfMonth, startOfYear, endOfDay, endOfMonth, endOfYear,
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
 
 export default function ReportsView() {
     const { user } = useAuth();
@@ -153,14 +154,17 @@ export default function ReportsView() {
         }
     }, [toast]);
 
-    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega' | 'Ambos') => {
+    const calculateTotalIncome = React.useCallback((entries: IncomeEntry[], startDate: Date, endDate: Date, type: 'Abono' | 'Entrega' | 'Ambos', method?: 'Efectivo' | 'Transferencia' | 'Ambos') => {
         return entries
             .filter(entry => {
                 const entryDate = new Date(entry.date);
                 const isWithin = isWithinInterval(entryDate, { start: startDate, end: endDate });
                 if (!isWithin) return false;
-                if (type === 'Ambos') return true;
-                return entry.type === type;
+                
+                const typeMatch = type === 'Ambos' || entry.type === type;
+                const methodMatch = !method || method === 'Ambos' || entry.method === method;
+
+                return typeMatch && methodMatch;
             })
             .reduce((sum, entry) => sum + entry.amount, 0);
     }, []);
@@ -168,13 +172,15 @@ export default function ReportsView() {
     const now = new Date();
     const todayInterval = { start: startOfDay(now), end: endOfDay(now) };
 
-    const ingresosEmpleadoHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Abono');
+    const ingresosEmpleadoEfectivoHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Abono', 'Efectivo');
+    const ingresosEmpleadoTransferenciaHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Abono', 'Transferencia');
+    const ingresosEmpleadoHoy = ingresosEmpleadoEfectivoHoy + ingresosEmpleadoTransferenciaHoy;
 
-    const abonosHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Abono');
-    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono');
-    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono');
+    const abonosHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Abono', 'Ambos');
+    const abonosMes = calculateTotalIncome(incomeEntries, startOfMonth(now), endOfMonth(now), 'Abono', 'Ambos');
+    const abonosAnio = calculateTotalIncome(incomeEntries, startOfYear(now), endOfYear(now), 'Abono', 'Ambos');
     
-    const ingresosPorEntregaHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Entrega');
+    const ingresosPorEntregaHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Entrega', 'Ambos');
     
     const displayClaimedItems = React.useMemo(() => {
         const thirtyDaysAgo = subDays(new Date(), 30);
@@ -197,13 +203,32 @@ export default function ReportsView() {
     if (user?.role === 'empleado') {
         return (
              <Card className="lg:col-span-4 bg-primary/10 border-primary/40">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-base font-medium">Total de Abonos Recibidos Hoy</CardTitle>
-                    <Coins className="h-5 w-5 text-muted-foreground" />
+                <CardHeader>
+                    <CardTitle className="text-base font-medium">Cierre de Caja (Hoy)</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="text-3xl font-bold">{formatCurrency(ingresosEmpleadoHoy)}</div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                <CardContent className='space-y-4'>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <div className='flex items-center gap-2 text-muted-foreground'>
+                                <Wallet className='h-5 w-5' />
+                                <span>Abonos en Efectivo</span>
+                            </div>
+                            <span className='font-semibold'>{formatCurrency(ingresosEmpleadoEfectivoHoy)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div className='flex items-center gap-2 text-muted-foreground'>
+                                <CreditCard className='h-5 w-5' />
+                                <span>Abonos por Transferencia</span>
+                            </div>
+                            <span className='font-semibold'>{formatCurrency(ingresosEmpleadoTransferenciaHoy)}</span>
+                        </div>
+                    </div>
+                    <Separator />
+                     <div className="flex items-center justify-between text-lg">
+                        <span className='font-bold'>Total Recibido Hoy</span>
+                        <span className='font-bold text-primary'>{formatCurrency(ingresosEmpleadoHoy)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground pt-2">
                         Suma de todos los abonos recibidos en el día.
                     </p>
                 </CardContent>
