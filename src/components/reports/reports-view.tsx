@@ -42,8 +42,11 @@ export default function ReportsView() {
     React.useEffect(() => {
         if (!db) return;
 
+        const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
+
         const claimedQuery = query(
             collection(db, "claimedItems"), 
+            where("claimedDate", ">=", thirtyDaysAgo),
             orderBy("claimedDate", "desc")
         );
 
@@ -202,11 +205,6 @@ export default function ReportsView() {
     
     const ingresosPorEntregaHoy = calculateTotalIncome(incomeEntries, todayInterval.start, todayInterval.end, 'Entrega', 'Ambos');
     
-    const displayClaimedItems = React.useMemo(() => {
-        const thirtyDaysAgo = subDays(new Date(), 30);
-        return claimedItems.filter(item => new Date(item.claimedDate) >= thirtyDaysAgo);
-    }, [claimedItems]);
-
     if (isFirebaseConfigInvalid) {
         return (
           <Alert variant="destructive" className="mt-4">
@@ -320,9 +318,9 @@ export default function ReportsView() {
                         Purgar 30 más antiguos
                     </Button>
                 </div>
-                {displayClaimedItems.length > 0 ? (
+                {claimedItems.length > 0 ? (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {displayClaimedItems.map((item) => (
+                        {claimedItems.map((item) => (
                            <ClaimedItemCard 
                                 key={item.id}
                                 item={item}
