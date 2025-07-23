@@ -18,7 +18,7 @@ export const RANGOS = {
   "Suboficiales": [
     "Sargento Mayor de Comando Conjunto", "Sargento Mayor de Comando", "Sargento Mayor",
     "Sargento Primero", "Sargento Viceprimero", "Sargento Segundo", "Cabo Primero",
-    "Cabo Segundo", "Cabo Tercero", "Soldado", "Soldado Regular", "SLP", "SL18", "SL12"
+    "Cabo Segundo", "Cabo Tercero", "SLP", "SL18", "SL12"
   ],
   "Otros": [
     "Sin Rango / Civil"
