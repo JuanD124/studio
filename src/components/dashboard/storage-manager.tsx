@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, arrayUnion, runTransaction, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, getDoc, runTransaction, deleteDoc } from 'firebase/firestore';
 import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry, ActivityLogEntry } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { StoredItemCard } from './stored-item-card';
 import { AddPaymentDialog } from './add-payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { useAuth } from '@/context/AuthContext';
 import { EditLocationDialog } from './edit-location-dialog';
 import { EditPaymentDialog } from './edit-payment-dialog';
@@ -45,6 +46,8 @@ export default function StorageManager() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
   const [isEditPaymentDialogOpen, setIsEditPaymentDialogOpen] = React.useState(false);
   const [isLocationDialogOpen, setIsLocationDialogOpen] = React.useState(false);
+  const [isConfirmPaymentOpen, setIsConfirmPaymentOpen] = React.useState(false);
+  const [paymentToConfirm, setPaymentToConfirm] = React.useState<{item: StoredItem, amount: number, method: Payment['method']} | null>(null);
   
   const [invoicingItem, setInvoicingItem] = React.useState<StoredItem | null>(null);
   const [editingItem, setEditingItem] = React.useState<StoredItem | null>(null);
@@ -162,8 +165,16 @@ export default function StorageManager() {
     }
   }, [toast, user]);
 
-  const handleSavePayment = React.useCallback(async (item: StoredItem, amount: number, method: Payment['method']) => {
-    if (!db || !user) return;
+  const handleOpenConfirmPaymentDialog = (item: StoredItem, amount: number, method: Payment['method']) => {
+    setPaymentToConfirm({ item, amount, method });
+    setIsPaymentDialogOpen(false);
+    setIsConfirmPaymentOpen(true);
+  };
+  
+  const executeSavePayment = React.useCallback(async () => {
+    if (!paymentToConfirm || !db || !user) return;
+    
+    const { item, amount, method } = paymentToConfirm;
 
     try {
       await runTransaction(db, async (transaction) => {
@@ -209,8 +220,11 @@ export default function StorageManager() {
     } catch (error) {
       console.error("Error al registrar el abono: ", error);
       toast({ title: "Error", description: "No se pudo registrar el abono.", variant: "destructive" });
+    } finally {
+        setIsConfirmPaymentOpen(false);
+        setPaymentToConfirm(null);
     }
-  }, [toast, user]);
+  }, [paymentToConfirm, toast, user]);
 
 
   const handleEditPayment = React.useCallback(async (itemId: string, oldPayment: Payment, newAmount: number) => {
@@ -233,11 +247,7 @@ export default function StorageManager() {
         }
 
         const updatedPayments = [...payments];
-        const originalAmount = updatedPayments[paymentIndex].amount;
         updatedPayments[paymentIndex] = { ...updatedPayments[paymentIndex], amount: newAmount, editedBy: { username: user.username, date: new Date().toISOString() }};
-
-        // For simplicity, we assume income entries are not updated. 
-        // A more robust solution would find and update the corresponding income entry.
 
         const newTotalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
         const newRemainingBalance = currentItem.totalPrice - newTotalPaid;
@@ -374,6 +384,8 @@ export default function StorageManager() {
     setLocationItem(null);
     setIsEditPaymentDialogOpen(false);
     setEditingPaymentInfo(null);
+    setIsConfirmPaymentOpen(false);
+    setPaymentToConfirm(null);
   }, []);
 
   const filteredItems = React.useMemo(() => 
@@ -455,7 +467,7 @@ export default function StorageManager() {
       <AddPaymentDialog
         isOpen={isPaymentDialogOpen}
         onClose={handleCloseDialogs}
-        onSave={handleSavePayment}
+        onSave={handleOpenConfirmPaymentDialog}
         item={paymentItem}
       />
       <EditPaymentDialog
@@ -475,6 +487,20 @@ export default function StorageManager() {
         onSave={handleSaveLocation}
         item={locationItem}
       />
+      <AlertDialog open={isConfirmPaymentOpen} onOpenChange={setIsConfirmPaymentOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Abono</AlertDialogTitle>
+            <AlertDialogDescription>
+                ¿Estás seguro de que quieres registrar un abono de <strong>{formatCurrency(paymentToConfirm?.amount ?? 0)}</strong> para el artículo de <strong>{paymentToConfirm?.item.customerName}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsConfirmPaymentOpen(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={executeSavePayment}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

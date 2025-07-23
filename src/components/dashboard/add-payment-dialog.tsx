@@ -40,10 +40,9 @@ const createFormSchema = (maxAmount: number) => {
 
 export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDialogProps) {
   
-  const formSchema = createFormSchema(item?.remainingBalance ?? 0);
-  type PaymentFormValues = z.infer<typeof formSchema>;
+  const formSchema = React.useMemo(() => createFormSchema(item?.remainingBalance ?? 0), [item]);
   
-  const form = useForm<PaymentFormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       amount: undefined,
@@ -53,22 +52,17 @@ export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDi
   });
 
   React.useEffect(() => {
-    if (isOpen && item) {
-      // Re-create the resolver with the correct max amount when the dialog opens or item changes
+    if (isOpen) {
       form.reset({ amount: undefined, method: 'Efectivo' });
-      // This part is tricky with react-hook-form's resolver. The simplest way
-      // is to let the component re-render with a new schema.
-      // We are already doing this by defining formSchema inside the component body.
-      // We just need to trigger a re-validation.
       form.trigger();
     }
   }, [isOpen, item, form]);
   
   if (!item) return null;
   
-  const onSubmit = (data: PaymentFormValues) => {
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
     onSave(item, data.amount, data.method);
-    onClose();
+    // onClose will be called by the parent component now
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -109,7 +103,7 @@ export function AddPaymentDialog({ isOpen, onClose, onSave, item }: AddPaymentDi
                       type="number" 
                       placeholder="5000" 
                       {...field}
-                      onChange={e => field.onChange(e.target.valueAsNumber || 0)}
+                      onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)}
                       value={field.value ?? ''}
                       autoFocus
                     />
