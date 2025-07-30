@@ -40,7 +40,7 @@ const firebaseConfig = {
 
 ### Paso 3: ¡Ejecutar el proyecto!
 
-Once installed the dependencies and configured Firebase, start the local development server with this command:
+Una vez instaladas las dependencias y configurado Firebase, inicia el servidor de desarrollo local con este comando:
 
 ```bash
 npm run dev
@@ -98,7 +98,7 @@ git push -u origin main
 ---
 ## Solución de Problemas
 
-### Error: "Failed to authenticate"
+### Error: "Failed to authenticate" o "Invalid username or token"
 
 Si al intentar subir tu código (con `git push`) recibes un error de autenticación, lo más probable es que necesites usar un **Token de Acceso Personal (PAT)** en lugar de tu contraseña de GitHub.
 
