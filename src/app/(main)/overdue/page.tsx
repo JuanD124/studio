@@ -7,7 +7,7 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import type { StoredItem } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Package, ShieldAlert, Search, DollarSign, ArrowDownWideNarrow, ArrowUpWideNarrow } from 'lucide-react';
+import { Package, ShieldAlert, Search, DollarSign, ArrowDownWideNarrow, ArrowUpWideNarrow, Archive, Droplets } from 'lucide-react';
 import { differenceInMonths } from 'date-fns';
 import { OverdueList } from '@/components/overdue/overdue-list';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,7 +37,12 @@ export default function OverduePage() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const items: StoredItem[] = [];
       querySnapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() } as StoredItem);
+        const data = doc.data();
+        items.push({ 
+            id: doc.id, 
+            ...data,
+            serviceType: data.serviceType || 'guardado' // Default for old items
+        } as StoredItem);
       });
       setAllItems(items);
       setLoading(false);
@@ -67,8 +72,17 @@ export default function OverduePage() {
 
   }, [allItems, searchTerm, activeFilter]);
 
-  const totalInventoryValue = React.useMemo(() => {
-    return allItems.reduce((total, item) => total + item.remainingBalance, 0);
+  const { guardadoCount, guardadoValue, lavadoCount, lavadoValue } = React.useMemo(() => {
+    return allItems.reduce((acc, item) => {
+        if (item.serviceType === 'lavado') {
+            acc.lavadoCount++;
+            acc.lavadoValue += item.remainingBalance;
+        } else { // 'guardado' or undefined (old items)
+            acc.guardadoCount++;
+            acc.guardadoValue += item.remainingBalance;
+        }
+        return acc;
+    }, { guardadoCount: 0, guardadoValue: 0, lavadoCount: 0, lavadoValue: 0 });
   }, [allItems]);
 
 
@@ -93,25 +107,45 @@ export default function OverduePage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 mb-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Artículos Almacenados</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Artículos en Guardado</CardTitle>
+                <Archive className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{allItems.length}</div>
-                <p className="text-xs text-muted-foreground">Cantidad actual en inventario.</p>
+                <div className="text-2xl font-bold">{guardadoCount}</div>
+                <p className="text-xs text-muted-foreground">Cantidad de artículos de guardado.</p>
             </CardContent>
         </Card>
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Valor Total del Inventario</CardTitle>
+                <CardTitle className="text-sm font-medium">Valor de Guardado</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalInventoryValue)}</div>
-                <p className="text-xs text-muted-foreground">Suma de todos los saldos pendientes de los artículos.</p>
+                <div className="text-2xl font-bold">{formatCurrency(guardadoValue)}</div>
+                <p className="text-xs text-muted-foreground">Saldo pendiente en guardado.</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Artículos en Lavado</CardTitle>
+                <Droplets className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{lavadoCount}</div>
+                <p className="text-xs text-muted-foreground">Cantidad de servicios de lavado.</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Valor de Lavado</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(lavadoValue)}</div>
+                <p className="text-xs text-muted-foreground">Saldo pendiente en lavado.</p>
             </CardContent>
         </Card>
       </div>
