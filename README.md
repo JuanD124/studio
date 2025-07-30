@@ -40,7 +40,7 @@ const firebaseConfig = {
 
 ### Paso 3: ¡Ejecutar el proyecto!
 
-Once las dependencias estén instaladas y Firebase configurado, inicia el servidor de desarrollo local con este comando:
+Una vez las dependencias estén instaladas y Firebase configurado, inicia el servidor de desarrollo local con este comando:
 
 ```bash
 npm run dev
@@ -94,6 +94,7 @@ Finalmente, este comando envía tus archivos a tu repositorio en GitHub.
 ```bash
 git push -u origin main
 ```
+*Si recibes un error de autenticación al ejecutar este comando, sigue las instrucciones de la sección de **Solución de Problemas** a continuación.*
 
 ---
 ## Solución de Problemas
