@@ -95,7 +95,10 @@ Finalmente, este comando envía tus archivos a tu repositorio en GitHub.
 git push -u origin main
 ```
 
-### Solución de Problemas: Error "Failed to authenticate"
+---
+## Solución de Problemas
+
+### Error: "Failed to authenticate"
 
 Si al intentar subir tu código (con `git push`) recibes un error de autenticación, lo más probable es que necesites usar un **Token de Acceso Personal (PAT)** en lugar de tu contraseña de GitHub.
 
@@ -123,3 +126,21 @@ Si al intentar subir tu código (con `git push`) recibes un error de autenticaci
     *   Cuando te pida la `Password`, **pega el token que acabas de crear**. No escribas tu contraseña de GitHub.
 
 ¡Con esto, tu código debería subirse correctamente!
+
+### Error: "failed to push some refs to..."
+
+Este error significa que el repositorio en GitHub tiene cambios que tu computadora no tiene. Para solucionarlo, necesitas traer esos cambios primero y luego volver a subir los tuyos.
+
+Ejecuta estos comandos en tu terminal, en orden:
+
+1.  **Trae los cambios de GitHub:**
+    ```bash
+    git pull origin main --allow-unrelated-histories
+    ```
+    *Este comando descarga los cambios remotos y los fusiona con tu trabajo local.*
+
+2.  **Vuelve a subir tu código:**
+    ```bash
+    git push origin main
+    ```
+    *Ahora que tienes todo sincronizado, este comando debería funcionar sin problemas.*
