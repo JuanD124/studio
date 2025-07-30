@@ -11,11 +11,12 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet } from 'lucide-react';
+import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet, Archive, Droplets } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { useAuth } from '@/context/AuthContext';
+import { cn } from '@/lib/utils';
 
 interface StoredItemCardProps {
   item: StoredItem;
@@ -82,6 +83,8 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
   const laundryItems = item.laundryItems || [];
   const [isExpanded, setIsExpanded] = React.useState(false);
   const isPaid = item.remainingBalance <= 0;
+  const serviceType = item.serviceType || 'guardado';
+
 
   const handleEditSpecificPayment = (payment: Payment) => {
     onEditPayment(item, payment);
@@ -89,7 +92,10 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-    <Card className="flex flex-col transition-all hover:shadow-lg">
+    <Card className={cn(
+        "flex flex-col transition-all hover:shadow-lg border-l-4",
+        serviceType === 'lavado' ? 'border-l-blue-400' : 'border-l-amber-400'
+    )}>
       <CardHeader>
         <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -125,7 +131,15 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 </DropdownMenu>
             )}
         </div>
-        <Badge variant="secondary" className="w-fit mt-2">ID: {item.id}</Badge>
+
+        <div className='flex items-center justify-between mt-2'>
+            <Badge variant="secondary">ID: {item.id}</Badge>
+            <Badge variant={serviceType === 'lavado' ? 'default' : 'outline'} className={cn(serviceType === 'lavado' && 'bg-blue-500 hover:bg-blue-600')}>
+                {serviceType === 'lavado' ? <Droplets className="mr-1.5 h-3.5 w-3.5"/> : <Archive className="mr-1.5 h-3.5 w-3.5"/>}
+                {serviceType === 'lavado' ? 'Lavado' : 'Guardado'}
+            </Badge>
+        </div>
+        
         <CardDescription className="flex items-center gap-2 pt-2">
           <Package className="w-4 h-4" />
           <span>{item.itemsDescription}</span>
@@ -170,7 +184,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
             <div className="space-y-1 text-xs">
                 <div className="flex items-center gap-2 font-medium">
                     <DollarSign className="w-3.5 h-3.5" />
-                    <span>Precio de Almacenamiento</span>
+                    <span>Precio {serviceType === 'guardado' ? 'Almacenamiento' : 'Base Lavado'}</span>
                 </div>
                 <div className="flex justify-between items-center pl-4">
                     <span>Valor base</span>

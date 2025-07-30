@@ -38,6 +38,7 @@ export interface StoredItem {
   payments: Payment[];
   remainingBalance: number;
   location?: string; // e.g., "Estante A-3"
+  serviceType: 'guardado' | 'lavado';
   editedBy?: {
     username: string;
     date: string; // ISO string format

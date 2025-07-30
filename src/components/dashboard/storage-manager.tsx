@@ -6,7 +6,7 @@ import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, update
 import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry, ActivityLogEntry } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, PlusCircle, Search } from 'lucide-react';
+import { AlertTriangle, PlusCircle, Search, Droplets, Archive } from 'lucide-react';
 import { AddItemDialog } from './add-item-dialog';
 import { InvoiceDialog } from './invoice-dialog';
 import { StoredItemCard } from './stored-item-card';
@@ -41,7 +41,9 @@ export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
   const [laundryServices, setLaundryServices] = React.useState<LaundryItem[]>([]);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [filter, setFilter] = React.useState<'todos' | 'guardado' | 'lavado'>('todos');
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
+  const [serviceTypeForDialog, setServiceTypeForDialog] = React.useState<'guardado' | 'lavado'>('guardado');
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = React.useState(false);
   const [isEditPaymentDialogOpen, setIsEditPaymentDialogOpen] = React.useState(false);
@@ -69,6 +71,8 @@ export default function StorageManager() {
           id: doc.id,
           ...data,
           storageDate: data.storageDate,
+          // Backward compatibility for old items
+          serviceType: data.serviceType || 'guardado',
         } as StoredItem);
       });
       itemsData.sort((a, b) => Number(b.id) - Number(a.id));
@@ -347,13 +351,15 @@ export default function StorageManager() {
     setIsInvoiceOpen(true);
   }, []);
   
-  const handleOpenAddDialog = React.useCallback(() => {
+  const handleOpenAddDialog = React.useCallback((type: 'guardado' | 'lavado') => {
     setEditingItem(null);
+    setServiceTypeForDialog(type);
     setIsAddDialogOpen(true);
   }, []);
 
   const handleOpenEditDialog = React.useCallback((item: StoredItem) => {
     setEditingItem(item);
+    setServiceTypeForDialog(item.serviceType);
     setIsAddDialogOpen(true);
   }, []);
 
@@ -388,14 +394,24 @@ export default function StorageManager() {
     setPaymentToConfirm(null);
   }, []);
 
-  const filteredItems = React.useMemo(() => 
-    items.filter(
-      (item) =>
+  const filteredItems = React.useMemo(() => {
+    return items.filter((item) => {
+      const searchMatch =
         item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.customerId && item.customerId.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase())
-  ), [items, searchTerm]);
+        item.itemsDescription.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (!searchMatch) return false;
+      
+      const itemServiceType = item.serviceType || 'guardado';
+
+      if (filter === 'todos') {
+        return true;
+      }
+      return itemServiceType === filter;
+    });
+  }, [items, searchTerm, filter]);
 
   if (isFirebaseConfigInvalid) {
     return (
@@ -414,23 +430,39 @@ export default function StorageManager() {
     <div className="space-y-6">
       <div>
         <div className="mb-6">
-            <h1 className="text-3xl font-bold font-headline">Panel de Almacenamiento</h1>
-            <p className="text-muted-foreground">Visualiza y gestiona todos los artículos almacenados.</p>
+            <h1 className="text-3xl font-bold font-headline">Panel de Facturación</h1>
+            <p className="text-muted-foreground">Visualiza y gestiona todos los servicios y artículos.</p>
         </div>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-                placeholder="Buscar por ID, nombre, cédula, o descripción..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
+
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar por ID, nombre, cédula, o descripción..."
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="flex gap-2">
+                    <Button onClick={() => handleOpenAddDialog('lavado')} className="flex-1 flex items-center gap-2">
+                        <Droplets className="h-5 w-5" />
+                        <span>Nuevo Lavado</span>
+                    </Button>
+                    <Button onClick={() => handleOpenAddDialog('guardado')} className="flex-1 flex items-center gap-2">
+                        <Archive className="h-5 w-5" />
+                        <span>Nuevo Guardado</span>
+                    </Button>
+                </div>
             </div>
-            <Button onClick={handleOpenAddDialog} className="flex items-center gap-2">
-            <PlusCircle className="h-5 w-5" />
-            <span>Almacenar Nuevo Artículo</span>
-            </Button>
+
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Filtrar:</span>
+                <Button variant={filter === 'todos' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilter('todos')}>Todos</Button>
+                <Button variant={filter === 'guardado' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilter('guardado')}>Guardado</Button>
+                <Button variant={filter === 'lavado' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilter('lavado')}>Lavado</Button>
+            </div>
         </div>
 
         {filteredItems.length > 0 ? (
@@ -450,7 +482,7 @@ export default function StorageManager() {
             </div>
         ) : (
             <div className="text-center py-16 border-2 border-dashed rounded-lg mt-6">
-            <p className="text-muted-foreground">No se encontraron artículos almacenados.</p>
+            <p className="text-muted-foreground">No se encontraron artículos.</p>
             <p className="text-sm text-muted-foreground">Intenta ajustar tu búsqueda o añade un nuevo artículo.</p>
             </div>
         )}
@@ -463,6 +495,7 @@ export default function StorageManager() {
         onSave={handleSaveItem}
         itemToEdit={editingItem}
         laundryServices={laundryServices}
+        serviceType={serviceTypeForDialog}
       />
       <AddPaymentDialog
         isOpen={isPaymentDialogOpen}

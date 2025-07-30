@@ -49,9 +49,10 @@ interface AddItemDialogProps {
   onSave: (data: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance'>, id?: string) => void;
   itemToEdit: StoredItem | null;
   laundryServices: LaundryItem[];
+  serviceType: 'guardado' | 'lavado';
 }
 
-export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServices }: AddItemDialogProps) {
+export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServices, serviceType }: AddItemDialogProps) {
   const form = useForm<AddItemFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -123,6 +124,12 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
       setQuantity(0);
     }
   };
+  
+  const getDialogTitle = () => {
+    if (itemToEdit) return 'Editar Artículo';
+    if (serviceType === 'lavado') return 'Nuevo Servicio de Lavado';
+    return 'Nuevo Artículo para Guardar';
+  }
 
   const onSubmit = (data: AddItemFormValues) => {
     const laundryTotal = data.laundryItems?.reduce((total, item) => total + (item.price * item.quantity), 0) || 0;
@@ -133,6 +140,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
       storagePrice: Number(data.storagePrice || 0),
       laundryItems: data.laundryItems || [],
       totalPrice,
+      serviceType: itemToEdit?.serviceType || serviceType
     };
     
     onSave(itemPayload, itemToEdit?.id);
@@ -149,9 +157,9 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">{itemToEdit ? 'Editar Artículo' : 'Almacenar Nuevo Artículo'}</DialogTitle>
+          <DialogTitle className="font-headline">{getDialogTitle()}</DialogTitle>
           <DialogDescription>
-            {itemToEdit ? 'Modifica los detalles del artículo y guarda los cambios.' : 'Introduce los detalles del artículo a almacenar.'}
+            {itemToEdit ? 'Modifica los detalles del artículo y guarda los cambios.' : 'Introduce los detalles del servicio.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -290,7 +298,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
                 name="storagePrice"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Precio Almacenamiento (COP)</FormLabel>
+                    <FormLabel>Precio {serviceType === 'guardado' ? 'Almacenamiento' : 'Base Lavado'} (COP)</FormLabel>
                     <FormControl>
                     <Input type="number" placeholder="10000" {...field} />
                     </FormControl>
@@ -300,7 +308,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
             />
             
             <div className="space-y-2">
-              <FormLabel>Añadir Servicio de Lavandería</FormLabel>
+              <FormLabel>Añadir Servicio de Lavandería (Adicional)</FormLabel>
               <div className="flex items-end gap-2">
                 <div className="flex-grow">
                   <FormLabel className="text-xs text-muted-foreground">Servicio</FormLabel>
