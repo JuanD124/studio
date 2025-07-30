@@ -92,7 +92,7 @@ git commit -m "Primer commit: Versión inicial del proyecto"
 Finalmente, este comando envía tus archivos a tu repositorio en GitHub.
 
 ```bash
-git push -u origin main
+
 ```
 *Si recibes un error de autenticación al ejecutar este comando, sigue las instrucciones de la sección de **Solución de Problemas** a continuación.*
 
