@@ -47,3 +47,52 @@ npm run dev
 ```
 
 Abre tu navegador y ve a [http://localhost:3000](http://localhost:3000). ¡Deberías ver tu aplicación funcionando!
+
+---
+
+## Cómo Subir Este Proyecto a GitHub
+
+Sigue estos pasos para subir tu código a un repositorio en GitHub.
+
+### Prerrequisito: Crear un Repositorio en GitHub
+
+1.  Ve a [GitHub](https://github.com) e inicia sesión.
+2.  Haz clic en el botón **"New"** para crear un nuevo repositorio.
+3.  Dale un nombre (por ejemplo, `lanza-express-app`), elige si será público o privado y **no inicialices** con un `README` o `.gitignore`, ya que el proyecto ya los tiene.
+4.  Copia la URL del repositorio que te proporciona GitHub (será algo como `https://github.com/tu-usuario/tu-repositorio.git`).
+
+### Paso 1: Inicializar Git en tu Proyecto Local
+
+Abre una terminal en la carpeta raíz de tu proyecto y ejecuta este comando. Si ya lo hiciste, puedes saltar este paso.
+
+```bash
+git init -b main
+```
+
+### Paso 2: Conectar tu Repositorio Local con GitHub
+
+Usa la URL que copiaste de GitHub en el siguiente comando.
+
+```bash
+git remote add origin TU_URL_DEL_REPOSITORIO.git
+```
+*Reemplaza `TU_URL_DEL_REPOSITORIO.git` con tu URL real.*
+
+### Paso 3: Añadir y Confirmar tus Archivos (Commit)
+
+Estos comandos preparan y guardan una "instantánea" de tu proyecto.
+
+```bash
+git add .
+git commit -m "Primer commit: Versión inicial del proyecto"
+```
+
+### Paso 4: Subir tu Código a GitHub
+
+Finalmente, este comando envía tus archivos a tu repositorio en GitHub.
+
+```bash
+git push -u origin main
+```
+
+¡Y listo! Tu código ya estará visible en tu perfil de GitHub.
