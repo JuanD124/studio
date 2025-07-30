@@ -95,4 +95,31 @@ Finalmente, este comando envía tus archivos a tu repositorio en GitHub.
 git push -u origin main
 ```
 
-¡Y listo! Tu código ya estará visible en tu perfil de GitHub.
+### Solución de Problemas: Error "Failed to authenticate"
+
+Si al intentar subir tu código (con `git push`) recibes un error de autenticación, lo más probable es que necesites usar un **Token de Acceso Personal (PAT)** en lugar de tu contraseña de GitHub.
+
+#### Cómo Crear y Usar un Token de Acceso Personal:
+
+1.  **Ve a la Configuración de GitHub:**
+    *   Inicia sesión en GitHub.
+    *   Haz clic en tu foto de perfil en la esquina superior derecha y selecciona **"Settings"**.
+    *   En el menú de la izquierda, baja y haz clic en **"Developer settings"**.
+    *   Selecciona **"Personal access tokens"** y luego **"Tokens (classic)"**.
+
+2.  **Genera un Nuevo Token:**
+    *   Haz clic en **"Generate new token"** (y luego "Generate new token (classic)").
+    *   Dale un nombre descriptivo en **"Note"** (ej: "Token para mi PC").
+    *   En **"Expiration"**, elige una duración (se recomienda 30 o 90 días).
+    *   En la sección **"Select scopes"**, marca la casilla **`repo`**. Esto le dará al token los permisos necesarios para acceder y modificar tus repositorios.
+    *   Baja y haz clic en **"Generate token"**.
+
+3.  **Copia y Guarda tu Token:**
+    *   **¡MUY IMPORTANTE!** GitHub te mostrará el token una sola vez. Cópialo y guárdalo en un lugar seguro (como un gestor de contraseñas o un archivo temporal). Si lo pierdes, tendrás que generar uno nuevo.
+
+4.  **Usa el Token en la Terminal:**
+    *   Vuelve a tu terminal y ejecuta el comando `git push` de nuevo.
+    *   Cuando te pida el `Username`, escribe tu nombre de usuario de GitHub.
+    *   Cuando te pida la `Password`, **pega el token que acabas de crear**. No escribas tu contraseña de GitHub.
+
+¡Con esto, tu código debería subirse correctamente!
