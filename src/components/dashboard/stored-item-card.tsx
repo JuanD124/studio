@@ -77,37 +77,31 @@ const LaundryItemsList = ({ items, onUpdateStatus }: { items: StoredItemLaundryI
                     Listos: {readyItemsCount} de {items.length}
                  </Badge>
             </div>
-            {items.map((item, index) => (
-                <div key={index} className="flex justify-between items-center pl-4 group">
-                    <div className="flex items-center gap-2">
-                        {item.status === 'ready' 
-                            ? <CircleCheck className="w-4 h-4 text-green-500" />
-                            : <CircleAlert className="w-4 h-4 text-amber-500" />
-                        }
-                        <div>
-                            <p>{item.quantity} &times; {item.name}</p>
-                            <p className="text-muted-foreground">{item.status === 'ready' ? 'Listo' : 'Pendiente'}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <Badge variant="outline">{formatCurrency(item.price * item.quantity)}</Badge>
-                        {item.status === 'pending' && (
-                           <TooltipProvider>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onUpdateStatus(item, 'ready')}>
-                                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                    </Button>
-                               </TooltipTrigger>
-                               <TooltipContent>
-                                 <p>Marcar como listo</p>
-                               </TooltipContent>
-                             </Tooltip>
-                           </TooltipProvider>
+            {items.map((item, index) => {
+                 const isPending = item.status === 'pending';
+                 return (
+                    <div
+                        key={index}
+                        onClick={() => isPending && onUpdateStatus(item, 'ready')}
+                        className={cn(
+                            "flex justify-between items-center pl-4 group rounded-md p-1",
+                            isPending && "cursor-pointer hover:bg-muted/80"
                         )}
+                    >
+                        <div className="flex items-center gap-2">
+                            {item.status === 'ready' 
+                                ? <CircleCheck className="w-4 h-4 text-green-500" />
+                                : <CircleAlert className="w-4 h-4 text-amber-500" />
+                            }
+                            <div>
+                                <p>{item.quantity} &times; {item.name}</p>
+                                <p className="text-muted-foreground">{item.status === 'ready' ? 'Listo' : 'Pendiente'}</p>
+                            </div>
+                        </div>
+                        <Badge variant="outline">{formatCurrency(item.price * item.quantity)}</Badge>
                     </div>
-                </div>
-            ))}
+                 )
+            })}
         </div>
     );
 };
