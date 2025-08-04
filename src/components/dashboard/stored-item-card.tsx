@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import type { Payment, StoredItem } from '@/lib/types';
+import type { Payment, StoredItem, StoredItemLaundryItem } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,13 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet, Archive, Droplets } from 'lucide-react';
+import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet, Archive, Droplets, CircleAlert, CircleCheck } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface StoredItemCardProps {
   item: StoredItem;
@@ -26,6 +27,7 @@ interface StoredItemCardProps {
   onAddPayment: (item: StoredItem) => void;
   onEditPayment: (item: StoredItem, payment: Payment) => void;
   onEditLocation: (item: StoredItem) => void;
+  onUpdateLaundryStatus: (item: StoredItem, laundryItem: StoredItemLaundryItem, newStatus: 'pending' | 'ready') => void;
 }
 
 const PaymentHistory = ({ payments, onEditPayment }: { payments: Payment[], onEditPayment: (payment: Payment) => void }) => {
@@ -58,26 +60,59 @@ const PaymentHistory = ({ payments, onEditPayment }: { payments: Payment[], onEd
     );
 };
 
-const LaundryItemsList = ({ items }: { items: StoredItem['laundryItems'] }) => {
+const LaundryItemsList = ({ items, onUpdateStatus }: { items: StoredItemLaundryItem[]; onUpdateStatus: (item: StoredItemLaundryItem, newStatus: 'pending' | 'ready') => void }) => {
     if (!items || items.length === 0) return null;
+    
+    const readyItemsCount = items.filter(item => item.status === 'ready').length;
+    const allItemsReady = readyItemsCount === items.length;
 
     return (
-        <div className="space-y-1 text-xs">
-            <div className="flex items-center gap-2 font-medium">
-                <Shirt className="w-3.5 h-3.5" />
-                <span>Servicios de Lavandería</span>
+        <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between font-medium">
+                 <div className="flex items-center gap-2">
+                    <Shirt className="w-3.5 h-3.5" />
+                    <span>Servicios de Lavandería</span>
+                 </div>
+                 <Badge variant={allItemsReady ? "default" : "secondary"} className={cn(allItemsReady && "bg-green-500 hover:bg-green-600")}>
+                    Listos: {readyItemsCount} de {items.length}
+                 </Badge>
             </div>
             {items.map((item, index) => (
-                <div key={index} className="flex justify-between items-center pl-4">
-                    <span>{item.quantity} &times; {item.name}</span>
-                    <Badge variant="outline">{formatCurrency(item.price * item.quantity)}</Badge>
+                <div key={index} className="flex justify-between items-center pl-4 group">
+                    <div className="flex items-center gap-2">
+                        {item.status === 'ready' 
+                            ? <CircleCheck className="w-4 h-4 text-green-500" />
+                            : <CircleAlert className="w-4 h-4 text-amber-500" />
+                        }
+                        <div>
+                            <p>{item.quantity} &times; {item.name}</p>
+                            <p className="text-muted-foreground">{item.status === 'ready' ? 'Listo' : 'Pendiente'}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Badge variant="outline">{formatCurrency(item.price * item.quantity)}</Badge>
+                        {item.status === 'pending' && (
+                           <TooltipProvider>
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onUpdateStatus(item, 'ready')}>
+                                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                    </Button>
+                               </TooltipTrigger>
+                               <TooltipContent>
+                                 <p>Marcar como listo</p>
+                               </TooltipContent>
+                             </Tooltip>
+                           </TooltipProvider>
+                        )}
+                    </div>
                 </div>
             ))}
         </div>
     );
 };
 
-function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment, onEditPayment, onEditLocation }: StoredItemCardProps) {
+function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment, onEditPayment, onEditLocation, onUpdateLaundryStatus }: StoredItemCardProps) {
   const { user } = useAuth();
   const payments = item.payments || [];
   const laundryItems = item.laundryItems || [];
@@ -88,6 +123,10 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
 
   const handleEditSpecificPayment = (payment: Payment) => {
     onEditPayment(item, payment);
+  };
+  
+  const handleUpdateStatus = (laundryItem: StoredItemLaundryItem, newStatus: 'pending' | 'ready') => {
+      onUpdateLaundryStatus(item, laundryItem, newStatus);
   };
 
   return (
@@ -192,7 +231,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 </div>
             </div>
 
-            <LaundryItemsList items={laundryItems} />
+            <LaundryItemsList items={laundryItems} onUpdateStatus={handleUpdateStatus} />
             <PaymentHistory payments={payments} onEditPayment={handleEditSpecificPayment} />
         </CardContent>
       </CollapsibleContent>

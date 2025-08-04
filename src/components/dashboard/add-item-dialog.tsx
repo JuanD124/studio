@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import type { StoredItem, LaundryItem } from '@/lib/types';
+import type { StoredItem, LaundryItem, StoredItemLaundryItem } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Trash2 } from 'lucide-react';
@@ -37,7 +37,8 @@ const formSchema = z.object({
     laundryItemId: z.string(),
     name: z.string(),
     price: z.number(),
-    quantity: z.coerce.number().min(1, { message: "La cantidad debe ser al menos 1." })
+    quantity: z.coerce.number().min(1, { message: "La cantidad debe ser al menos 1." }),
+    status: z.enum(['pending', 'ready']),
   })).optional(),
 });
 
@@ -88,7 +89,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
         itemsDescription: itemToEdit.itemsDescription,
         storagePrice: itemToEdit.storagePrice,
         location: itemToEdit.location || '',
-        laundryItems: itemToEdit.laundryItems || [],
+        laundryItems: itemToEdit.laundryItems.map(item => ({...item, status: item.status || 'pending'})) || [],
       });
     } else if (isOpen) {
       form.reset({
@@ -119,6 +120,7 @@ export function AddItemDialog({ isOpen, onClose, onSave, itemToEdit, laundryServ
         name: service.name,
         price: service.price,
         quantity: quantity,
+        status: 'pending', // Default status for new items
       });
       setSelectedService('');
       setQuantity(0);

@@ -16,6 +16,14 @@ export interface Payment {
   };
 }
 
+export interface StoredItemLaundryItem {
+  laundryItemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  status: 'pending' | 'ready';
+}
+
 export interface StoredItem {
   id: string; // Firestore document ID, now will be a sequential number as string
   customerName: string;
@@ -28,12 +36,7 @@ export interface StoredItem {
   itemsDescription: string;
   storageDate: string; // ISO string format
   storagePrice: number;
-  laundryItems: {
-    laundryItemId: string;
-    name: string;
-    price: number;
-    quantity: number;
-  }[];
+  laundryItems: StoredItemLaundryItem[];
   totalPrice: number;
   payments: Payment[];
   remainingBalance: number;

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, getDoc, runTransaction, deleteDoc } from 'firebase/firestore';
-import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry, ActivityLogEntry } from '@/lib/types';
+import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry, ActivityLogEntry, StoredItemLaundryItem } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, PlusCircle, Search, Droplets, Archive } from 'lucide-react';
@@ -345,6 +345,30 @@ export default function StorageManager() {
       });
     }
   }, [toast, user]);
+
+  const handleUpdateLaundryItemStatus = React.useCallback(async (item: StoredItem, laundryItemToUpdate: StoredItemLaundryItem, newStatus: 'pending' | 'ready') => {
+    if (!db) return;
+    try {
+        const itemRef = doc(db, 'storedItems', item.id);
+        const updatedLaundryItems = item.laundryItems.map(li => 
+            li.laundryItemId === laundryItemToUpdate.laundryItemId && li.name === laundryItemToUpdate.name && li.quantity === laundryItemToUpdate.quantity
+                ? { ...li, status: newStatus } 
+                : li
+        );
+        await updateDoc(itemRef, { laundryItems: updatedLaundryItems });
+        toast({
+            title: 'Estado Actualizado',
+            description: `El estado de "${laundryItemToUpdate.name}" se ha actualizado.`,
+        });
+    } catch (error) {
+        console.error("Error al actualizar el estado de la prenda: ", error);
+        toast({
+            title: 'Error',
+            description: 'No se pudo actualizar el estado de la prenda.',
+            variant: 'destructive',
+        });
+    }
+}, [toast]);
   
   const handleOpenInvoice = React.useCallback((item: StoredItem) => {
     setInvoicingItem(item);
@@ -477,6 +501,7 @@ export default function StorageManager() {
                     onAddPayment={handleOpenPaymentDialog}
                     onEditPayment={handleOpenEditPaymentDialog}
                     onEditLocation={handleOpenLocationDialog}
+                    onUpdateLaundryStatus={handleUpdateLaundryItemStatus}
                 />
             ))}
             </div>
