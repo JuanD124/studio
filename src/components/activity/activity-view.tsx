@@ -2,14 +2,15 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, getDocs, writeBatch, where } from 'firebase/firestore';
 import type { ActivityLogEntry } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, isToday } from 'date-fns';
+import { format, isToday, startOfToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { History, User, Edit, PlusCircle, PackageCheck, Banknote, MapPin, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const ACTION_ICONS: { [key in ActivityLogEntry['action']]: React.ElementType } = {
   created: PlusCircle,
@@ -39,6 +40,8 @@ export default function ActivityView() {
     const [allActivities, setAllActivities] = React.useState<ActivityLogEntry[]>([]);
     const [todaysActivities, setTodaysActivities] = React.useState<ActivityLogEntry[]>([]);
     const [loading, setLoading] = React.useState(true);
+    const [isPurging, setIsPurging] = React.useState(false);
+    const { toast } = useToast();
 
     React.useEffect(() => {
         if (!db) return;
@@ -59,6 +62,40 @@ export default function ActivityView() {
     React.useEffect(() => {
         setTodaysActivities(allActivities.filter(activity => isToday(new Date(activity.date))));
     }, [allActivities]);
+    
+    const handlePurgeOldActivity = async () => {
+        if (!db) return;
+        if (!window.confirm("¿Estás seguro de que quieres eliminar toda la actividad que no sea de hoy? Esta acción no se puede deshacer.")) {
+            return;
+        }
+
+        setIsPurging(true);
+        try {
+            const todayStart = startOfToday().toISOString();
+            const oldActivityQuery = query(collection(db, 'activityLog'), where('date', '<', todayStart));
+            const snapshot = await getDocs(oldActivityQuery);
+
+            if (snapshot.empty) {
+                toast({ title: "Información", description: "No hay actividad antigua para purgar." });
+                setIsPurging(false);
+                return;
+            }
+
+            const batch = writeBatch(db);
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+
+            toast({ title: "Éxito", description: `Se han eliminado ${snapshot.size} registros antiguos.` });
+        } catch (error) {
+            console.error("Error al purgar la actividad:", error);
+            toast({ title: "Error", description: "No se pudo purgar la actividad antigua.", variant: "destructive" });
+        } finally {
+            setIsPurging(false);
+        }
+    };
+
 
     if (loading) {
         return (
@@ -74,8 +111,12 @@ export default function ActivityView() {
 
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Actividad de Hoy</CardTitle>
+                 <Button variant="outline" size="sm" onClick={handlePurgeOldActivity} disabled={isPurging}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {isPurging ? 'Purgando...' : 'Purgar Actividad Antigua'}
+                </Button>
             </CardHeader>
             <CardContent>
                 {todaysActivities.length === 0 ? (
