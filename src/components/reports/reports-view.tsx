@@ -55,7 +55,11 @@ export default function ReportsView() {
             setClaimedItems(items);
         });
         
-        const incomeQuery = query(collection(db, "incomeEntries"), orderBy("date", "desc"));
+        const incomeQuery = query(
+            collection(db, "incomeEntries"), 
+            where("date", ">=", thirtyDaysAgo),
+            orderBy("date", "desc")
+        );
         const unsubscribeIncome = onSnapshot(incomeQuery, (snapshot) => {
             let entries: IncomeEntry[] = [];
             snapshot.forEach(doc => {
