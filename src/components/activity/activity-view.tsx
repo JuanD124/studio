@@ -2,15 +2,16 @@
 
 import * as React from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, getDocs, writeBatch, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, getDocs, writeBatch, where, limit } from 'firebase/firestore';
 import type { ActivityLogEntry } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, isToday, startOfToday } from 'date-fns';
+import { format, isToday, startOfDay, subDays, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { History, User, Edit, PlusCircle, PackageCheck, Banknote, MapPin, Trash2, RotateCcw } from 'lucide-react';
+import { History, Trash2, Edit, PlusCircle, PackageCheck, Banknote, MapPin, RotateCcw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
 const ACTION_ICONS: { [key in ActivityLogEntry['action']]: React.ElementType } = {
   created: PlusCircle,
@@ -36,9 +37,12 @@ const ACTION_COLORS: { [key in ActivityLogEntry['action']]: string } = {
     location_changed: 'text-indigo-500',
 };
 
+interface GroupedActivities {
+    [date: string]: ActivityLogEntry[];
+}
+
 export default function ActivityView() {
-    const [allActivities, setAllActivities] = React.useState<ActivityLogEntry[]>([]);
-    const [todaysActivities, setTodaysActivities] = React.useState<ActivityLogEntry[]>([]);
+    const [groupedActivities, setGroupedActivities] = React.useState<GroupedActivities>({});
     const [loading, setLoading] = React.useState(true);
     const [isPurging, setIsPurging] = React.useState(false);
     const { toast } = useToast();
@@ -46,33 +50,49 @@ export default function ActivityView() {
     React.useEffect(() => {
         if (!db) return;
 
-        const q = query(collection(db, 'activityLog'), orderBy('date', 'desc'));
+        const fifteenDaysAgo = subDays(startOfDay(new Date()), 15).toISOString();
+
+        const q = query(
+            collection(db, 'activityLog'),
+            where('date', '>=', fifteenDaysAgo),
+            orderBy('date', 'desc')
+        );
+
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const activityData: ActivityLogEntry[] = [];
             querySnapshot.forEach((doc) => {
                 activityData.push({ id: doc.id, ...doc.data() } as ActivityLogEntry);
             });
-            setAllActivities(activityData);
+
+            const grouped = activityData.reduce((acc: GroupedActivities, activity) => {
+                const dateKey = format(new Date(activity.date), 'yyyy-MM-dd');
+                if (!acc[dateKey]) {
+                    acc[dateKey] = [];
+                }
+                acc[dateKey].push(activity);
+                return acc;
+            }, {});
+
+            setGroupedActivities(grouped);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching activity log:", error);
             setLoading(false);
         });
 
         return () => unsubscribe();
     }, []);
-
-    React.useEffect(() => {
-        setTodaysActivities(allActivities.filter(activity => isToday(new Date(activity.date))));
-    }, [allActivities]);
     
     const handlePurgeOldActivity = async () => {
         if (!db) return;
-        if (!window.confirm("¿Estás seguro de que quieres eliminar toda la actividad que no sea de hoy? Esta acción no se puede deshacer.")) {
+        if (!window.confirm("¿Estás seguro de que quieres eliminar toda la actividad con más de 15 días de antigüedad? Esta acción no se puede deshacer.")) {
             return;
         }
 
         setIsPurging(true);
         try {
-            const todayStart = startOfToday().toISOString();
-            const oldActivityQuery = query(collection(db, 'activityLog'), where('date', '<', todayStart));
+            const fifteenDaysAgo = subDays(startOfDay(new Date()), 15).toISOString();
+            const oldActivityQuery = query(collection(db, 'activityLog'), where('date', '<', fifteenDaysAgo), limit(100));
             const snapshot = await getDocs(oldActivityQuery);
 
             if (snapshot.empty) {
@@ -96,7 +116,6 @@ export default function ActivityView() {
         }
     };
 
-
     if (loading) {
         return (
             <div className="space-y-4">
@@ -108,52 +127,77 @@ export default function ActivityView() {
             </div>
         )
     }
+    
+    const sortedDates = Object.keys(groupedActivities).sort((a, b) => b.localeCompare(a));
+    const todayKey = format(new Date(), 'yyyy-MM-dd');
 
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Actividad de Hoy</CardTitle>
+                <CardTitle>Últimos 15 Días</CardTitle>
                  <Button variant="outline" size="sm" onClick={handlePurgeOldActivity} disabled={isPurging}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     {isPurging ? 'Purgando...' : 'Purgar Actividad Antigua'}
                 </Button>
             </CardHeader>
             <CardContent>
-                {todaysActivities.length === 0 ? (
+                {sortedDates.length === 0 ? (
                      <div className="text-center py-16 border-2 border-dashed rounded-lg">
                         <History className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-medium">No hay actividad registrada hoy</h3>
+                        <h3 className="mt-4 text-lg font-medium">No hay actividad registrada recientemente</h3>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Las acciones que se realicen durante el día aparecerán aquí.
+                            Las acciones que se realicen aparecerán aquí.
                         </p>
                     </div>
                 ) : (
-                    <div className="relative pl-6">
-                        {/* Vertical line */}
-                        <div className="absolute left-0 top-0 h-full w-0.5 bg-border -translate-x-1/2 ml-3"></div>
-
-                        {todaysActivities.map((activity) => {
-                            const Icon = ACTION_ICONS[activity.action] || History;
-                            const iconColor = ACTION_COLORS[activity.action] || 'text-gray-500';
+                    <Accordion type="single" collapsible defaultValue={todayKey} className="w-full">
+                        {sortedDates.map(dateKey => {
+                            const activities = groupedActivities[dateKey];
+                            const date = new Date(dateKey);
+                            const formattedDate = isToday(date)
+                                ? 'Hoy'
+                                : format(date, 'EEEE, d \'de\' MMMM', { locale: es });
 
                             return (
-                                <div key={activity.id} className="relative flex items-start space-x-4 pb-8">
-                                    <div className="absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-background -translate-x-1/2">
-                                        <Icon className={`h-5 w-5 ${iconColor}`} />
-                                    </div>
+                                <AccordionItem value={dateKey} key={dateKey}>
+                                    <AccordionTrigger>
+                                        <div className="flex justify-between w-full pr-4">
+                                          <span>{formattedDate}</span>
+                                          <span className="text-sm text-muted-foreground">{activities.length} actividades</span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <div className="relative pl-6">
+                                            <div className="absolute left-0 top-0 h-full w-0.5 bg-border -translate-x-1/2 ml-3"></div>
+                                            {activities.map((activity) => {
+                                                const Icon = ACTION_ICONS[activity.action] || History;
+                                                const iconColor = ACTION_COLORS[activity.action] || 'text-gray-500';
 
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm text-muted-foreground">
-                                            {format(new Date(activity.date), "d MMM yyyy, HH:mm:ss", { locale: es })}
-                                        </p>
-                                        <p className="mt-0.5 text-base">
-                                            <span className="font-semibold">{activity.user}</span> {activity.details}
-                                        </p>
-                                    </div>
-                                </div>
+                                                return (
+                                                    <div key={activity.id} className="relative flex items-start space-x-4 pb-8">
+                                                        <div className="absolute left-0 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-background -translate-x-1/2">
+                                                            <Icon className={`h-5 w-5 ${iconColor}`} />
+                                                        </div>
+
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-sm text-muted-foreground">
+                                                                {format(new Date(activity.date), "HH:mm:ss", { locale: es })}
+                                                                <span className="mx-1">&middot;</span>
+                                                                {formatDistanceToNow(new Date(activity.date), { locale: es, addSuffix: true })}
+                                                            </p>
+                                                            <p className="mt-0.5 text-base">
+                                                                <span className="font-semibold">{activity.user}</span> {activity.details}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
                             )
                         })}
-                    </div>
+                    </Accordion>
                 )}
             </CardContent>
         </Card>
