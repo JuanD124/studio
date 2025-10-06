@@ -36,6 +36,30 @@ async function logActivity(user: { username: string }, action: ActivityLogEntry[
     }
 }
 
+// Helper function to compare old and new data and generate a change summary
+function getChangeDetails(oldData: StoredItem, newData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance' | 'editedBy' >): string {
+    const changes: string[] = [];
+    if (oldData.customerName !== newData.customerName) changes.push(`Nombre (${oldData.customerName} -> ${newData.customerName})`);
+    if (oldData.customerId !== newData.customerId) changes.push(`Cédula (${oldData.customerId} -> ${newData.customerId})`);
+    if (oldData.customerPhone !== newData.customerPhone) changes.push(`Teléfono (${oldData.customerPhone} -> ${newData.customerPhone})`);
+    if (oldData.rank !== newData.rank) changes.push(`Rango (${oldData.rank} -> ${newData.rank})`);
+    if (oldData.color !== newData.color) changes.push(`Color (${oldData.color} -> ${newData.color})`);
+    if (oldData.itemsDescription !== newData.itemsDescription) changes.push('Descripción');
+    if (oldData.storagePrice !== newData.storagePrice) changes.push(`Precio Base (${formatCurrency(oldData.storagePrice)} -> ${formatCurrency(newData.storagePrice)})`);
+    if (oldData.laundryItems.length !== (newData.laundryItems?.length ?? 0)) {
+        changes.push('Servicios de Lavado');
+    } else {
+        // Simple check if items are different, could be more granular
+        const oldLaundry = JSON.stringify(oldData.laundryItems.map(i => ({id: i.laundryItemId, qty: i.quantity})).sort());
+        const newLaundry = JSON.stringify((newData.laundryItems || []).map(i => ({id: i.laundryItemId, qty: i.quantity})).sort());
+        if(oldLaundry !== newLaundry) changes.push('Servicios de Lavado');
+    }
+
+    if (changes.length === 0) return `Artículo de ${newData.customerName} editado sin cambios detectables.`;
+    
+    return `Artículo de ${newData.customerName} editado. Cambios: ${changes.join(', ')}.`;
+}
+
 
 export default function StorageManager() {
   const [items, setItems] = React.useState<StoredItem[]>([]);
@@ -121,8 +145,12 @@ export default function StorageManager() {
             date: new Date().toISOString(),
           }
         };
+        
+        const changeDetails = getChangeDetails(existingItem, itemData);
+
         await updateDoc(itemRef, updatedData);
-        await logActivity(user, 'edited', id, `Artículo de ${itemData.customerName} editado.`);
+        await logActivity(user, 'edited', id, changeDetails);
+        
         toast({
           title: "Éxito",
           description: "El artículo ha sido actualizado correctamente.",
