@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { db, isFirebaseConfigInvalid } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, doc, writeBatch, query, orderBy, updateDoc, getDoc, runTransaction, deleteDoc } from 'firebase/firestore';
-import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry, ActivityLogEntry, StoredItemLaundryItem } from '@/lib/types';
+import type { StoredItem, LaundryItem, ClaimedItem, Payment, IncomeEntry, ActivityLogEntry, StoredItemLaundryItem, EditLog } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, PlusCircle, Search, Droplets, Archive } from 'lucide-react';
@@ -37,7 +37,7 @@ async function logActivity(user: { username: string }, action: ActivityLogEntry[
 }
 
 // Helper function to compare old and new data and generate a change summary
-function getChangeDetails(oldData: StoredItem, newData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance' | 'editedBy' >): string {
+function getChangeDetails(oldData: StoredItem, newData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance' | 'editHistory' >): string {
     const changes: string[] = [];
     if (oldData.customerName !== newData.customerName) changes.push(`Nombre (${oldData.customerName} -> ${newData.customerName})`);
     if (oldData.customerId !== newData.customerId) changes.push(`Cédula (${oldData.customerId} -> ${newData.customerId})`);
@@ -123,7 +123,7 @@ export default function StorageManager() {
     return () => unsubscribe();
   }, []);
 
-  const handleSaveItem = React.useCallback(async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance' | 'editedBy' >, id?: string) => {
+  const handleSaveItem = React.useCallback(async (itemData: Omit<StoredItem, 'id' | 'storageDate' | 'payments' | 'remainingBalance' | 'editHistory' >, id?: string) => {
     if (!db || !user) return;
     try {
       if (id) {
@@ -135,17 +135,21 @@ export default function StorageManager() {
         const totalPaid = existingItem.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
         const changeDetails = getChangeDetails(existingItem, itemData);
 
+        const newEditLog: EditLog = {
+          username: user.username,
+          date: new Date().toISOString(),
+          changeDetails: changeDetails,
+        };
+
+        const updatedHistory = [newEditLog, ...(existingItem.editHistory || [])];
+
         const updatedData = {
           ...itemData,
           customerPhone: itemData.customerPhone || '',
           location: itemData.location || existingItem.location || '',
           payments: existingItem.payments || [],
           remainingBalance: itemData.totalPrice - totalPaid,
-          editedBy: {
-            username: user.username,
-            date: new Date().toISOString(),
-            changeDetails: changeDetails,
-          }
+          editHistory: updatedHistory
         };
         
         await updateDoc(itemRef, updatedData);
@@ -174,6 +178,7 @@ export default function StorageManager() {
             payments: [],
             remainingBalance: itemData.totalPrice,
             location: itemData.location || '',
+            editHistory: []
           };
 
           transaction.set(newItemRef, newItemData);

@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import type { Payment, StoredItem, StoredItemLaundryItem } from '@/lib/types';
+import type { Payment, StoredItem, StoredItemLaundryItem, EditLog } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,8 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet, Archive, Droplets, CircleAlert, CircleCheck, Info } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
@@ -105,6 +106,31 @@ const LaundryItemsList = ({ items, onUpdateStatus }: { items: StoredItemLaundryI
         </div>
     );
 };
+
+const EditHistory = ({ history }: { history: EditLog[] }) => {
+    if (!history || history.length === 0) return null;
+
+    return (
+        <div className="text-amber-600/90 italic pt-2 space-y-2">
+            <h4 className="flex items-center text-sm not-italic font-semibold text-foreground/80">
+                <History className="mr-2 h-4 w-4 flex-shrink-0" />
+                Historial de Cambios
+            </h4>
+            {history.map((log, index) => (
+                <div key={index} className="pl-4 border-l-2 border-amber-200 ml-2 text-xs">
+                    <p className='font-semibold'>
+                        {log.username} - {formatDistanceToNow(new Date(log.date), { locale: es, addSuffix: true })}
+                    </p>
+                    {log.changeDetails && (
+                         <p className='text-xs'>
+                            {log.changeDetails.replace(`Artículo de ${log.username} editado. Cambios: `, 'Cambios: ')}
+                        </p>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
 
 function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPayment, onEditPayment, onEditLocation, onUpdateLaundryStatus }: StoredItemCardProps) {
   const { user } = useAuth();
@@ -204,24 +230,9 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 {item.customerId && <div className="flex items-center gap-2"><Fingerprint className="w-3 h-3"/><span>C.C. {item.customerId}</span></div>}
                 {item.battalion && <div className="flex items-center gap-2"><Shield className="w-3 h-3"/><span>{item.battalion}</span></div>}
                 {item.contingent && <div className="flex items-center gap-2"><Users className="w-3 h-3"/><span>{item.contingent}</span></div>}
-                {user?.role === 'gerente' && item.editedBy && (
-                    <div className="text-amber-600/90 italic pt-2 space-y-1">
-                        <div className='flex items-center'>
-                           <History className="mr-2 h-3 w-3 flex-shrink-0" />
-                            <span>
-                                Editado por {item.editedBy.username} el {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}
-                            </span>
-                        </div>
-                        {item.editedBy.changeDetails && (
-                            <div className='flex items-start'>
-                               <Info className="mr-2 h-3 w-3 flex-shrink-0 mt-0.5" />
-                                <span className='text-xs'>
-                                    {item.editedBy.changeDetails.replace(`Artículo de ${item.customerName} editado. Cambios: `, 'Cambios: ')}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                )}
+                
+                {user?.role === 'gerente' && <EditHistory history={item.editHistory || []} />}
+
             </div>
             
             <div className="space-y-1 text-xs">

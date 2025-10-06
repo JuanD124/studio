@@ -24,6 +24,12 @@ export interface StoredItemLaundryItem {
   status: 'pending' | 'ready';
 }
 
+export interface EditLog {
+    username: string;
+    date: string; // ISO string format
+    changeDetails?: string;
+}
+
 export interface StoredItem {
   id: string; // Firestore document ID, now will be a sequential number as string
   customerName: string;
@@ -42,11 +48,7 @@ export interface StoredItem {
   remainingBalance: number;
   location?: string; // e.g., "Estante A-3"
   serviceType: 'guardado' | 'lavado';
-  editedBy?: {
-    username: string;
-    date: string; // ISO string format
-    changeDetails?: string;
-  };
+  editHistory?: EditLog[];
 }
 
 // Represents an item that has been claimed/delivered
