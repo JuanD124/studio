@@ -204,7 +204,7 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 {item.customerId && <div className="flex items-center gap-2"><Fingerprint className="w-3 h-3"/><span>C.C. {item.customerId}</span></div>}
                 {item.battalion && <div className="flex items-center gap-2"><Shield className="w-3 h-3"/><span>{item.battalion}</span></div>}
                 {item.contingent && <div className="flex items-center gap-2"><Users className="w-3 h-3"/><span>{item.contingent}</span></div>}
-                {item.editedBy && (
+                {user?.role === 'gerente' && item.editedBy && (
                     <div className="flex items-center text-amber-600 italic pt-1">
                     <History className="mr-2 h-3 w-3" />
                     <span>
