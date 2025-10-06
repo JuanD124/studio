@@ -45,6 +45,7 @@ export interface StoredItem {
   editedBy?: {
     username: string;
     date: string; // ISO string format
+    changeDetails?: string;
   };
 }
 

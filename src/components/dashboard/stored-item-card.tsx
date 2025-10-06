@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet, Archive, Droplets, CircleAlert, CircleCheck } from 'lucide-react';
+import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet, Archive, Droplets, CircleAlert, CircleCheck, Info } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
@@ -205,11 +205,21 @@ function StoredItemCardComponent({ item, onClaim, onOpenInvoice, onEdit, onAddPa
                 {item.battalion && <div className="flex items-center gap-2"><Shield className="w-3 h-3"/><span>{item.battalion}</span></div>}
                 {item.contingent && <div className="flex items-center gap-2"><Users className="w-3 h-3"/><span>{item.contingent}</span></div>}
                 {user?.role === 'gerente' && item.editedBy && (
-                    <div className="flex items-center text-amber-600 italic pt-1">
-                    <History className="mr-2 h-3 w-3" />
-                    <span>
-                        Editado por {item.editedBy.username} el {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}
-                    </span>
+                    <div className="text-amber-600/90 italic pt-2 space-y-1">
+                        <div className='flex items-center'>
+                           <History className="mr-2 h-3 w-3 flex-shrink-0" />
+                            <span>
+                                Editado por {item.editedBy.username} el {format(new Date(item.editedBy.date), 'dd/MM/yy HH:mm')}
+                            </span>
+                        </div>
+                        {item.editedBy.changeDetails && (
+                            <div className='flex items-start'>
+                               <Info className="mr-2 h-3 w-3 flex-shrink-0 mt-0.5" />
+                                <span className='text-xs'>
+                                    {item.editedBy.changeDetails.replace(`Artículo de ${item.customerName} editado. Cambios: `, 'Cambios: ')}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

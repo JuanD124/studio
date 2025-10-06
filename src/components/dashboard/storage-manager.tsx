@@ -133,7 +133,8 @@ export default function StorageManager() {
 
         const existingItem = itemDoc.data() as StoredItem;
         const totalPaid = existingItem.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
-        
+        const changeDetails = getChangeDetails(existingItem, itemData);
+
         const updatedData = {
           ...itemData,
           customerPhone: itemData.customerPhone || '',
@@ -143,11 +144,10 @@ export default function StorageManager() {
           editedBy: {
             username: user.username,
             date: new Date().toISOString(),
+            changeDetails: changeDetails,
           }
         };
         
-        const changeDetails = getChangeDetails(existingItem, itemData);
-
         await updateDoc(itemRef, updatedData);
         await logActivity(user, 'edited', id, changeDetails);
         
