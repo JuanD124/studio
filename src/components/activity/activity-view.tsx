@@ -6,7 +6,7 @@ import { collection, onSnapshot, query, orderBy, getDocs, writeBatch, where, lim
 import type { ActivityLogEntry } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, isToday, startOfDay, subDays, formatDistanceToNow } from 'date-fns';
+import { format, isToday, startOfDay, subDays, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { History, Trash2, Edit, PlusCircle, PackageCheck, Banknote, MapPin, RotateCcw } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -65,7 +65,8 @@ export default function ActivityView() {
             });
 
             const grouped = activityData.reduce((acc: GroupedActivities, activity) => {
-                const dateKey = format(new Date(activity.date), 'yyyy-MM-dd');
+                // Use substring to get 'YYYY-MM-DD' part of ISO string to avoid timezone issues
+                const dateKey = activity.date.substring(0, 10);
                 if (!acc[dateKey]) {
                     acc[dateKey] = [];
                 }
@@ -129,7 +130,7 @@ export default function ActivityView() {
     }
     
     const sortedDates = Object.keys(groupedActivities).sort((a, b) => b.localeCompare(a));
-    const todayKey = format(new Date(), 'yyyy-MM-dd');
+    const todayKey = new Date().toISOString().substring(0, 10);
 
     return (
         <Card>
@@ -153,7 +154,7 @@ export default function ActivityView() {
                     <Accordion type="single" collapsible defaultValue={todayKey} className="w-full">
                         {sortedDates.map(dateKey => {
                             const activities = groupedActivities[dateKey];
-                            const date = new Date(dateKey);
+                            const date = parseISO(dateKey); // Use parseISO to correctly interpret YYYY-MM-DD
                             const formattedDate = isToday(date)
                                 ? 'Hoy'
                                 : format(date, 'EEEE, d \'de\' MMMM', { locale: es });
