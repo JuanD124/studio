@@ -516,9 +516,9 @@ export default function StorageManager() {
 
             <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Filtrar:</span>
-                <Button variant={filter === 'todos' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilter('todos')}>Todos</Button>
-                <Button variant={filter === 'guardado' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilter('guardado')}>Guardado</Button>
-                <Button variant={filter === 'lavado' ? 'secondary' : 'outline'} size="sm" onClick={() => setFilter('lavado')}>Lavado</Button>
+                <Button variant={filter === 'todos' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('todos')}>Todos</Button>
+                <Button variant={filter === 'guardado' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('guardado')}>Guardado</Button>
+                <Button variant={filter === 'lavado' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('lavado')}>Lavado</Button>
             </div>
         </div>
 
