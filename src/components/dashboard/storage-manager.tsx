@@ -46,13 +46,31 @@ function getChangeDetails(oldData: StoredItem, newData: Omit<StoredItem, 'id' | 
     if (oldData.color !== newData.color) changes.push(`Color (${oldData.color} -> ${newData.color})`);
     if (oldData.itemsDescription !== newData.itemsDescription) changes.push('Descripción');
     if (oldData.storagePrice !== newData.storagePrice) changes.push(`Precio Base (${formatCurrency(oldData.storagePrice)} -> ${formatCurrency(newData.storagePrice)})`);
-    if (oldData.laundryItems.length !== (newData.laundryItems?.length ?? 0)) {
-        changes.push('Servicios de Lavado');
-    } else {
-        // Simple check if items are different, could be more granular
-        const oldLaundry = JSON.stringify(oldData.laundryItems.map(i => ({id: i.laundryItemId, qty: i.quantity})).sort());
-        const newLaundry = JSON.stringify((newData.laundryItems || []).map(i => ({id: i.laundryItemId, qty: i.quantity})).sort());
-        if(oldLaundry !== newLaundry) changes.push('Servicios de Lavado');
+    
+    // Detailed laundry items changes
+    const oldLaundryMap = new Map(oldData.laundryItems.map(item => [item.laundryItemId, item]));
+    const newLaundryMap = new Map((newData.laundryItems || []).map(item => [item.laundryItemId, item]));
+    const laundryChanges: string[] = [];
+
+    newLaundryMap.forEach((newItem, key) => {
+        if (oldLaundryMap.has(key)) {
+            const oldItem = oldLaundryMap.get(key)!;
+            if (oldItem.quantity !== newItem.quantity) {
+                laundryChanges.push(`${newItem.name} x${oldItem.quantity} -> x${newItem.quantity}`);
+            }
+        } else {
+            laundryChanges.push(`+${newItem.quantity} ${newItem.name}`);
+        }
+    });
+
+    oldLaundryMap.forEach((oldItem, key) => {
+        if (!newLaundryMap.has(key)) {
+            laundryChanges.push(`-${oldItem.quantity} ${oldItem.name}`);
+        }
+    });
+
+    if (laundryChanges.length > 0) {
+        changes.push(`Servicios de Lavado (${laundryChanges.join(', ')})`);
     }
 
     if (changes.length === 0) return `Artículo de ${newData.customerName} editado sin cambios detectables.`;
