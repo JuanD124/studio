@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
   } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet, Archive, Droplets, CircleAlert, CircleCheck, Info } from 'lucide-react';
+import { Clock, Package, PackageCheck, Palette, MoreVertical, Pencil, Receipt, Banknote, History, Shirt, ChevronDown, ChevronUp, DollarSign, Phone, MapPin, User, Fingerprint, Shield, Users, Edit, CheckCircle2, CreditCard, Wallet, Archive, Droplets, CircleAlert, CircleCheck } from 'lucide-react';
 import { formatCurrency, getStorageDuration } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
