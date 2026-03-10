@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 // --- Hardcoded User Credentials ---
 // You can change these credentials as needed.
 const USERS = {
-  gerente: { password: 'Beato', role: 'gerente' },
-  empleado: { password: '1234', role: 'empleado' },
+  gerente: { password: 'Gerente2025', role: 'gerente' },
+  empleado: { password: 'Empleado2025', role: 'empleado' },
 };
 // ---
 
